@@ -1,0 +1,9 @@
+icalendar>=5.0.0
+pytz>=2023.3
+requests>=2.31.0
+azure-cognitiveservices-speech
+json
+pynput
+sqlalchemy
+python-dotenv
+tenacity
