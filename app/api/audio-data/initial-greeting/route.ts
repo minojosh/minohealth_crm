@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { API_ENDPOINTS } from '../../api';
 
 // This API route provides the initial greeting for medication or appointment reminders
 // with TTS audio generation for immediate playback
@@ -20,21 +21,17 @@ export async function GET(request: NextRequest) {
       greeting = "Hello, this is Mino Healthcare assistant. How can I help you today?";
     }
 
-    // Try to get TTS audio from the backend if available
+    // Try to get TTS audio from the backend
     try {
       console.log("Fetching TTS audio for greeting...");
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const ttsEndpoint = `${backendUrl}/tts`;
-      
-      const ttsResponse = await fetch(ttsEndpoint, {
+      const ttsResponse = await fetch(API_ENDPOINTS.tts, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          text: greeting
+          text: greeting,
         }),
-        // Set a reasonable timeout to avoid hanging the request
         signal: AbortSignal.timeout(10000)
       });
       

@@ -1,11 +1,12 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Query, Depends, HTTPException, status, BackgroundTasks
+from fastapi.websockets import WebSocketState
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-import logging
 from .scheduler import (
     SpeechAssistant, Message, docs, db_manager,
     speech_client, client, schedule_appointment
 )
+from .medical_assistant import Assistant
 # Import appointment manager components
 from .appointment_manager import (
     SchedulerManager, 
@@ -13,14 +14,23 @@ from .appointment_manager import (
     ReminderMessage
 )
 from datetime import datetime
-import json
-import asyncio
-import fastapi # Import the fastapi module itself
-import base64
-import numpy as np
+import fastapi  # Import the fastapi module itself
 from typing import Optional, List
 from pydantic import BaseModel
-from .TTS_client import TTSClient
+# from .TTS_client import TTSClient
+from .XTTS_adapter import TTSClient
+# from .XTTS_client import TTSClient
+import time
+import logging
+import os
+import json
+import yaml
+import re
+import traceback
+import base64
+import numpy as np
+import asyncio
+from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(
@@ -33,6 +43,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Load environment variables
+load_dotenv()
+
 app = FastAPI(
     title="Moremi AI Scheduler API",
     description="API for scheduling appointments using AI assistance",
@@ -40,7 +53,7 @@ app = FastAPI(
 )
 
 # Initialize TTS client
-tts_client = TTSClient()
+tts_client = TTSClient(api_url=os.getenv("XTTS_URL") or os.getenv("SPEECH_SERVICE_URL"))
 
 print(f"FastAPI version: {fastapi.__version__}") # Print version at startup
 
@@ -52,6 +65,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add this after the FastAPI app initialization
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Middleware to log all incoming requests"""
+    start_time = time.time()
+    path = request.url.path
+    method = request.method
+    
+    # Only log details for specific endpoints of interest
+    detailed_logging = path == "/api/extract/data"
+    
+    if (detailed_logging):
+        logger.info(f"Request started: {method} {path}")
+        # Try to log request body for specific endpoints
+        try:
+            body = await request.body()
+            if body:
+                logger.info(f"Request body size: {len(body)} bytes")
+        except Exception as e:
+            logger.warning(f"Could not log request body: {str(e)}")
+    
+    response = await call_next(request)
+    
+    process_time = time.time() - start_time
+    formatted_process_time = "{0:.2f}".format(process_time)
+    
+    if detailed_logging:
+        logger.info(f"Request completed: {method} {path} - took {formatted_process_time}s with status {response.status_code}")
+    
+    return response
 
 # Appointment Manager API models
 class SchedulerRequest(BaseModel):
@@ -77,6 +121,9 @@ class TTSRequest(BaseModel):
 
 # Store active conversations
 active_conversations = {}
+# Store last audio data for each conversation
+conversation_audio_cache = {}
+
 
 def convert_audio_to_base64(audio_data):
     """Convert numpy array audio data to base64 string."""
@@ -138,8 +185,8 @@ async def text_to_speech(request: TTSRequest):
     try:
         logger.info(f"TTS request received for text: {request.text[:30]}...")
         
-        # Use the TTS client to generate audio
-        audio_data, sample_rate, base64_audio = tts_client.TTS(
+        # Use the TTS client to generate audio - correctly unpack all 4 return values
+        audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
             request.text,
             play_locally=False,  # Don't play on server
             return_data=True     # Get the data back
@@ -152,10 +199,7 @@ async def text_to_speech(request: TTSRequest):
         }
     except Exception as e:
         logger.error(f"Error in TTS endpoint: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate speech: {str(e)}"
-        )
+        return {"error": str(e)}
 
 @app.post("/transcribe")
 async def transcribe_audio_endpoint(request: Request):
@@ -196,42 +240,50 @@ async def transcribe_audio_endpoint(request: Request):
 
 @app.post("/api/extract/data")
 async def extract_data(request: Request):
-    """
-    Extract structured data from a transcript using Moremi.
-    """
+    """Extract structured data from transcript using the medical Assistant"""
     try:
         data = await request.json()
         transcript = data.get("transcript")
         
         if not transcript:
-            raise HTTPException(
-                status_code=400,
-                detail="No transcript provided"
-            )
+            raise HTTPException(status_code=400, detail="No transcript provided")
         
-        # Initialize the speech assistant
-        assistant = SpeechAssistant()
+        # Use the Assistant class from medical_assistant.py
+        from .medical_assistant import Assistant, Message
+        
+        # Create Assistant and add transcript
+        assistant = Assistant()
         assistant.messages.append(Message(user_input=transcript))
         
-        # Get Moremi response
-        response = assistant.get_moremi_response(assistant.messages, assistant.system_prompt)
-        
-        # Save the results (this will process and clean the YAML)
-        timestamp = assistant._get_timestamp()
-        raw_path, processed_path = assistant._save_yaml(response, timestamp)
-        
-        # Return the processed YAML data
-        import yaml
-        with open(processed_path, 'r') as f:
-            extracted_data = yaml.safe_load(f)
+        # Extract structured YAML using Moremi
+        try:
+            yaml_content = assistant.get_moremi_response(assistant.messages, assistant.system_prompt)
+            timestamp = assistant._get_timestamp()
+            _, processed_path = assistant._save_yaml(yaml_content, timestamp)
             
-        return extracted_data
-        
+            # Parse YAML
+            import yaml
+            processed_yaml = yaml.safe_load(yaml_content)
+            
+            return {
+                "status": "success",
+                "data": processed_yaml,
+                "message": "Successfully extracted structured data from transcript"
+            }
+        except Exception as e:
+            logger.error(f"Error extracting data: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error extracting data from transcript: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error in data extraction: {str(e)}")
+        logger.error(f"Error in extract_data endpoint: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to extract data: {str(e)}"
+            detail=f"Server error during data extraction: {str(e)}"
         )
 
 @app.websocket("/ws/audio")
@@ -567,13 +619,30 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                             })
 
                             # Generate and send TTS
-                            audio_data, sample_rate = speech_client.generate_speech(response)
-                            if audio_data is not None:
-                                base64_audio = convert_audio_to_base64(audio_data)
+                            audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
+                                response, 
+                                play_locally=False, 
+                                return_data=True
+                            )
+                            
+                            if base64_audio:
+                                # Store for frontend use
+                                assistant.audio_base64 = base64_audio
+                                
+                                # Cache for later retrieval
+                                conversation_audio_cache[f"schedule_{patient_id}"] = {
+                                    "audio": base64_audio,
+                                    "sample_rate": sample_rate,
+                                    "encoding": "PCM_FLOAT"
+                                }
+                                
+                                # Send to client
                                 await websocket.send_json({
                                     "type": "audio",
                                     "audio": base64_audio,
-                                    "sample_rate": sample_rate
+                                    "sample_rate": sample_rate,
+                                    "message_id": f"audio_schedule_{patient_id}",
+                                    "encoding": "PCM_FLOAT"
                                 })
 
                             # If doctors were found, send them
@@ -616,13 +685,30 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                         })
 
                         # Generate and send TTS for summary
-                        audio_data, sample_rate = speech_client.generate_speech(f"Summary: {summary}")
-                        if audio_data is not None:
-                            base64_audio = convert_audio_to_base64(audio_data)
+                        audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
+                            f"Summary: {summary}", 
+                            play_locally=False, 
+                            return_data=True
+                        )
+                        
+                        if base64_audio:
+                            # Store for frontend use
+                            assistant.audio_base64 = base64_audio
+                            
+                            # Cache for later retrieval
+                            conversation_audio_cache[f"summary_{patient_id}"] = {
+                                "audio": base64_audio,
+                                "sample_rate": sample_rate,
+                                "encoding": "PCM_FLOAT"
+                            }
+                            
+                            # Send to client
                             await websocket.send_json({
                                 "type": "audio",
                                 "audio": base64_audio,
-                                "sample_rate": sample_rate
+                                "sample_rate": sample_rate,
+                                "message_id": f"audio_summary_{patient_id}",
+                                "encoding": "PCM_FLOAT"
                             })
 
                         if summary != "null":
@@ -639,13 +725,19 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
 
                                 # Generate and send TTS for confirmation
                                 confirm_message = f"Your appointment with {parsed_dict['doctorName']} has been scheduled for {parsed_dict['appointmentDateTime']}."
-                                audio_data, sample_rate = speech_client.generate_speech(confirm_message)
-                                if audio_data is not None:
-                                    base64_audio = convert_audio_to_base64(audio_data)
+                                audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
+                                    confirm_message, 
+                                    play_locally=False, 
+                                    return_data=True
+                                )
+                                
+                                if base64_audio:
                                     await websocket.send_json({
                                         "type": "audio",
                                         "audio": base64_audio,
-                                        "sample_rate": sample_rate
+                                        "sample_rate": sample_rate,
+                                        "message_id": f"audio_confirm_{patient_id}",
+                                        "encoding": "PCM_FLOAT"
                                     })
                             except Exception as e:
                                 logger.error(f"Error saving appointment: {str(e)}")
@@ -656,13 +748,19 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                                 })
                                 
                                 # Generate and send TTS for error
-                                audio_data, sample_rate = speech_client.generate_speech(error_message)
-                                if audio_data is not None:
-                                    base64_audio = convert_audio_to_base64(audio_data)
+                                audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
+                                    error_message, 
+                                    play_locally=False, 
+                                    return_data=True
+                                )
+                                
+                                if base64_audio:
                                     await websocket.send_json({
                                         "type": "audio",
                                         "audio": base64_audio,
-                                        "sample_rate": sample_rate
+                                        "sample_rate": sample_rate,
+                                        "message_id": f"audio_error_{patient_id}",
+                                        "encoding": "PCM_FLOAT"
                                     })
                         
                         break
@@ -709,99 +807,112 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
         
-    await websocket.accept()
-    logger.info(f"Conversation WebSocket connection established for patient {patient_id} with type {type}")
-    
     try:
-        # Send connection successful message
-        await websocket.send_json({
-            "type": "connection_status",
-            "status": "connected",
-            "message": "WebSocket connection established successfully"
-        })
+        await websocket.accept()
+        logger.info(f"Conversation WebSocket connection established for patient {patient_id} with type {type}")
         
-        # Create reminder ID based on type and patient ID
+        # Track conversation state to prevent duplicate messages
+        conversation_state = {
+            "last_message_id": None,  # Use message ID to track uniqueness
+            "last_message": None,
+            "message_count": 0,
+            "audio_format": None,  # Track audio format to ensure consistency
+            "greeting_sent": False  # Flag to track if greeting has been sent
+        }
+        
+        # Look up the reminder if a reminder_id is provided
         reminder_id = f"{type}_{patient_id}"
+        reminder = None
+        
+        # Directly access the reminder from the dictionary using the key
         reminder = active_conversations.get(reminder_id)
         
+        # If not found with simple key, try to find it in all values
         if not reminder:
-            logger.warning(f"No active reminder found for {reminder_id}")
-            logger.info(f"Available reminders: {list(active_conversations.keys())}")
-            
-            # Create a dummy reminder for debugging purposes
-            logger.info("Creating a dummy reminder for testing")
-            dummy_greeting = f"This is a test {type} reminder. No actual reminder data was found for patient {patient_id}."
-            
-            await websocket.send_json({
-                "type": "message",
-                "text": dummy_greeting
-            })
-            
-            # Try to generate audio for the dummy greeting
-            try:
-                audio_data, sample_rate, base64_audio = tts_client.TTS(
-                    dummy_greeting, 
-                    play_locally=False, 
-                    return_data=True
-                )
-                
-                if base64_audio:
-                    await websocket.send_json({
-                        "type": "audio",
-                        "audio": base64_audio,
-                        "sample_rate": sample_rate
-                    })
-            except Exception as audio_err:
-                logger.error(f"Failed to generate speech for dummy greeting: {str(audio_err)}")
-            
-            return
-            
-        logger.info(f"Found reminder for {reminder_id}: {reminder.message_type} for {reminder.patient_name}")
+            for key, value in active_conversations.items():
+                if key.startswith(f"{type}_{patient_id}"):
+                    reminder = value
+                    break
+        
+        logger.info(f"Reminder lookup for {reminder_id}: {'Found' if reminder else 'Not found'}")
         
         # Initialize the appropriate agent based on type
         agent = None
         try:
             if type == "medication":
-                agent = MedicalAgent(reminder, "medication", days_ahead=30)  # Add days_ahead parameter
+                agent = MedicalAgent(reminder or None, "medication", days_ahead=30)
             elif type == "appointment":
-                agent = MedicalAgent(reminder, "appointment", days_ahead=30)  # Add days_ahead parameter
+                agent = MedicalAgent(reminder or None, "appointment", days_ahead=30)
             else:
                 await websocket.send_json({
                     "type": "error",
-                    "message": f"Invalid conversation type: {type}"
+                    "message": f"Invalid conversation type: {type}",
+                    "message_id": "error_invalid_type"
                 })
                 return
         except Exception as agent_err:
             logger.error(f"Failed to initialize agent: {str(agent_err)}")
             await websocket.send_json({
                 "type": "error",
-                "message": f"Failed to initialize conversation agent: {str(agent_err)}"
+                "message": f"Failed to initialize conversation agent: {str(agent_err)}",
+                "message_id": "error_agent_init"
             })
             return
             
-        # Send initial message
-        initial_message = f"Starting {type} conversation for patient {patient_id}. Hello {reminder.patient_name}!"
-        await websocket.send_json({
-            "type": "message",
-            "text": initial_message
-        })
-        
-        # Try to generate speech for the initial message using TTSClient
-        try:
-            audio_data, sample_rate, base64_audio = tts_client.TTS(
-                initial_message, 
-                play_locally=False, 
-                return_data=True
-            )
+        # Send initial message only if we haven't sent a greeting yet
+        if not conversation_state["greeting_sent"]:
+            # Customize greeting based on conversation type
+            if type == "medication":
+                initial_message = f"Hello {reminder.patient_name if reminder else 'Patient'}! This is MinoHealth calling about your medication reminder. How are you doing today?"
+            elif type == "appointment":
+                initial_message = f"Hello {reminder.patient_name if reminder else 'Patient'}! This is MinoHealth calling about your upcoming appointment. How are you doing today?"
+            else:
+                initial_message = f"Hello {reminder.patient_name if reminder else 'Patient'}! This is MinoHealth calling. How can I assist you today?"
+                
+            message_id = f"initial_greeting_{patient_id}_{type}"
             
-            if base64_audio:
+            try:
                 await websocket.send_json({
-                    "type": "audio",
-                    "audio": base64_audio,
-                    "sample_rate": sample_rate
+                    "type": "message",
+                    "text": initial_message,
+                    "message_id": message_id
                 })
-        except Exception as audio_err:
-            logger.error(f"Failed to generate speech for initial message: {str(audio_err)}")
+                conversation_state["message_count"] += 1
+                conversation_state["last_message"] = initial_message
+                conversation_state["last_message_id"] = message_id
+                conversation_state["greeting_sent"] = True
+                
+                # Try to generate speech for the initial message using TTSClient
+                audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
+                    initial_message, 
+                    play_locally=False, 
+                    return_data=True
+                )
+                
+                if base64_audio:
+                    # Store audio format information
+                    conversation_state["audio_format"] = {
+                        "sample_rate": sample_rate,
+                        "encoding": "PCM_FLOAT"
+                    }
+                    
+                    await websocket.send_json({
+                        "type": "audio",
+                        "audio": base64_audio,
+                        "sample_rate": sample_rate,
+                        "message_id": f"audio_{message_id}",
+                        "encoding": "PCM_FLOAT"
+                    })
+                    
+                    # Send a prompt to encourage user input
+                    await websocket.send_json({
+                        "type": "status",
+                        "status": "waiting_for_input",
+                        "message": "Please speak now",
+                        "message_id": "prompt_for_input"
+                    })
+            except Exception as audio_err:
+                logger.error(f"Failed to generate speech for initial message: {str(audio_err)}")
         
         # Handle audio input from client
         while True:
@@ -819,11 +930,13 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                 if message_type == "audio_input":
                     audio_base64 = data.get("audio")
                     conversation_id = data.get("conversation_id")
+                    client_message_id = data.get("message_id", f"audio_input_{datetime.now().timestamp()}")
                     
                     if not audio_base64:
                         await websocket.send_json({
                             "type": "error",
-                            "message": "No audio data provided"
+                            "message": "No audio data provided",
+                            "message_id": f"error_no_audio_{client_message_id}"
                         })
                         continue
                     
@@ -832,20 +945,35 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                         audio_bytes = base64.b64decode(audio_base64)
                         transcription = client.transcribe_audio(audio_bytes)
                         
+                        # Check if transcription contains an error message
+                        if transcription and transcription.startswith("Processing error:"):
+                            logger.error(f"Transcription error: {transcription}")
+                            await websocket.send_json({
+                                "type": "error",
+                                "message": transcription,
+                                "message_id": f"error_transcription_{client_message_id}"
+                            })
+                            continue
+                        
+                        # Generate a unique ID for this transcription
+                        transcription_id = f"transcription_{conversation_state['message_count']}_{datetime.now().timestamp()}"
+                        
                         if not transcription or transcription == "No speech detected":
                             await websocket.send_json({
                                 "type": "message",
-                                "text": "I couldn't hear you clearly. Could you please repeat that?"
+                                "text": "I couldn't hear you clearly. Could you please repeat that?",
+                                "message_id": f"no_speech_{transcription_id}"
                             })
                             continue
                             
                         # Send transcription back to client
                         await websocket.send_json({
                             "type": "transcription",
-                            "text": transcription
+                            "text": transcription,
+                            "message_id": transcription_id
                         })
                         
-                        # Process with agent
+                        # Process with agent - each message gets a unique ID based on timestamp and content hash
                         if agent and hasattr(agent, 'Moremi'):
                             # Add the transcription to the agent's messages
                             if not hasattr(agent, 'messages'):
@@ -856,84 +984,136 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                             response = agent.Moremi(agent.messages, agent.system_prompt)
                             agent.messages[-1].add_response(response)
                             
-                            # Send text response
-                            await websocket.send_json({
-                                "type": "message",
-                                "text": response
-                            })
+                            # Generate a unique response ID
+                            response_id = f"resp_{conversation_state['message_count']}_{hash(response)}"
                             
-                            # Generate and send audio using TTSClient
-                            audio_data, sample_rate, base64_audio = tts_client.TTS(
-                                response,
-                                play_locally=False, 
-                                return_data=True
-                            )
-                            
-                            if base64_audio:
-                                # Store for frontend use
-                                agent.audio_base64 = base64_audio
-                                
-                                # Send to client
+                            # Only send if this is a new response (prevent duplicates)
+                            if response_id != conversation_state["last_message_id"]:
+                                # Send text response
                                 await websocket.send_json({
-                                    "type": "audio",
-                                    "audio": base64_audio,
-                                    "sample_rate": sample_rate
+                                    "type": "message",
+                                    "text": response,
+                                    "message_id": response_id
                                 })
+                                
+                                conversation_state["message_count"] += 1
+                                conversation_state["last_message"] = response
+                                conversation_state["last_message_id"] = response_id
+                                
+                                # Generate and send audio using TTSClient
+                                try:
+                                    audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
+                                        response,
+                                        play_locally=False, 
+                                        return_data=True
+                                    )
+                                    
+                                    if base64_audio:
+                                        # Store for frontend use
+                                        agent.audio_base64 = base64_audio
+                                        
+                                        # Cache for later retrieval
+                                        conversation_audio_cache[conversation_id or reminder_id] = {
+                                            "audio": base64_audio,
+                                            "sample_rate": sample_rate,
+                                            "encoding": "PCM_FLOAT"
+                                        }
+                                        
+                                        # Send to client
+                                        await websocket.send_json({
+                                            "type": "audio",
+                                            "audio": base64_audio,
+                                            "sample_rate": sample_rate,
+                                            "message_id": f"audio_{response_id}",
+                                            "encoding": "PCM_FLOAT"
+                                        })
+                                        
+                                        # Send a prompt to encourage continued conversation
+                                        await websocket.send_json({
+                                            "type": "status",
+                                            "status": "waiting_for_input",
+                                            "message": "Please speak now",
+                                            "message_id": f"prompt_after_{response_id}"
+                                        })
+                                except Exception as e:
+                                    logger.error(f"Failed to generate speech for response: {str(e)}")
                         else:
                             # Fallback response if agent isn't properly initialized
                             response = f"Thank you for your message: '{transcription}'. How else can I help with your {type}?"
+                            response_id = f"fallback_{conversation_state['message_count']}_{hash(response)}"
                             
-                            # Send text response
-                            await websocket.send_json({
-                                "type": "message",
-                                "text": response
-                            })
-                            
-                            # Try to generate speech with TTSClient
-                            try:
-                                audio_data, sample_rate, base64_audio = tts_client.TTS(
-                                    response,
-                                    play_locally=False, 
-                                    return_data=True
-                                )
+                            # Send text response only if it's not a duplicate
+                            if response_id != conversation_state["last_message_id"]:
+                                await websocket.send_json({
+                                    "type": "message",
+                                    "text": response,
+                                    "message_id": response_id
+                                })
                                 
-                                if base64_audio:
-                                    await websocket.send_json({
-                                        "type": "audio",
-                                        "audio": base64_audio,
-                                        "sample_rate": sample_rate
-                                    })
-                            except Exception as audio_err:
-                                logger.error(f"Failed to generate speech for response: {str(audio_err)}")
+                                conversation_state["message_count"] += 1
+                                conversation_state["last_message"] = response
+                                conversation_state["last_message_id"] = response_id
+                                
+                                # Try to generate speech with TTSClient
+                                try:
+                                    audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
+                                        response,
+                                        play_locally=False, 
+                                        return_data=True
+                                    )
+                                    
+                                    if base64_audio:
+                                        await websocket.send_json({
+                                            "type": "audio",
+                                            "audio": base64_audio,
+                                            "sample_rate": sample_rate,
+                                            "message_id": f"audio_{response_id}",
+                                            "encoding": "PCM_FLOAT"
+                                        })
+                                        
+                                        # Send a prompt to encourage continued conversation
+                                        await websocket.send_json({
+                                            "type": "status",
+                                            "status": "waiting_for_input",
+                                            "message": "Please speak now",
+                                            "message_id": f"prompt_after_{response_id}"
+                                        })
+                                except Exception as audio_err:
+                                    logger.error(f"Failed to generate speech for response: {str(audio_err)}")
                                 
                     except Exception as transcribe_err:
                         logger.error(f"Error processing audio: {str(transcribe_err)}")
                         await websocket.send_json({
                             "type": "error",
-                            "message": "Failed to process your audio"
+                            "message": "Failed to process your audio",
+                            "message_id": f"error_process_{datetime.now().timestamp()}"
                         })
                 
                 # Handle ping to keep connection alive
                 elif message_type == "ping":
+                    timestamp = datetime.now().timestamp()
                     await websocket.send_json({
                         "type": "pong",
-                        "timestamp": datetime.now().timestamp()
+                        "timestamp": timestamp,
+                        "message_id": f"pong_{timestamp}"
                     })
                 
                 # Handle commands
                 elif message_type == "command":
                     command = data.get("command")
+                    command_id = f"cmd_{command}_{datetime.now().timestamp()}"
                     
                     if command == "finish":
                         farewell = "Thank you for using our service. Goodbye!"
                         await websocket.send_json({
                             "type": "message",
-                            "text": farewell
+                            "text": farewell,
+                            "message_id": f"farewell_{command_id}"
                         })
                         
                         # Generate farewell audio
                         try:
-                            audio_data, sample_rate, base64_audio = tts_client.TTS(
+                            audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
                                 farewell,
                                 play_locally=False, 
                                 return_data=True
@@ -943,7 +1123,9 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                                 await websocket.send_json({
                                     "type": "audio",
                                     "audio": base64_audio,
-                                    "sample_rate": sample_rate
+                                    "sample_rate": sample_rate,
+                                    "message_id": f"audio_farewell_{command_id}",
+                                    "encoding": "PCM_FLOAT"
                                 })
                         except Exception as e:
                             logger.error(f"Error generating farewell audio: {e}")
@@ -952,47 +1134,59 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                     else:
                         await websocket.send_json({
                             "type": "status",
-                            "message": f"Received command: {command}"
+                            "message": f"Received command: {command}",
+                            "message_id": command_id
                         })
                 
                 # Handle other message types
                 else:
+                    message_id = f"unknown_{message_type}_{datetime.now().timestamp()}"
                     await websocket.send_json({
                         "type": "status",
-                        "message": f"Received unknown message type: {message_type}"
+                        "message": f"Received unknown message type: {message_type}",
+                        "message_id": message_id
                     })
                     
             except json.JSONDecodeError:
                 logger.error("Failed to parse JSON from WebSocket message")
                 await websocket.send_json({
                     "type": "error",
-                    "message": "Invalid JSON format received"
+                    "message": "Invalid JSON format received",
+                    "message_id": f"error_json_{datetime.now().timestamp()}"
                 })
                 continue
             except WebSocketDisconnect:
-                logger.info(f"Client disconnected from {type} conversation for patient {patient_id}")
-                break
-            except asyncio.CancelledError:
-                logger.info("WebSocket task was cancelled")
+                logger.info(f"WebSocket disconnected for patient {patient_id}")
                 break
             except Exception as e:
-                logger.error(f"Error processing WebSocket message: {str(e)}")
+                logger.error(f"Error in conversation WebSocket: {str(e)}")
                 try:
                     await websocket.send_json({
                         "type": "error",
-                        "message": "Internal server error"
+                        "message": f"Server error: {str(e)}",
+                        "message_id": f"error_server_{datetime.now().timestamp()}"
                     })
                 except:
+                    # If we can't send the error, the connection is probably closed
                     break
-                
+    
     except WebSocketDisconnect:
-        logger.info(f"Client disconnected from {type} conversation for patient {patient_id}")
+        logger.info(f"WebSocket disconnected for patient {patient_id}")
     except Exception as e:
-        logger.error(f"Error in conversation websocket: {str(e)}")
+        logger.error(f"Error in conversation WebSocket: {str(e)}")
     finally:
-        if websocket.client_state == WebSocket.client_state.CONNECTED:
+        # Save conversation if agent was initialized
+        if 'agent' in locals() and agent:
+            try:
+                # Save conversation history
+                if hasattr(agent, 'save_conversation'):
+                    agent.save_conversation()
+            except Exception as save_err:
+                logger.error(f"Error saving conversation: {str(save_err)}")
+        
+        # Ensure WebSocket is closed
+        if 'websocket' in locals() and websocket.client_state != WebSocketState.DISCONNECTED:
             await websocket.close()
-        logger.info(f"Conversation WebSocket connection closed for patient {patient_id}")
 
 # =========== APPOINTMENT MANAGER API ENDPOINTS ============ #
 
@@ -1074,6 +1268,80 @@ async def start_conversation(reminder_id: str, background_tasks: BackgroundTasks
     except Exception as e:
         logger.error(f"Error starting conversation: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/speech-input/{conversation_id}")
+async def receive_speech_input(conversation_id: str):
+    """
+    Receive speech input for an active conversation
+    """
+    try:
+        # Using existing transcribe_audio method which works in the event loop
+        # Pass a dummy audio sample to avoid creating a new event loop with asyncio.run()
+        audio_bytes = b''  # Empty bytes as placeholder
+        user_input = client.transcribe_audio(audio_bytes)
+        
+        if not user_input or not user_input.strip():
+            raise HTTPException(status_code=400, detail="No speech input detected")
+
+        return {"status": "success", "text": user_input}
+
+    except Exception as e:
+        logger.error(f"Error processing speech input: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/speech-output")
+async def generate_speech_output(text: str):
+    """
+    Generate speech output from text
+    """
+    try:
+        # Generate speech using the TTS client
+        audio_data, sample_rate, base64_audio, _ = tts_client.TTS(text, play_locally=False)
+        return {
+            "status": "success", 
+            "message": "Speech generated successfully",
+            "audio": base64_audio,
+            "sample_rate": sample_rate
+        }
+    except Exception as e:
+        logger.error(f"Error generating speech: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/end-conversation/{conversation_id}")
+async def end_conversation(conversation_id: str):
+    """
+    End an active conversation
+    """
+    try:
+        # End the conversation using the conversation manager
+        agent = MedicalAgent(None, None)
+        agent.end_conversation(conversation_id)
+        return {"status": "success", "message": "Conversation ended"}
+
+    except Exception as e:
+        logger.error(f"Error ending conversation: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/get-conversation-audio")
+async def get_conversation_audio(conversation_id: str):
+    """
+    Get the audio data for a specific conversation.
+    """
+    try:
+        audio_data = conversation_audio_cache.get(conversation_id)
+        
+        if not audio_data:
+            raise HTTPException(status_code=404, detail="No audio found for this conversation")
+            
+        return {
+            "conversation_id": conversation_id,
+            "audio_data": audio_data
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in get_conversation_audio: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
 
 @app.get("/health")
 async def health_check():
@@ -1081,6 +1349,58 @@ async def health_check():
     Health check endpoint
     """
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+@app.get("/test-moremi-connection")
+async def test_moremi_connection():
+    """Test the connection to the Moremi API."""
+    try:
+        from .moremi import ConversationManager
+        
+        base_url = os.getenv("MOREMI_API_BASE_URL", "http://localhost:8000")
+        api_key = os.getenv("MOREMI_API_KEY") or os.getenv("OPENAI_API_KEY")
+        logger.info(f"Testing connection to Moremi API at: {base_url}")
+        
+        # Validate environment variables
+        env_status = {
+            "MOREMI_API_BASE_URL": "✅ Set" if base_url != "http://localhost:8000" else "⚠️ Using default",
+            "MOREMI_API_KEY": "✅ Set" if api_key else "❌ Missing"
+        }
+        
+        logger.info(f"Environment variables: {env_status}")
+        
+        try:
+            if not api_key:
+                return {
+                    "status": "error",
+                    "message": "API key not found. Set MOREMI_API_KEY or OPENAI_API_KEY environment variable",
+                    "environment": env_status
+                }
+                
+            conversation = ConversationManager(base_url, api_key)
+            conversation.add_user_message(text="Hello")
+            response = conversation.get_assistant_response(stream=False)
+            
+            return {
+                "status": "success",
+                "message": "Successfully connected to Moremi API",
+                "response_preview": response[:100] + "..." if response else "No response",
+                "environment": env_status
+            }
+        except Exception as e:
+            logger.error(f"Connection test failed with error: {str(e)}")
+            return {
+                "status": "error",
+                "message": str(e),
+                "environment": env_status
+            }
+            
+    except Exception as e:
+        logger.error(f"Connection test failed: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to connect to Moremi API: {str(e)}"
+        )
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

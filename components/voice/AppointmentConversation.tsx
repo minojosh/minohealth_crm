@@ -5,6 +5,7 @@ import { ReminderResponse } from '../../app/appointment-manager/types';
 import { MicrophoneIcon, StopIcon, SpeakerWaveIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import { appointmentManagerApi } from '../../app/appointment-manager/api';
 import { playAudioFromBase64 } from '../../app/api/audio';
+import { API_CONFIG } from '../../app/api/api';
 
 interface Message {
   role: 'user' | 'system' | 'agent';
@@ -102,8 +103,8 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
 
     setConnectionStatus('connecting');
     
-    // Add auth token to the WebSocket URL to prevent 403 Forbidden errors
-    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000'}/ws/schedule/${patientId}?token=audio_access_token_2023`;
+    // Use consistent API configuration for WebSocket connection
+    const wsUrl = `${process.env.NEXT_PUBLIC_SPEECH_SERVICE_URL || 'ws://localhost:8000'}/ws/schedule/${patientId}?token=${API_CONFIG.websocketAuth.token}`;
     console.log(`Connecting to WebSocket at ${wsUrl}`);
     
     try {
@@ -127,91 +128,36 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('WebSocket message:', data);
+          console.log('WebSocket message received:', data);
           
-          // Handle different message types from the server
-          switch (data.type) {
-            case 'message':
-              addMessage('agent', data.text);
-              break;
-            
-            case 'transcription':
-              if (data.payload?.text || data.text) {
-                const transcriptionText = data.payload?.text || data.text;
-                addMessage('user', transcriptionText);
-                setIsProcessing(true);
-              }
-              break;
-            
-            case 'audio':
-              if (data.audio || data.payload?.audio) {
-                const audioData = data.audio || data.payload.audio;
-                const sampleRate = data.sample_rate || data.payload?.sample_rate || 16000;
-                
-                // Store the audio with the last agent message for replay
-                setMessages(prevMessages => {
-                  const newMessages = [...prevMessages];
-                  // Find the last agent message
-                  for (let i = newMessages.length - 1; i >= 0; i--) {
-                    if (newMessages[i].role === 'agent') {
-                      newMessages[i] = {
-                        ...newMessages[i],
-                        audio: audioData,
-                        sampleRate: sampleRate
-                      };
-                      break;
-                    }
-                  }
-                  return newMessages;
-                });
-                
-                // Store for later access
-                setAudioData(audioData);
-                
-                // Try to save the audio data for retrieval later
-                if (conversationId) {
-                  saveAudioData(conversationId, audioData);
-                }
-                
-                playAudio(audioData, sampleRate);
-              }
-              break;
-            
-            case 'doctors':
-              if (data.data && Array.isArray(data.data)) {
-                setAvailableSlots(data.data);
-              }
-              break;
-            
-            case 'summary':
-              addMessage('agent', `Summary: ${data.text}`);
-              setIsProcessing(false);
-              break;
-            
-            case 'appointment':
-              if (data.status === 'success' && onComplete) {
-                addMessage('system', 'Appointment confirmed! I\'ve updated your schedule.');
-                setTimeout(() => {
-                  const resultWithAudio = {
-                    ...data.data,
-                    audioAvailable: true,
-                    audioData: latestAudioRef.current
-                  };
-                  onComplete(resultWithAudio);
-                }, 2000);
-              }
-              setIsProcessing(false);
-              break;
-            
-            case 'error':
-              setError(data.message);
-              addMessage('system', `Error: ${data.message}`);
-              setIsProcessing(false);
-              break;
-
-            case 'status':
-              console.log('Status update:', data.payload?.message || data.message);
-              break;
+          if (data.type === 'message') {
+            addMessage('agent', data.text);
+          } 
+          else if (data.type === 'audio') {
+            // Store audio data for playback
+            const message = messages[messages.length - 1];
+            if (message && message.role === 'agent') {
+              message.audio = data.audio;
+              message.sampleRate = data.sample_rate || 16000;
+              setMessages([...messages]);
+              
+              // Play audio immediately
+              playAudio(data.audio, data.sample_rate || 16000, data.encoding || 'PCM_FLOAT');
+            }
+          }
+          else if (data.type === 'transcription') {
+            addMessage('user', data.text);
+          }
+          else if (data.type === 'error') {
+            console.error('WebSocket error:', data.message);
+            setError(data.message);
+          }
+          else if (data.type === 'status') {
+            console.log('Status update:', data.message);
+            // Handle status updates like "waiting_for_input"
+            if (data.status === 'waiting_for_input') {
+              setIsWaitingForInput(true);
+            }
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
@@ -346,13 +292,15 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
     // Let the parent component know we're done
     if (onComplete) {
       // Create a result object for the parent component
-      const result = {
+      const result: any = {
         status: 'completed',
         type: reminder?.message_type,
         patient_name: reminder?.patient_name,
         datetime: new Date(),
         audioAvailable: !!audioData,
-        audioData: audioData // Include actual audio data in the result
+        audioData: audioData, // Include actual audio data in the result
+        doctor_name: undefined,
+        appointment_datetime: undefined
       };
       
       if (reminder?.message_type === 'appointment') {
@@ -368,23 +316,46 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
     }
   };
 
-  const playAudio = async (base64Audio: string, sampleRate: number = 16000) => {
+  const playAudio = async (base64Audio: string, sampleRate: number = 16000, encoding: 'PCM_FLOAT' | 'PCM_16' = 'PCM_FLOAT') => {
     try {
+      if (!base64Audio) {
+        console.error("No audio data provided");
+        return;
+      }
+      
       setIsSpeaking(true);
-      await playAudioFromBase64(base64Audio);
-      setIsSpeaking(false);
+      
+      // Use the improved playAudioFromBase64 function with proper error handling
+      await playAudioFromBase64(base64Audio, sampleRate, encoding)
+        .catch(error => {
+          console.error("Error during audio playback:", error);
+        })
+        .finally(() => {
+          setIsSpeaking(false);
+        });
     } catch (error) {
-      console.error('Error playing audio:', error);
+      console.error("Error playing audio:", error);
       setIsSpeaking(false);
     }
   };
 
   const replayAudio = async (message: Message) => {
-    if (message.audio) {
-      await playAudio(message.audio, message.sampleRate);
+    if (message.audio && message.sampleRate) {
+      // Audio data is included in the message object
+      await playAudio(message.audio, message.sampleRate, 'PCM_FLOAT');
     } else if (audioData && conversationId) {
-      // If we have audio data cached for this conversation, try to play it
-      await playAudio(audioData);
+      // Fall back to fetching from the conversation's stored audio
+      try {
+        const response = await fetch(`/api/audio-data/${conversationId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.audio) {
+            await playAudio(data.audio, data.sample_rate || 16000, data.encoding || 'PCM_FLOAT');
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching audio data:", error);
+      }
     }
   };
 

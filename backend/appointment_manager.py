@@ -5,12 +5,13 @@ import logging
 import os
 import sys
 from .STT_client import SpeechRecognitionClient
-from .TTS_client import TTSClient
+from .XTTS_adapter import TTSClient
 from .config import DATABASE_URL
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, func
 from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass, asdict
+from .moremi import ConversationManager
 import base64
 import sounddevice as sd
 import numpy as np
@@ -87,7 +88,7 @@ class VoiceAssistant:
     
     def __init__(self):
         """Initialize the voice assistant with TTSClient and STTClient."""
-        self.tts_client = TTSClient(os.getenv("SPEECH_SERVICE_URL"))
+        self.tts_client = TTSClient(api_url=os.getenv("XTTS_URL") or os.getenv("SPEECH_SERVICE_URL"))
         self.stt_client = SpeechRecognitionClient()
         self.last_audio_data = None
         self.last_audio_base64 = None
@@ -115,9 +116,9 @@ class VoiceAssistant:
             logger.info("Synthesizing speech with TTSClient...")
             
             # Use the TTSClient to generate speech
-            audio_data, sample_rate, base64_audio = self.tts_client.TTS(
+            audio_data, sample_rate, base64_audio, _ = self.tts_client.TTS(
                 text, 
-                play_locally=True, 
+                play_locally=False,
                 return_data=True
             )
             
@@ -129,7 +130,8 @@ class VoiceAssistant:
             logger.info("Speech synthesis complete")
         except Exception as e:
             logger.error(f"Error in speech synthesis: {str(e)}")
-            raise
+            self.last_audio_data = None
+            self.last_audio_base64 = None
 
 class SchedulerManager:
     """Manages appointment and medication scheduling."""
@@ -398,6 +400,21 @@ class MedicalAgent:
         self._load_prompts()
         self.audio_base64 = None
         
+        # Set default values if reminder is None
+        if self.reminder is None:
+            self.reminder = type('DummyReminder', (), {
+                'patient_name': 'Patient',
+                'details': {
+                    'patient_id': 1,
+                    'doctor_id': 1,
+                    'doctor_name': 'Doctor',
+                    'datetime': datetime.now() + timedelta(days=7),
+                    'medication_name': 'your medication',
+                    'dosage': 'as prescribed',
+                    'frequency': 'as directed'
+                }
+            })
+            logger.warning(f"Created dummy reminder for {message_type} conversation")
 
     def _load_prompts(self):
         try:
@@ -416,29 +433,25 @@ class MedicalAgent:
             self.system_prompt=""
             self.reschedule_message="Let me find available slots for rescheduling."
     
-    def Moremi(self, messages: List[Message], system_prompt: Optional[str] = None) -> str:
-        """Get response from Moremi API with retry logic."""
-
-        if not isinstance(messages, list):
-            raise ValueError("messages must be a list")
-        query = [msg.to_dict() for msg in messages]
+    def moremi_response(self, messages, system_prompt: Optional[str] = None) -> str:
+        """Get response from Moremi API using ConversationManager for text-only processing."""
         
-        data = {
-            "query": query,
-            "temperature": 1.0,
-            "max_new_token": 500,
-            "endpoint": "history_inference"
-        }
-        if system_prompt:
-            data["systemPrompt"] = system_prompt
+        
+        base_url = "http://46.101.91.139:5003/v1"  
+        conversation_manager = ConversationManager(base_url=base_url)
+        print("yaaayyyyy")
+        
+        
+        conversation_manager.custom_params["system_prompt"] = system_prompt
+        
+        
+        conversation_manager.add_user_message(text=messages)
 
-        try:
-            response = requests.post(self.api, json=data)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error calling Moremi API: {str(e)}")
-            raise
+        
+    
+        response = conversation_manager.get_assistant_response()
+        
+        return response
 
     def appointment_rescheduler(self):
         """Reschedules an appointment."""
@@ -539,7 +552,10 @@ class MedicalAgent:
         try:
             while True:
                 # Get speech input using STT client
-                user_input = client.recognize_speech()
+                # Get speech input
+                client = SpeechRecognitionClient()  # Reinitialize client each time
+                client.recognize_speech()
+                user_input = client.get_transcription()
                 
                 if not user_input or not user_input.strip():
                     logger.warning("Empty input received. Please say something.")
@@ -549,7 +565,7 @@ class MedicalAgent:
                 
                 # Get Moremi response
                 messages.append(Message(user_input=user_input))
-                response = self.Moremi(messages, self.system_prompt)
+                response = self.moremi_response(messages, self.system_prompt)
                 
                 if 'reschedule_appointment' in response:
                     logger.info("User requested to reschedule appointment")

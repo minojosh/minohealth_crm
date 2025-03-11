@@ -1,4 +1,5 @@
 import { AudioTranscriptionRequest, AudioTranscriptionResponse, TextToSpeechRequest, TextToSpeechResponse, WebSocketMessage, AudioResponse } from './types';
+import { API_ENDPOINTS, API_CONFIG } from './api';
 
 class AudioService {
   private ws: WebSocket | null = null;
@@ -108,27 +109,43 @@ class AudioService {
     // Clear any previous audio buffer
     this.audioBuffer = [];
 
-    // Create an AudioContext and set up processing chain
+    // Use a fixed sample rate for speech recognition
+    const targetSampleRate = 24000; // 16kHz is optimal for speech recognition
+    
+    // Create an AudioContext with the target sample rate
     const audioContext = new AudioContext({
-      sampleRate: 16000, // Match the expected sample rate of the STT server
+      sampleRate: targetSampleRate,
     });
+    
+    console.log(`Recording audio with sample rate: ${audioContext.sampleRate}Hz`);
     
     // Create a MediaStreamSource from the input stream
     const source = audioContext.createMediaStreamSource(stream);
     
     // Create a ScriptProcessor to get raw audio data
-    // Note: ScriptProcessor is deprecated but still widely supported
-    // We'll use it for now as the replacement AudioWorklet isn't as widely supported
     const processor = audioContext.createScriptProcessor(4096, 1, 1);
     
     // Connect the audio processing chain
     source.connect(processor);
     processor.connect(audioContext.destination);
 
-    // Process audio data
+    // Process audio data with consistent format
     processor.onaudioprocess = (e) => {
       const inputData = e.inputBuffer.getChannelData(0);
-      this.audioBuffer.push(new Float32Array(inputData));
+      
+      // Create a copy of the data to avoid reference issues
+      const dataCopy = new Float32Array(inputData.length);
+      dataCopy.set(inputData);
+      
+      // Apply a simple noise gate to reduce background noise
+      for (let i = 0; i < dataCopy.length; i++) {
+        // Simple noise gate - values below threshold are set to zero
+        if (Math.abs(dataCopy[i]) < 0.01) {
+          dataCopy[i] = 0;
+        }
+      }
+      
+      this.audioBuffer.push(dataCopy);
     };
 
     // Create a MediaRecorder to handle start/stop
@@ -141,13 +158,14 @@ class AudioService {
       try {
         // Concatenate all audio chunks
         const totalLength = this.audioBuffer.reduce((acc, chunk) => acc + chunk.length, 0);
-        console.log(`Sending ${totalLength} audio samples for processing`);
+        console.log(`Processing ${totalLength} audio samples at ${audioContext.sampleRate}Hz`);
         
         if (totalLength === 0) {
           console.warn('No audio data to process');
           return;
         }
         
+        // Concatenate all chunks into a single Float32Array
         const concatenated = new Float32Array(totalLength);
         let offset = 0;
         
@@ -156,21 +174,29 @@ class AudioService {
           offset += chunk.length;
         }
         
-        // Convert to base64 in chunks to avoid stack overflow
-        const base64Audio = this.arrayBufferToBase64(concatenated.buffer);
+        // Convert float32 to int16 for better compatibility with backend
+        const int16Data = new Int16Array(concatenated.length);
+        for (let i = 0; i < concatenated.length; i++) {
+          // Apply some light compression to improve speech clarity
+          const compressed = Math.sign(concatenated[i]) * Math.pow(Math.abs(concatenated[i]), 0.8);
+          // Convert float32 [-1.0, 1.0] to int16 [-32768, 32767]
+          int16Data[i] = Math.max(-32768, Math.min(32767, compressed * 32767));
+        }
+        
+        // Convert to base64
+        const base64Audio = this.arrayBufferToBase64(int16Data.buffer);
         
         // Send complete audio to server
         if (this.ws?.readyState === WebSocket.OPEN) {
-          const request: AudioTranscriptionRequest = {
-            audioData: base64Audio,
-            sampleRate: audioContext.sampleRate,
-            processComplete: true // Flag to indicate this is the complete recording
-          };
+          console.log(`Sending audio data with sample rate: ${audioContext.sampleRate}Hz`);
           
           this.ws.send(JSON.stringify({
-            type: 'transcription',
-            payload: request,
-            timestamp: Date.now()
+            type: 'audio_input',
+            audio: base64Audio,
+            sampleRate: audioContext.sampleRate,
+            encoding: 'PCM_24',
+            timestamp: Date.now(),
+            message_id: `audio_input_${Date.now()}`
           }));
         } else {
           console.error('WebSocket not open, cannot send audio for processing');
@@ -205,7 +231,7 @@ class AudioService {
     let base64 = '';
     
     // Process in chunks of 16KB to avoid stack overflow
-    const chunkSize = 16 * 1024;
+    const chunkSize = 24 * 1024;
     
     for (let i = 0; i < len; i += chunkSize) {
       const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
@@ -218,15 +244,13 @@ class AudioService {
   async synthesizeSpeech(text: string, speaker?: string): Promise<TextToSpeechResponse> {
     const request: TextToSpeechRequest = {
       text,
-      speaker
+      speaker: speaker || 'default'
     };
 
     try {
-      const response = await fetch('/api/tts', {
+      const response = await fetch(API_ENDPOINTS.tts, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: API_CONFIG.headers,
         body: JSON.stringify(request)
       });
 
@@ -356,57 +380,93 @@ export function clearAudioData(sessionId?: string): void {
   }
 }
 
+// Singleton AudioContext with resample handling
+const getAudioContext = (() => {
+  let ctx: AudioContext | null = null;
+  return (desiredSampleRate: number) => {
+    if (!ctx || ctx.state === 'closed') {
+      ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return ctx;
+  };
+})();
+
 /**
- * Play audio from base64 data
+ * Play audio from base64 data with optimized handling to prevent glitches
  * 
  * @param base64Audio - Base64 encoded audio data
- * @param sampleRate - Optional sample rate for the audio data
+ * @param sampleRate - Sample rate of the audio data
+ * @param encoding - Encoding format ('PCM_FLOAT' or 'PCM_16')
  * @param onUtteranceCreated - Optional callback that receives the utterance object for control
  * @returns Promise that resolves when audio playback is complete
  */
 export async function playAudioFromBase64(
-  base64Audio: string, 
-  sampleRate?: number,
+  base64Audio: string,
+  sampleRate = 24000,
+  encoding: 'PCM_FLOAT' | 'PCM_16' = 'PCM_FLOAT',
   onUtteranceCreated?: (utterance: SpeechSynthesisUtterance) => void
 ): Promise<void> {
   if (!base64Audio) return;
   
   try {
-    // First try to use the Web Speech API for more control
-    if (window.speechSynthesis && onUtteranceCreated) {
-      const utterance = new SpeechSynthesisUtterance("Text to speech playback");
-      utterance.volume = 1;
-      utterance.rate = 1;
-      utterance.pitch = 1;
-
-      // Call the callback with the utterance so caller can control it
-      onUtteranceCreated(utterance);
-
-      // Start speaking
-      window.speechSynthesis.speak(utterance);
+    console.log(`Playing audio with sample rate: ${sampleRate}Hz, encoding: ${encoding}`);
+    
+    const audioContext = getAudioContext(sampleRate);
+    const actualSampleRate = audioContext.sampleRate;
+    
+    // Decode base64 efficiently
+    const bytes = Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0));
+    
+    // Process based on encoding with resampling if needed
+    let audioData: Float32Array;
+    if (encoding === 'PCM_16') {
+      const int16Data = new Int16Array(bytes.buffer);
+      audioData = new Float32Array(int16Data.length);
+      for (let i = 0; i < int16Data.length; i++) {
+        audioData[i] = int16Data[i] / 32768.0;
+      }
+    } else {
+      // Assume PCM_FLOAT (Float32)
+      audioData = new Float32Array(bytes.buffer);
     }
     
-    // Also play the actual audio data using AudioContext
-    // Convert base64 to ArrayBuffer
-    const binaryString = window.atob(base64Audio);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
+    // Create properly sized buffer with resampling if needed
+    const resampleRatio = actualSampleRate / sampleRate;
+    const buffer = audioContext.createBuffer(
+      1, // mono
+      Math.ceil(audioData.length * resampleRatio),
+      actualSampleRate
+    );
     
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    // Apply antialiasing if resampling
+    const bufferData = buffer.getChannelData(0);
+    if (Math.abs(resampleRatio - 1.0) < 0.001) {
+      // No resampling needed, just copy the data
+      bufferData.set(audioData);
+    } else {
+      console.log(`Resampling audio from ${sampleRate}Hz to ${actualSampleRate}Hz (ratio: ${resampleRatio})`);
+      // Simple linear resampling
+      for (let i = 0; i < bufferData.length; i++) {
+        const srcIdx = i / resampleRatio;
+        const srcIdxFloor = Math.floor(srcIdx);
+        const srcIdxCeil = Math.min(srcIdxFloor + 1, audioData.length - 1);
+        const t = srcIdx - srcIdxFloor;
+        bufferData[i] = audioData[srcIdxFloor] * (1 - t) + audioData[srcIdxCeil] * t;
+      }
     }
     
-    // Create audio context and play audio
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
-    
+    // Play with clean start/stop
     const source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
+    source.buffer = buffer;
     source.connect(audioContext.destination);
     
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       source.onended = () => resolve();
       source.start(0);
+      
+      // Safety timeout in case onended doesn't fire
+      const duration = buffer.duration * 1000;
+      setTimeout(() => resolve(), duration + 500);
     });
   } catch (error) {
     console.error("Error playing audio:", error);

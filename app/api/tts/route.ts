@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TextToSpeechRequest, TextToSpeechResponse } from '../types';
+import { API_ENDPOINTS } from '../api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,16 +15,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Call the backend TTS service
-    const backendUrl = process.env.BACKEND_API_URL || 'http://localhost:8000';
-    const response = await fetch(`${backendUrl}/generate_speech`, {
+    const response = await fetch(API_ENDPOINTS.tts, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         text: body.text,
-        speaker: body.speaker || 'emma', // Default speaker
-        speed: body.speed || 1.0,       // Default speed
+        speaker: body.speaker || 'default',
+        speed: body.speed || 1.0,
       }),
     });
 
@@ -37,9 +37,11 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
     
+    // Create response with proper typing
     const result: TextToSpeechResponse = {
-      audioData: data.audio_base64,
-      duration: data.duration,
+      audioData: data.audio,
+      duration: data.duration || 0,
+      sampleRate: data.sample_rate || 24000, // Use sample_rate from backend or default to 24000
     };
 
     return NextResponse.json(result);

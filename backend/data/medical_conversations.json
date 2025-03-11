@@ -1,0 +1,4750 @@
+[
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I have an appointment today",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Allison Hill",
+      "Receptionist: When were you born?",
+      "Patient: 1959-04-11",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with NHIS",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing nausea for the past month",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have loose stools",
+      "Patient: I have an appointment scheduled for today",
+      "Patient: I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Allison Hill",
+      "date_of_birth": "1959-04-11",
+      "address": "600 Jeffery Parkways\nNew Jamesside, MT 29394",
+      "phone": "394.802.6542x351",
+      "email": "howardmaurice@example.com",
+      "insurance": "NHIS",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "loose stools"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "23:51",
+        "doctor": "Dr. Blair",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I have an appointment today",
+      "> Could I get your name, please?",
+      "- My name is Jamie Arnold",
+      "> When were you born?",
+      "- 2000-06-30",
+      "> Who's your insurance provider?",
+      "- I'm with Prudential Life Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing shortness of breath for several weeks",
+      "> Could you tell me more about that?",
+      "- Well, I also have nosebleeds",
+      "- I have a 17:00 appointment",
+      "- I'm here because hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Jamie Arnold",
+      "date_of_birth": "2000-06-30",
+      "address": "310 Kendra Common Apt. 164\nReidstad, GA 49021",
+      "phone": "(534)719-2832x764",
+      "email": "perezantonio@example.com",
+      "insurance": "Prudential Life Insurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "nosebleeds",
+        "shortness of breath"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "17:00",
+        "doctor": "Dr. Jones",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I called earlier about seeing someone today Who am I speaking with today?",
+      "My name is Michelle Lewis Date of birth?",
+      "1978-01-17 Who's your insurance provider?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "For the past several weeks, I've had excessive thirst Is there anything that makes it better or worse?",
+      "Well, I also have unexplained weight loss The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Michelle Lewis",
+      "date_of_birth": "1978-01-17",
+      "address": "42388 Burgess Meadow Suite 532\nDaviston, VI 14872",
+      "phone": "(626)291-6697",
+      "email": "maldonadoamanda@example.com",
+      "insurance": "MiLife",
+      "condition": "diabetes",
+      "symptoms": [
+        "excessive thirst",
+        "unexplained weight loss"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I have an appointment today What's your name?",
+      "My name is Gina Carter Could you confirm your date of birth for me?",
+      "1954-11-08 Who's your insurance provider?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "I have this sweating that won't go away When did you first notice these symptoms?",
+      "Well, I also have fever I'm here for my consultation I need to see the doctor about malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Gina Carter",
+      "date_of_birth": "1954-11-08",
+      "address": "281 Skinner Parkways Apt. 252\nNew Mariotown, DE 48077",
+      "phone": "430-639-1171x8227",
+      "email": "ibrandt@example.net",
+      "insurance": "MiLife",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "consultation",
+        "time": "01:05",
+        "doctor": "Dr. Marquez",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I'm here to see the doctor",
+      "> Who am I speaking with today?",
+      "- My name is Jacqueline Lam",
+      "> Could you confirm your date of birth for me?",
+      "- 1974-10-19",
+      "> What insurance will you be using today?",
+      "- I'm with Star Assurance",
+      "> What symptoms are you experiencing today?",
+      "- I have this coughing that won't go away",
+      "> When did you first notice these symptoms?",
+      "- Well, I also have wheezing",
+      "- I have a 19:07 appointment",
+      "- I'm here because asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Jacqueline Lam",
+      "date_of_birth": "1974-10-19",
+      "address": "0983 Adrian Station\nEast Carloston, VI 43810",
+      "phone": "983-547-3829",
+      "email": "maguirre@example.org",
+      "insurance": "Star Assurance",
+      "condition": "asthma",
+      "symptoms": [
+        "coughing",
+        "wheezing"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "19:07",
+        "doctor": "Dr. Jordan",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hi there! How can we help you today at City General?",
+      "- I called earlier about seeing someone today",
+      "> Could I get your name, please?",
+      "- My name is Nicholas Nunez",
+      "> Could you confirm your date of birth for me?",
+      "- 2011-01-08",
+      "> What insurance will you be using today?",
+      "- I'm with Prudential Life Insurance",
+      "> What symptoms are you experiencing today?",
+      "- For the past several weeks, I've had nosebleeds",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have shortness of breath",
+      "- The reason for my visit is hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Nicholas Nunez",
+      "date_of_birth": "2011-01-08",
+      "address": "513 James Mission Apt. 624\nWrightland, NV 72633",
+      "phone": "908-501-3267",
+      "email": "kbarrera@example.com",
+      "insurance": "Prudential Life Insurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "nosebleeds",
+        "shortness of breath"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I have an appointment today Could I get your name, please?",
+      "My name is James House Date of birth?",
+      "1997-06-27 Do you have insurance coverage?",
+      "I'm with Vanguard Assurance What symptoms are you experiencing today?",
+      "For the past the past month, I've had fever Could you tell me more about that?",
+      "Well, I also have sweating The reason for my visit is malaria symptoms"
+    ],
+    "metadata": {
+      "name": "James House",
+      "date_of_birth": "1997-06-27",
+      "address": "34309 Julie Centers Apt. 978\nNorth Susan, CO 24857",
+      "phone": "291-336-1939",
+      "email": "ksandoval@example.net",
+      "insurance": "Vanguard Assurance",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I need to see a doctor about some symptoms Who am I speaking with today?",
+      "My name is Dean Santiago Could you confirm your date of birth for me?",
+      "1965-06-18 What insurance will you be using today?",
+      "I'm with Glico Life Insurance What symptoms are you experiencing today?",
+      "I've been experiencing joint pain for the past month When did you first notice these symptoms?",
+      "Well, I also have swelling I'm here because arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Dean Santiago",
+      "date_of_birth": "1965-06-18",
+      "address": "475 Albert Road\nNorth Amandahaven, KS 17862",
+      "phone": "(613)354-2784x980",
+      "email": "josephpreston@example.net",
+      "insurance": "Glico Life Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "swelling",
+        "joint pain"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I'm here to see the doctor Could I get your name, please?",
+      "My name is Denise Jacobs Could you confirm your date of birth for me?",
+      "1992-11-23 What insurance will you be using today?",
+      "I'm with Star Assurance What symptoms are you experiencing today?",
+      "I have this nausea that won't go away Could you tell me more about that?",
+      "Well, I also have stomach cramps I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Denise Jacobs",
+      "date_of_birth": "1992-11-23",
+      "address": "740 Cynthia Village Suite 005\nLake Tina, GA 97655",
+      "phone": "486.880.1128x059",
+      "email": "bobbydiaz@example.org",
+      "insurance": "Star Assurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I have an appointment today Who am I speaking with today?",
+      "My name is Christine Wright Could you confirm your date of birth for me?",
+      "1951-02-02 What insurance will you be using today?",
+      "I'm with Prudential Life Insurance What symptoms are you experiencing today?",
+      "For the past about a week, I've had wheezing When did you first notice these symptoms?",
+      "Well, I also have coughing I need to see the doctor about asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Christine Wright",
+      "date_of_birth": "1951-02-02",
+      "address": "232 Nicole Burg Apt. 563\nErikville, MS 05576",
+      "phone": "333.675.4330x3654",
+      "email": "darlene68@example.com",
+      "insurance": "Prudential Life Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "wheezing",
+        "coughing"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I need to see a doctor about some symptoms What's your name?",
+      "My name is Ashley Waller When were you born?",
+      "1956-03-29 Who's your insurance provider?",
+      "I'm with SIC Insurance What symptoms are you experiencing today?",
+      "I've been experiencing headaches for about a week Could you tell me more about that?",
+      "Well, I also have nosebleeds The reason for my visit is hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Ashley Waller",
+      "date_of_birth": "1956-03-29",
+      "address": "USNV Johnson\nFPO AP 57460",
+      "phone": "(256)598-1693x406",
+      "email": "ryan59@example.com",
+      "insurance": "SIC Insurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "headaches",
+        "nosebleeds"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: Could I get your name, please?",
+      "Patient: My name is Belinda Mccullough",
+      "Receptionist: When were you born?",
+      "Patient: 1978-08-01",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Prudential Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing unexplained weight loss for the past month",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have frequent urination",
+      "Patient: I'm here for my routine checkup",
+      "Patient: I need to see the doctor about diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Belinda Mccullough",
+      "date_of_birth": "1978-08-01",
+      "address": "4823 Ortega Light Apt. 994\nKelleytown, ME 38107",
+      "phone": "969.495.7773",
+      "email": "campbellelizabeth@example.net",
+      "insurance": "Prudential Life Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "frequent urination",
+        "unexplained weight loss"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "21:17",
+        "doctor": "Dr. Cardenas",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I called earlier about seeing someone today",
+      "Receptionist: What's your name?",
+      "Patient: My name is Courtney Gonzalez",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1945-10-04",
+      "Receptionist: Who's your insurance provider?",
+      "Patient: I'm with Prudential Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past a few days, I've had sweating",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have chills",
+      "Patient: I need to see the doctor about malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Courtney Gonzalez",
+      "date_of_birth": "1945-10-04",
+      "address": "176 Jennifer Lights Suite 632\nPort Michelleville, WI 56225",
+      "phone": "428.970.8317",
+      "email": "stephanie79@example.net",
+      "insurance": "Prudential Life Insurance",
+      "condition": "malaria",
+      "symptoms": [
+        "chills",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I called earlier about seeing someone today",
+      "Receptionist: Could I get your name, please?",
+      "Patient: My name is Jessica Meadows",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1974-06-03",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with SIC Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing excessive thirst for the past month",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have unexplained weight loss",
+      "Patient: I'm scheduled to see Dr. Dr. Smith today",
+      "Patient: I need to see the doctor about diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Jessica Meadows",
+      "date_of_birth": "1974-06-03",
+      "address": "4348 Sims Harbor Suite 143\nMatthewside, CO 18637",
+      "phone": "(936)823-1665",
+      "email": "clarkrobert@example.net",
+      "insurance": "SIC Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "excessive thirst"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "03:05",
+        "doctor": "Dr. Smith",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I'm here to see the doctor",
+      "> What's your name?",
+      "- My name is Karen Bender",
+      "> Date of birth?",
+      "- 1964-05-27",
+      "> What insurance will you be using today?",
+      "- I'm with NHIS",
+      "> What symptoms are you experiencing today?",
+      "- I have this unexplained weight loss that won't go away",
+      "> When did you first notice these symptoms?",
+      "- Well, I also have frequent urination",
+      "- I'm scheduled to see Dr. Dr. Hobbs today",
+      "- The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Karen Bender",
+      "date_of_birth": "1964-05-27",
+      "address": "893 Robinson Mews Suite 065\nRamseymouth, PW 17229",
+      "phone": "+1-280-669-9016x272",
+      "email": "dmurphy@example.com",
+      "insurance": "NHIS",
+      "condition": "diabetes",
+      "symptoms": [
+        "frequent urination",
+        "unexplained weight loss"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "10:09",
+        "doctor": "Dr. Hobbs",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I have an appointment today",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Jennifer Conley",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1976-01-30",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Star Assurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past the past month, I've had joint pain",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have stiffness",
+      "Patient: I'm here because arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Jennifer Conley",
+      "date_of_birth": "1976-01-30",
+      "address": "3100 James Brooks\nEast David, TN 15494",
+      "phone": "001-437-645-2991",
+      "email": "lanesarah@example.net",
+      "insurance": "Star Assurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "joint pain",
+        "stiffness"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Hi there! How can we help you today at City General?",
+      "- I'm here to see the doctor",
+      "> Who am I speaking with today?",
+      "- My name is Tina Sanders",
+      "> When were you born?",
+      "- 1992-09-19",
+      "> What insurance will you be using today?",
+      "- I'm with Star Assurance",
+      "> What symptoms are you experiencing today?",
+      "- For the past the past month, I've had frequent urination",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have unexplained weight loss",
+      "- I have a 09:57 appointment",
+      "- The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Tina Sanders",
+      "date_of_birth": "1992-09-19",
+      "address": "49190 Patel Shore\nCaseymouth, AL 55558",
+      "phone": "916.857.2628x4987",
+      "email": "marcus31@example.com",
+      "insurance": "Star Assurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "frequent urination",
+        "unexplained weight loss"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "09:57",
+        "doctor": "Dr. Sanchez",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: What's your name?",
+      "Patient: My name is Jamie Johnson",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 2001-12-18",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Prudential Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past the past month, I've had shortness of breath",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have nosebleeds",
+      "Patient: I'm here because hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Jamie Johnson",
+      "date_of_birth": "2001-12-18",
+      "address": "4549 Peters Path\nNorth John, MT 64539",
+      "phone": "+1-837-577-0143",
+      "email": "elizabeth57@example.net",
+      "insurance": "Prudential Life Insurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "shortness of breath",
+        "nosebleeds"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I need to see a doctor about some symptoms Could I get your name, please?",
+      "My name is Jessica Reese Could you confirm your date of birth for me?",
+      "1966-08-04 Do you have insurance coverage?",
+      "I'm with Glico Life Insurance What symptoms are you experiencing today?",
+      "For the past a few days, I've had excessive thirst Is there anything that makes it better or worse?",
+      "Well, I also have frequent urination I have a 10:22 appointment I need to see the doctor about diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Jessica Reese",
+      "date_of_birth": "1966-08-04",
+      "address": "4313 Wilson Plain Apt. 337\nJennyhaven, PA 37594",
+      "phone": "434-635-2408",
+      "email": "mccannangela@example.net",
+      "insurance": "Glico Life Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "frequent urination",
+        "excessive thirst"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "10:22",
+        "doctor": "Dr. Little",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "Patient: I'm here to see the doctor",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Adam Mitchell",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1976-08-25",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Glico Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I have this unexplained weight loss that won't go away",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have frequent urination",
+      "Patient: I have an appointment scheduled for today",
+      "Patient: I need to see the doctor about diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Adam Mitchell",
+      "date_of_birth": "1976-08-25",
+      "address": "7116 Jones Roads\nEast Edwardshire, ME 11665",
+      "phone": "818.969.9938",
+      "email": "levans@example.com",
+      "insurance": "Glico Life Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "frequent urination",
+        "unexplained weight loss"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "23:32",
+        "doctor": "Dr. Oliver",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I need to see a doctor about some symptoms Could I get your name, please?",
+      "My name is Theresa Clark When were you born?",
+      "1958-06-13 Who's your insurance provider?",
+      "I'm with NHIS What symptoms are you experiencing today?",
+      "I've been experiencing stiffness for a few days Could you tell me more about that?",
+      "Well, I also have joint pain I need to see the doctor about arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Theresa Clark",
+      "date_of_birth": "1958-06-13",
+      "address": "28120 Hayes Ranch\nCarterbury, LA 93163",
+      "phone": "471-334-9361x8324",
+      "email": "martinkyle@example.net",
+      "insurance": "NHIS",
+      "condition": "arthritis",
+      "symptoms": [
+        "joint pain",
+        "stiffness"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: Could I get your name, please?",
+      "Patient: My name is Tammy Gonzales",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1975-12-21",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Vanguard Assurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I have this nosebleeds that won't go away",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have headaches",
+      "Patient: I'm scheduled to see Dr. Dr. Rivera today",
+      "Patient: I need to see the doctor about hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Tammy Gonzales",
+      "date_of_birth": "1975-12-21",
+      "address": "8877 Carly Meadows Suite 940\nEast Suzanneshire, OR 03220",
+      "phone": "001-949-702-7874x29671",
+      "email": "qcook@example.org",
+      "insurance": "Vanguard Assurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "nosebleeds",
+        "headaches"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "10:47",
+        "doctor": "Dr. Rivera",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: What's your name?",
+      "Patient: My name is Tony Cervantes",
+      "Receptionist: When were you born?",
+      "Patient: 1981-07-03",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with Prudential Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing stomach cramps for several weeks",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have nausea",
+      "Patient: I have an appointment scheduled for today",
+      "Patient: The reason for my visit is diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Tony Cervantes",
+      "date_of_birth": "1981-07-03",
+      "address": "5168 Diane Plains Suite 603\nCindyfort, SC 58440",
+      "phone": "001-603-248-2477x10932",
+      "email": "hdavis@example.com",
+      "insurance": "Prudential Life Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "stomach cramps",
+        "nausea"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "05:28",
+        "doctor": "Dr. Holland",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I'm here to see the doctor",
+      "> Could I get your name, please?",
+      "- My name is Dorothy Thornton",
+      "> When were you born?",
+      "- 1972-05-08",
+      "> What insurance will you be using today?",
+      "- I'm with Enterprise Life Insurance",
+      "- I'm scheduled to see Dr. Dr. Thornton today",
+      "- The reason for my visit is routine physical"
+    ],
+    "metadata": {
+      "name": "Dorothy Thornton",
+      "date_of_birth": "1972-05-08",
+      "address": "78263 Michelle Harbor Suite 584\nWest Jessicashire, OR 87000",
+      "phone": "527.887.5588x6753",
+      "email": "melissajenkins@example.com",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "routine physical",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "16:29",
+        "doctor": "Dr. Thornton",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I have an appointment today",
+      "> What's your name?",
+      "- My name is Matthew Hoover",
+      "> Date of birth?",
+      "- 2010-10-17",
+      "> Do you have insurance coverage?",
+      "- I'm with Glico Life Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing coughing for a few days",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have chest tightness",
+      "- I'm scheduled to see Dr. Dr. Padilla today",
+      "- The reason for my visit is asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Matthew Hoover",
+      "date_of_birth": "2010-10-17",
+      "address": "89517 Alicia Motorway\nLake Douglasberg, CA 62038",
+      "phone": "359-561-5865x780",
+      "email": "wendy16@example.org",
+      "insurance": "Glico Life Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "chest tightness",
+        "coughing"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "22:43",
+        "doctor": "Dr. Padilla",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hi there! How can we help you today at City General?",
+      "- I'm here to see the doctor",
+      "> What's your name?",
+      "- My name is Elijah Johnson",
+      "> Date of birth?",
+      "- 1966-02-26",
+      "> Do you have insurance coverage?",
+      "- I'm with SIC Insurance",
+      "> What symptoms are you experiencing today?",
+      "- For the past a few days, I've had stomach cramps",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have nausea",
+      "- I need to see the doctor about diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Elijah Johnson",
+      "date_of_birth": "1966-02-26",
+      "address": "6238 Knight Turnpike Apt. 221\nHarveybury, NM 76936",
+      "phone": "(437)347-4074",
+      "email": "llandry@example.com",
+      "insurance": "SIC Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I have an appointment today Who am I speaking with today?",
+      "My name is Jessica Wright Could you confirm your date of birth for me?",
+      "2001-07-30 Do you have insurance coverage?",
+      "I'm with Vanguard Assurance What symptoms are you experiencing today?",
+      "I have this stomach cramps that won't go away When did you first notice these symptoms?",
+      "Well, I also have loose stools I have a 20:46 appointment I need to see the doctor about diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Jessica Wright",
+      "date_of_birth": "2001-07-30",
+      "address": "1369 Andrews Squares Suite 064\nNew Michelleton, PW 79983",
+      "phone": "001-674-939-5339x4210",
+      "email": "rileyjessica@example.org",
+      "insurance": "Vanguard Assurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "loose stools",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "consultation",
+        "time": "20:46",
+        "doctor": "Dr. Murphy",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I called earlier about seeing someone today Who am I speaking with today?",
+      "My name is Richard Walter Date of birth?",
+      "1968-12-22 Who's your insurance provider?",
+      "I'm with SIC Insurance What symptoms are you experiencing today?",
+      "I have this shortness of breath that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have nosebleeds I have a 18:41 appointment The reason for my visit is hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Richard Walter",
+      "date_of_birth": "1968-12-22",
+      "address": "47451 Mccarty Divide Apt. 685\nPort Ralphview, ND 16700",
+      "phone": "754.596.5137x098",
+      "email": "reidsteven@example.net",
+      "insurance": "SIC Insurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "nosebleeds",
+        "shortness of breath"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "18:41",
+        "doctor": "Dr. Ortiz",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I'm here to see the doctor Who am I speaking with today?",
+      "My name is Elizabeth Vasquez Date of birth?",
+      "1950-09-15 Who's your insurance provider?",
+      "I'm with Prudential Life Insurance What symptoms are you experiencing today?",
+      "I've been experiencing stiffness for a few days Is there anything that makes it better or worse?",
+      "Well, I also have swelling The reason for my visit is arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Elizabeth Vasquez",
+      "date_of_birth": "1950-09-15",
+      "address": "7586 Nicole Shoal\nPort Tracychester, KY 04789",
+      "phone": "001-853-677-3515x850",
+      "email": "tammyrush@example.com",
+      "insurance": "Prudential Life Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "swelling",
+        "stiffness"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I have an appointment today What's your name?",
+      "My name is Daniel Fowler Could you confirm your date of birth for me?",
+      "2010-02-18 Do you have insurance coverage?",
+      "I'm with Star Assurance What symptoms are you experiencing today?",
+      "I have this headaches that won't go away When did you first notice these symptoms?",
+      "Well, I also have nosebleeds I'm here for my follow-up visit I'm here because hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Daniel Fowler",
+      "date_of_birth": "2010-02-18",
+      "address": "29318 Brenda Via Apt. 529\nWest Micheleberg, DC 71308",
+      "phone": "621-202-0539x502",
+      "email": "judyfox@example.net",
+      "insurance": "Star Assurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "headaches",
+        "nosebleeds"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "03:32",
+        "doctor": "Dr. West",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I called earlier about seeing someone today Could I get your name, please?",
+      "My name is Jodi Walker When were you born?",
+      "1985-12-04 What insurance will you be using today?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "I've been experiencing loose stools for the past month When did you first notice these symptoms?",
+      "Well, I also have stomach cramps I have a 09:12 appointment The reason for my visit is diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Jodi Walker",
+      "date_of_birth": "1985-12-04",
+      "address": "0076 Parks Overpass Suite 115\nNorth David, RI 83479",
+      "phone": "001-885-369-8478",
+      "email": "farrelldebra@example.net",
+      "insurance": "MiLife",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "loose stools",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "09:12",
+        "doctor": "Dr. Lewis",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I need to see a doctor about some symptoms",
+      "> Who am I speaking with today?",
+      "- My name is Gerald Chavez",
+      "> Could you confirm your date of birth for me?",
+      "- 1972-05-20",
+      "> Do you have insurance coverage?",
+      "- I'm with Enterprise Life Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I have this fever that won't go away",
+      "> Could you tell me more about that?",
+      "- Well, I also have chills",
+      "- I need to see the doctor about malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Gerald Chavez",
+      "date_of_birth": "1972-05-20",
+      "address": "4527 Christopher Corner Apt. 615\nNew Brian, OH 74121",
+      "phone": "416-956-0494x51983",
+      "email": "melaniebell@example.net",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "chills"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I'm here to see the doctor",
+      "Receptionist: What's your name?",
+      "Patient: My name is Phillip Andrews",
+      "Receptionist: When were you born?",
+      "Patient: 1998-12-27",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Glico Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I have this chest tightness that won't go away",
+      "Receptionist: When did you first notice these symptoms?",
+      "Patient: Well, I also have coughing",
+      "Patient: I have a 09:36 appointment",
+      "Patient: I need to see the doctor about asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Phillip Andrews",
+      "date_of_birth": "1998-12-27",
+      "address": "402 Park Inlet\nMichaelburgh, VI 19277",
+      "phone": "001-861-920-1836",
+      "email": "eric45@example.net",
+      "insurance": "Glico Life Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "chest tightness",
+        "coughing"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "09:36",
+        "doctor": "Dr. Ware",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hi there! How can we help you today at City General?",
+      "- I have an appointment today",
+      "> Who am I speaking with today?",
+      "- My name is Amber Miller",
+      "> Could you confirm your date of birth for me?",
+      "- 1974-03-25",
+      "> Who's your insurance provider?",
+      "- I'm with NHIS",
+      "> What symptoms are you experiencing today?",
+      "- I have this joint pain that won't go away",
+      "> When did you first notice these symptoms?",
+      "- Well, I also have stiffness",
+      "- The reason for my visit is arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Amber Miller",
+      "date_of_birth": "1974-03-25",
+      "address": "4381 Jordan Haven Suite 840\nSouth Tracey, AR 01508",
+      "phone": "943.824.4510",
+      "email": "davidpatel@example.org",
+      "insurance": "NHIS",
+      "condition": "arthritis",
+      "symptoms": [
+        "joint pain",
+        "stiffness"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I need to see a doctor about some symptoms",
+      "> Who am I speaking with today?",
+      "- My name is Sandra Drake",
+      "> When were you born?",
+      "- 1948-12-31",
+      "> Who's your insurance provider?",
+      "- I'm with Enterprise Life Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing fever for the past month",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have chills",
+      "- I have an appointment scheduled for today",
+      "- The reason for my visit is malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Sandra Drake",
+      "date_of_birth": "1948-12-31",
+      "address": "0715 Berry Station\nRobertsfurt, AK 43069",
+      "phone": "(897)351-6136",
+      "email": "vharrell@example.com",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "chills"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "06:50",
+        "doctor": "Dr. Maxwell",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I have an appointment today What's your name?",
+      "My name is Kerry Lee Could you confirm your date of birth for me?",
+      "1996-11-18 Who's your insurance provider?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "I have this sweating that won't go away When did you first notice these symptoms?",
+      "Well, I also have chills I'm scheduled to see Dr.",
+      "Dr.",
+      "Bell today The reason for my visit is malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Kerry Lee",
+      "date_of_birth": "1996-11-18",
+      "address": "12432 Kathleen Shoal\nEast Stephaniefort, NH 99387",
+      "phone": "001-397-999-5527",
+      "email": "ywelch@example.com",
+      "insurance": "MiLife",
+      "condition": "malaria",
+      "symptoms": [
+        "sweating",
+        "chills"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "17:11",
+        "doctor": "Dr. Bell",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I have an appointment today",
+      "Receptionist: What's your name?",
+      "Patient: My name is Andrew Wood",
+      "Receptionist: Date of birth?",
+      "Patient: 1963-08-15",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with Glico Life Insurance",
+      "Patient: I'm here because prescription refill"
+    ],
+    "metadata": {
+      "name": "Andrew Wood",
+      "date_of_birth": "1963-08-15",
+      "address": "986 Carpenter Turnpike\nSouth Reginashire, SD 25173",
+      "phone": "997-982-0715x18203",
+      "email": "michaelhardin@example.com",
+      "insurance": "Glico Life Insurance",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "prescription refill",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I'm here to see the doctor What's your name?",
+      "My name is George Harper When were you born?",
+      "1997-10-07 What insurance will you be using today?",
+      "I'm with NHIS I'm here for my routine checkup The reason for my visit is routine physical"
+    ],
+    "metadata": {
+      "name": "George Harper",
+      "date_of_birth": "1997-10-07",
+      "address": "1864 Cummings Shoals\nWest Christopher, TN 19038",
+      "phone": "(346)829-1486x528",
+      "email": "andrew42@example.org",
+      "insurance": "NHIS",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "routine physical",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "14:11",
+        "doctor": "Dr. Miranda",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I need to see a doctor about some symptoms Could I get your name, please?",
+      "My name is Mrs.",
+      "Elizabeth French DDS When were you born?",
+      "1980-10-20 What insurance will you be using today?",
+      "I'm with Vanguard Assurance What symptoms are you experiencing today?",
+      "I have this nausea that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have stomach cramps I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Mrs. Elizabeth French DDS",
+      "date_of_birth": "1980-10-20",
+      "address": "592 Moore Falls\nLake Samuel, MT 48250",
+      "phone": "+1-937-994-7383x47359",
+      "email": "kimberly88@example.com",
+      "insurance": "Vanguard Assurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "stomach cramps",
+        "nausea"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I have an appointment today What's your name?",
+      "My name is Ruth Solis When were you born?",
+      "1953-07-05 Who's your insurance provider?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "For the past a few days, I've had excessive thirst Is there anything that makes it better or worse?",
+      "Well, I also have unexplained weight loss I have a 06:48 appointment I'm here because diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Ruth Solis",
+      "date_of_birth": "1953-07-05",
+      "address": "8181 Miller Estates Suite 782\nDavisbury, GU 59631",
+      "phone": "(206)706-8536x153",
+      "email": "combsdebra@example.org",
+      "insurance": "MiLife",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "excessive thirst"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "06:48",
+        "doctor": "Dr. Mitchell",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I called earlier about seeing someone today Who am I speaking with today?",
+      "My name is Brenda Thornton Date of birth?",
+      "1974-08-08 Who's your insurance provider?",
+      "I'm with Enterprise Life Insurance I'm here because prescription refill"
+    ],
+    "metadata": {
+      "name": "Brenda Thornton",
+      "date_of_birth": "1974-08-08",
+      "address": "43289 Rodriguez Heights\nWest David, IA 55528",
+      "phone": "+1-697-811-7980x8932",
+      "email": "mendezjohn@example.com",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "prescription refill",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I need to see a doctor about some symptoms What's your name?",
+      "My name is Michael Mills Date of birth?",
+      "1968-08-14 What insurance will you be using today?",
+      "I'm with Enterprise Life Insurance What symptoms are you experiencing today?",
+      "I've been experiencing nausea for the past month When did you first notice these symptoms?",
+      "Well, I also have loose stools I need to see the doctor about diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Michael Mills",
+      "date_of_birth": "1968-08-14",
+      "address": "USS Myers\nFPO AA 06207",
+      "phone": "+1-265-740-5153x1952",
+      "email": "lisa27@example.net",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "loose stools",
+        "nausea"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I called earlier about seeing someone today Could I get your name, please?",
+      "My name is Clarence Taylor Could you confirm your date of birth for me?",
+      "1992-10-15 Who's your insurance provider?",
+      "I'm with Vanguard Assurance What symptoms are you experiencing today?",
+      "For the past several weeks, I've had chills Is there anything that makes it better or worse?",
+      "Well, I also have fever The reason for my visit is malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Clarence Taylor",
+      "date_of_birth": "1992-10-15",
+      "address": "USS Carter\nFPO AE 26645",
+      "phone": "5546868740",
+      "email": "michelle05@example.com",
+      "insurance": "Vanguard Assurance",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "chills"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I called earlier about seeing someone today",
+      "> Who am I speaking with today?",
+      "- My name is Jacob Preston",
+      "> When were you born?",
+      "- 1994-08-23",
+      "> Who's your insurance provider?",
+      "- I'm with Prudential Life Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing sweating for a few days",
+      "> When did you first notice these symptoms?",
+      "- Well, I also have fever",
+      "- I'm here for my vaccination",
+      "- The reason for my visit is malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Jacob Preston",
+      "date_of_birth": "1994-08-23",
+      "address": "PSC 6527, Box 7584\nAPO AE 95801",
+      "phone": "(816)492-8451x15447",
+      "email": "cbell@example.net",
+      "insurance": "Prudential Life Insurance",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "01:51",
+        "doctor": "Dr. Gomez",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I called earlier about seeing someone today Who am I speaking with today?",
+      "My name is William Gould When were you born?",
+      "1949-03-14 Who's your insurance provider?",
+      "I'm with Glico Life Insurance What symptoms are you experiencing today?",
+      "I have this loose stools that won't go away When did you first notice these symptoms?",
+      "Well, I also have nausea I have a 16:14 appointment I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "William Gould",
+      "date_of_birth": "1949-03-14",
+      "address": "202 Johnson Cliff Apt. 556\nNew Ericmouth, MN 49261",
+      "phone": "419.928.5654x310",
+      "email": "hmcintyre@example.com",
+      "insurance": "Glico Life Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "loose stools"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "16:14",
+        "doctor": "Dr. Padilla",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Melissa Lutz",
+      "Receptionist: When were you born?",
+      "Patient: 1957-09-16",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with Vanguard Assurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing unexplained weight loss for a few days",
+      "Receptionist: When did you first notice these symptoms?",
+      "Patient: Well, I also have frequent urination",
+      "Patient: I'm here for my follow-up visit",
+      "Patient: The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Melissa Lutz",
+      "date_of_birth": "1957-09-16",
+      "address": "2715 Mckinney Plaza\nPatriciaburgh, VT 93504",
+      "phone": "001-725-983-1323x705",
+      "email": "cherylmiller@example.com",
+      "insurance": "Vanguard Assurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "frequent urination",
+        "unexplained weight loss"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "05:38",
+        "doctor": "Dr. Love",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Jason Andrews",
+      "Receptionist: Date of birth?",
+      "Patient: 1952-08-14",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with NHIS",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing headaches for a few days",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have nosebleeds",
+      "Patient: The reason for my visit is hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Jason Andrews",
+      "date_of_birth": "1952-08-14",
+      "address": "7852 Katrina Curve\nShawton, MP 16775",
+      "phone": "624.422.5358x41438",
+      "email": "christina18@example.net",
+      "insurance": "NHIS",
+      "condition": "hypertension",
+      "symptoms": [
+        "nosebleeds",
+        "headaches"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I called earlier about seeing someone today Could I get your name, please?",
+      "My name is Todd Moore Date of birth?",
+      "1988-11-21 Who's your insurance provider?",
+      "I'm with Enterprise Life Insurance What symptoms are you experiencing today?",
+      "For the past a few days, I've had joint pain Is there anything that makes it better or worse?",
+      "Well, I also have stiffness I need to see the doctor about arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Todd Moore",
+      "date_of_birth": "1988-11-21",
+      "address": "001 Stacy Trail Suite 396\nSouth Pamelaside, LA 84637",
+      "phone": "573-764-7102x7677",
+      "email": "larryhiggins@example.net",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "stiffness",
+        "joint pain"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I called earlier about seeing someone today Who am I speaking with today?",
+      "My name is Haley Ross PhD When were you born?",
+      "1979-02-12 Do you have insurance coverage?",
+      "I'm with Star Assurance What symptoms are you experiencing today?",
+      "I have this unexplained weight loss that won't go away When did you first notice these symptoms?",
+      "Well, I also have excessive thirst I have a 01:48 appointment I need to see the doctor about diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Haley Ross PhD",
+      "date_of_birth": "1979-02-12",
+      "address": "1473 Colin Highway\nLinchester, IA 21433",
+      "phone": "995-532-7877x47016",
+      "email": "brandywilliams@example.com",
+      "insurance": "Star Assurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "excessive thirst"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "01:48",
+        "doctor": "Dr. Khan",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I'm here to see the doctor What's your name?",
+      "My name is Joshua Boone When were you born?",
+      "1973-05-26 What insurance will you be using today?",
+      "I'm with NHIS What symptoms are you experiencing today?",
+      "I've been experiencing swelling for about a week Is there anything that makes it better or worse?",
+      "Well, I also have joint pain I'm here because arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Joshua Boone",
+      "date_of_birth": "1973-05-26",
+      "address": "5060 Michael Heights Apt. 687\nMarciaville, DC 13173",
+      "phone": "(255)485-2398x6800",
+      "email": "linda87@example.org",
+      "insurance": "NHIS",
+      "condition": "arthritis",
+      "symptoms": [
+        "swelling",
+        "joint pain"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Kaylee Murphy",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1985-10-14",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with SIC Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past several weeks, I've had shortness of breath",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have nosebleeds",
+      "Patient: I'm here for my consultation",
+      "Patient: The reason for my visit is hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Kaylee Murphy",
+      "date_of_birth": "1985-10-14",
+      "address": "588 Erickson Hills Suite 055\nSouth Brandytown, PA 62706",
+      "phone": "599-230-9728x962",
+      "email": "leescott@example.com",
+      "insurance": "SIC Insurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "shortness of breath",
+        "nosebleeds"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": {
+        "type": "consultation",
+        "time": "15:43",
+        "doctor": "Dr. Vaughn",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: What's your name?",
+      "Patient: My name is Tami Salas",
+      "Receptionist: Date of birth?",
+      "Patient: 1994-02-18",
+      "Receptionist: Who's your insurance provider?",
+      "Patient: I'm with Star Assurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I have this frequent urination that won't go away",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have excessive thirst",
+      "Patient: I'm scheduled to see Dr. Dr. Rhodes today",
+      "Patient: The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Tami Salas",
+      "date_of_birth": "1994-02-18",
+      "address": "385 Fox Island\nSouth Rhonda, MA 72102",
+      "phone": "(549)973-3484x344",
+      "email": "timothy84@example.com",
+      "insurance": "Star Assurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "excessive thirst",
+        "frequent urination"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "19:08",
+        "doctor": "Dr. Rhodes",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I'm here to see the doctor",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Sabrina Blevins",
+      "Receptionist: When were you born?",
+      "Patient: 1998-10-24",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with SIC Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past several weeks, I've had unexplained weight loss",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have excessive thirst",
+      "Patient: I'm here for my prescription refill",
+      "Patient: The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Sabrina Blevins",
+      "date_of_birth": "1998-10-24",
+      "address": "157 Burgess Forest Apt. 848\nDerrickshire, IA 32280",
+      "phone": "3834301657",
+      "email": "oconnelltiffany@example.org",
+      "insurance": "SIC Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "excessive thirst"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "06:48",
+        "doctor": "Dr. Donovan",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I have an appointment today What's your name?",
+      "My name is Curtis Maynard Could you confirm your date of birth for me?",
+      "1965-12-08 Who's your insurance provider?",
+      "I'm with Glico Life Insurance What symptoms are you experiencing today?",
+      "For the past several weeks, I've had chills Could you tell me more about that?",
+      "Well, I also have fever I'm here because malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Curtis Maynard",
+      "date_of_birth": "1965-12-08",
+      "address": "938 Robin Extensions\nKhanburgh, PW 05264",
+      "phone": "(972)440-0499x1547",
+      "email": "znelson@example.org",
+      "insurance": "Glico Life Insurance",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "chills"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I have an appointment today What's your name?",
+      "My name is Nicholas Wong Date of birth?",
+      "1992-12-17 Who's your insurance provider?",
+      "I'm with Enterprise Life Insurance What symptoms are you experiencing today?",
+      "I've been experiencing coughing for several weeks When did you first notice these symptoms?",
+      "Well, I also have chest tightness I need to see the doctor about asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Nicholas Wong",
+      "date_of_birth": "1992-12-17",
+      "address": "9329 Wilcox Passage Suite 161\nEast Thomas, IA 01396",
+      "phone": "563-274-5499x045",
+      "email": "marshallerik@example.net",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "chest tightness",
+        "coughing"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I called earlier about seeing someone today Who am I speaking with today?",
+      "My name is Stephanie Padilla Could you confirm your date of birth for me?",
+      "1965-03-30 What insurance will you be using today?",
+      "I'm with Enterprise Life Insurance I'm here for my follow-up visit The reason for my visit is annual checkup"
+    ],
+    "metadata": {
+      "name": "Stephanie Padilla",
+      "date_of_birth": "1965-03-30",
+      "address": "9332 Hernandez Summit Suite 687\nPort John, WV 78595",
+      "phone": "587-485-1910",
+      "email": "markmeyer@example.org",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "annual checkup",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "09:28",
+        "doctor": "Dr. Love",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I'm here to see the doctor",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Jill Brown",
+      "Receptionist: Date of birth?",
+      "Patient: 1953-01-26",
+      "Receptionist: Who's your insurance provider?",
+      "Patient: I'm with Glico Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing chills for the past month",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have sweating",
+      "Patient: I have an appointment scheduled for today",
+      "Patient: The reason for my visit is malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Jill Brown",
+      "date_of_birth": "1953-01-26",
+      "address": "740 Scott Alley\nNew Charles, NE 45659",
+      "phone": "001-718-801-7046x226",
+      "email": "ykane@example.com",
+      "insurance": "Glico Life Insurance",
+      "condition": "malaria",
+      "symptoms": [
+        "chills",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "02:01",
+        "doctor": "Dr. Brandt",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I called earlier about seeing someone today What's your name?",
+      "My name is Scott Wilson Date of birth?",
+      "2011-08-12 Who's your insurance provider?",
+      "I'm with Enterprise Life Insurance What symptoms are you experiencing today?",
+      "I've been experiencing unexplained weight loss for the past month Is there anything that makes it better or worse?",
+      "Well, I also have excessive thirst I'm here for my prescription refill I'm here because diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Scott Wilson",
+      "date_of_birth": "2011-08-12",
+      "address": "300 Ford Stravenue\nPatelbury, IA 60876",
+      "phone": "(324)231-0690x331",
+      "email": "tharper@example.org",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "excessive thirst"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "10:30",
+        "doctor": "Dr. Williams",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I need to see a doctor about some symptoms Who am I speaking with today?",
+      "My name is Nicole Parsons When were you born?",
+      "1953-08-17 Do you have insurance coverage?",
+      "I'm with Vanguard Assurance What symptoms are you experiencing today?",
+      "I have this chest tightness that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have coughing The reason for my visit is asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Nicole Parsons",
+      "date_of_birth": "1953-08-17",
+      "address": "Unit 3959 Box 9534\nDPO AE 87036",
+      "phone": "836.744.0892x68705",
+      "email": "trussell@example.com",
+      "insurance": "Vanguard Assurance",
+      "condition": "asthma",
+      "symptoms": [
+        "coughing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I'm here to see the doctor Who am I speaking with today?",
+      "My name is Joshua Allen Could you confirm your date of birth for me?",
+      "1959-06-03 What insurance will you be using today?",
+      "I'm with SIC Insurance What symptoms are you experiencing today?",
+      "I have this coughing that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have chest tightness The reason for my visit is asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Joshua Allen",
+      "date_of_birth": "1959-06-03",
+      "address": "0866 Paul Glens\nWest Deborah, NV 49138",
+      "phone": "383-504-6990",
+      "email": "timothybooth@example.com",
+      "insurance": "SIC Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "chest tightness",
+        "coughing"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I'm here to see the doctor",
+      "> Who am I speaking with today?",
+      "- My name is Terry Lewis",
+      "> When were you born?",
+      "- 1957-01-07",
+      "> Who's your insurance provider?",
+      "- I'm with SIC Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing nausea for the past month",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have stomach cramps",
+      "- The reason for my visit is diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Terry Lewis",
+      "date_of_birth": "1957-01-07",
+      "address": "93638 Rowe Light Suite 854\nMichaelfort, NH 13425",
+      "phone": "001-875-635-5609x3204",
+      "email": "jameshall@example.net",
+      "insurance": "SIC Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I need to see a doctor about some symptoms",
+      "> Who am I speaking with today?",
+      "- My name is Kathryn Pena",
+      "> When were you born?",
+      "- 1990-09-01",
+      "> Who's your insurance provider?",
+      "- I'm with SIC Insurance",
+      "> What symptoms are you experiencing today?",
+      "- For the past several weeks, I've had unexplained weight loss",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have frequent urination",
+      "- I'm scheduled to see Dr. Dr. Hill today",
+      "- The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Kathryn Pena",
+      "date_of_birth": "1990-09-01",
+      "address": "772 Jackson Stravenue Suite 280\nPort Melanieton, WV 01337",
+      "phone": "(923)212-0387x50997",
+      "email": "patelrobert@example.org",
+      "insurance": "SIC Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "frequent urination"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "21:11",
+        "doctor": "Dr. Hill",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: Could I get your name, please?",
+      "Patient: My name is Robert Craig",
+      "Receptionist: When were you born?",
+      "Patient: 1998-12-01",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with NHIS",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past a few days, I've had stomach cramps",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have nausea",
+      "Patient: I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Robert Craig",
+      "date_of_birth": "1998-12-01",
+      "address": "PSC 1182, Box 3398\nAPO AA 46958",
+      "phone": "361-856-7933x410",
+      "email": "ebennett@example.org",
+      "insurance": "NHIS",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I need to see a doctor about some symptoms What's your name?",
+      "My name is Michele Miller Could you confirm your date of birth for me?",
+      "2001-07-31 What insurance will you be using today?",
+      "I'm with Glico Life Insurance What symptoms are you experiencing today?",
+      "For the past the past month, I've had joint pain Is there anything that makes it better or worse?",
+      "Well, I also have swelling I'm here for my consultation I'm here because arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Michele Miller",
+      "date_of_birth": "2001-07-31",
+      "address": "180 Jason Ways Suite 401\nRachelshire, TN 04813",
+      "phone": "(450)539-2614",
+      "email": "irhodes@example.com",
+      "insurance": "Glico Life Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "joint pain",
+        "swelling"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": {
+        "type": "consultation",
+        "time": "03:51",
+        "doctor": "Dr. Singh",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I'm here to see the doctor What's your name?",
+      "My name is Angela Mcgee When were you born?",
+      "1967-08-14 Who's your insurance provider?",
+      "I'm with SIC Insurance What symptoms are you experiencing today?",
+      "For the past several weeks, I've had headaches Could you tell me more about that?",
+      "Well, I also have nosebleeds I'm scheduled to see Dr.",
+      "Dr.",
+      "Nelson today The reason for my visit is hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Angela Mcgee",
+      "date_of_birth": "1967-08-14",
+      "address": "59996 Johnson Groves\nHenrystad, OH 49708",
+      "phone": "(829)761-9431x14262",
+      "email": "daniel04@example.com",
+      "insurance": "SIC Insurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "nosebleeds",
+        "headaches"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "13:54",
+        "doctor": "Dr. Nelson",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: What's your name?",
+      "Patient: My name is Jerry Peters",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1971-11-05",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with MiLife",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing nausea for the past month",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have loose stools",
+      "Patient: I'm scheduled to see Dr. Dr. Raymond today",
+      "Patient: I need to see the doctor about diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Jerry Peters",
+      "date_of_birth": "1971-11-05",
+      "address": "199 Shields Bridge Suite 661\nNew Adriana, TX 50404",
+      "phone": "(824)644-7212",
+      "email": "yevans@example.org",
+      "insurance": "MiLife",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "loose stools",
+        "nausea"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "21:06",
+        "doctor": "Dr. Raymond",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I have an appointment today",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Luis Ellis Jr.",
+      "Receptionist: When were you born?",
+      "Patient: 1944-07-23",
+      "Receptionist: Who's your insurance provider?",
+      "Patient: I'm with Glico Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past about a week, I've had chest tightness",
+      "Receptionist: When did you first notice these symptoms?",
+      "Patient: Well, I also have wheezing",
+      "Patient: I'm here because asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Luis Ellis Jr.",
+      "date_of_birth": "1944-07-23",
+      "address": "7569 Kevin Rapids Apt. 752\nNovakport, WA 91590",
+      "phone": "+1-479-235-6465x1939",
+      "email": "nhahn@example.com",
+      "insurance": "Glico Life Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "wheezing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I have an appointment today What's your name?",
+      "My name is Sandra Jones Could you confirm your date of birth for me?",
+      "2001-09-30 What insurance will you be using today?",
+      "I'm with Glico Life Insurance What symptoms are you experiencing today?",
+      "I've been experiencing stomach cramps for about a week When did you first notice these symptoms?",
+      "Well, I also have nausea I have a 23:44 appointment I need to see the doctor about diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Sandra Jones",
+      "date_of_birth": "2001-09-30",
+      "address": "43426 Jones Rapid Suite 968\nStephensstad, UT 70874",
+      "phone": "+1-311-235-2909x656",
+      "email": "greenwilliam@example.net",
+      "insurance": "Glico Life Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "23:44",
+        "doctor": "Dr. Watts",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I'm here to see the doctor What's your name?",
+      "My name is Joel Frazier Could you confirm your date of birth for me?",
+      "1991-01-18 Who's your insurance provider?",
+      "I'm with Prudential Life Insurance What symptoms are you experiencing today?",
+      "I have this stiffness that won't go away Could you tell me more about that?",
+      "Well, I also have joint pain I'm here for my prescription refill I'm here because arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Joel Frazier",
+      "date_of_birth": "1991-01-18",
+      "address": "1461 Marie Stream\nWest Larry, NH 27615",
+      "phone": "375.471.7751x40105",
+      "email": "zacharyarnold@example.com",
+      "insurance": "Prudential Life Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "joint pain",
+        "stiffness"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "07:59",
+        "doctor": "Dr. Mullen",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I have an appointment today",
+      "Receptionist: What's your name?",
+      "Patient: My name is Cody Davidson",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1973-06-25",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with Vanguard Assurance",
+      "Patient: I need to see the doctor about prescription refill"
+    ],
+    "metadata": {
+      "name": "Cody Davidson",
+      "date_of_birth": "1973-06-25",
+      "address": "9660 Jamie Terrace\nNew Cristianside, HI 48446",
+      "phone": "737-714-7859x69691",
+      "email": "rwilliamson@example.net",
+      "insurance": "Vanguard Assurance",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "prescription refill",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I called earlier about seeing someone today",
+      "Receptionist: Could I get your name, please?",
+      "Patient: My name is Tamara Lawrence",
+      "Receptionist: When were you born?",
+      "Patient: 1989-10-20",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with SIC Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past about a week, I've had loose stools",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have nausea",
+      "Patient: I need to see the doctor about diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Tamara Lawrence",
+      "date_of_birth": "1989-10-20",
+      "address": "1252 Barnes Dam\nHendersonfort, SC 70936",
+      "phone": "001-728-227-4225x790",
+      "email": "ytaylor@example.net",
+      "insurance": "SIC Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "loose stools"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: What's your name?",
+      "Patient: My name is Kathleen Cohen",
+      "Receptionist: Date of birth?",
+      "Patient: 1972-05-12",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Glico Life Insurance",
+      "Patient: I'm here because annual checkup"
+    ],
+    "metadata": {
+      "name": "Kathleen Cohen",
+      "date_of_birth": "1972-05-12",
+      "address": "19034 Joshua Plain Suite 279\nDunnville, OK 15470",
+      "phone": "285-980-7836x134",
+      "email": "michael17@example.org",
+      "insurance": "Glico Life Insurance",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "annual checkup",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Hi there! How can we help you today at City General?",
+      "- I'm here to see the doctor",
+      "> What's your name?",
+      "- My name is Cynthia Cochran",
+      "> When were you born?",
+      "- 1984-01-29",
+      "> What insurance will you be using today?",
+      "- I'm with SIC Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I have this sweating that won't go away",
+      "> Could you tell me more about that?",
+      "- Well, I also have chills",
+      "- I have a 02:40 appointment",
+      "- I'm here because malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Cynthia Cochran",
+      "date_of_birth": "1984-01-29",
+      "address": "92330 Patel Ranch Apt. 544\nStephaniehaven, MH 89538",
+      "phone": "726-504-2232",
+      "email": "kburns@example.net",
+      "insurance": "SIC Insurance",
+      "condition": "malaria",
+      "symptoms": [
+        "chills",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "02:40",
+        "doctor": "Dr. Perry",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I need to see a doctor about some symptoms Could I get your name, please?",
+      "My name is Sheryl Davis Could you confirm your date of birth for me?",
+      "1979-02-28 Who's your insurance provider?",
+      "I'm with Prudential Life Insurance What symptoms are you experiencing today?",
+      "I have this stiffness that won't go away Could you tell me more about that?",
+      "Well, I also have joint pain I need to see the doctor about arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Sheryl Davis",
+      "date_of_birth": "1979-02-28",
+      "address": "7590 Jessica Mount Suite 186\nSouth Mallory, NM 35698",
+      "phone": "345-489-2975x00170",
+      "email": "bbryant@example.org",
+      "insurance": "Prudential Life Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "stiffness",
+        "joint pain"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I have an appointment today Who am I speaking with today?",
+      "My name is Susan Khan MD Date of birth?",
+      "2003-07-24 Do you have insurance coverage?",
+      "I'm with NHIS What symptoms are you experiencing today?",
+      "I have this shortness of breath that won't go away Could you tell me more about that?",
+      "Well, I also have headaches I have an appointment scheduled for today The reason for my visit is hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Susan Khan MD",
+      "date_of_birth": "2003-07-24",
+      "address": "541 Beck Run\nNorth Randy, ME 95657",
+      "phone": "001-936-211-0371x293",
+      "email": "dominguezlisa@example.com",
+      "insurance": "NHIS",
+      "condition": "hypertension",
+      "symptoms": [
+        "shortness of breath",
+        "headaches"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "20:04",
+        "doctor": "Dr. Woods",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I'm here to see the doctor Could I get your name, please?",
+      "My name is Robert Garcia Could you confirm your date of birth for me?",
+      "1969-02-03 What insurance will you be using today?",
+      "I'm with Star Assurance I have a 05:18 appointment I'm here because routine physical"
+    ],
+    "metadata": {
+      "name": "Robert Garcia",
+      "date_of_birth": "1969-02-03",
+      "address": "21890 Scott Stravenue Apt. 269\nHeathland, MH 13669",
+      "phone": "(619)365-6523",
+      "email": "angelagreene@example.net",
+      "insurance": "Star Assurance",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "routine physical",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "05:18",
+        "doctor": "Dr. Pugh",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I have an appointment today What's your name?",
+      "My name is Sheri Harris Could you confirm your date of birth for me?",
+      "1985-05-15 Who's your insurance provider?",
+      "I'm with NHIS What symptoms are you experiencing today?",
+      "For the past the past month, I've had headaches Could you tell me more about that?",
+      "Well, I also have shortness of breath I need to see the doctor about hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Sheri Harris",
+      "date_of_birth": "1985-05-15",
+      "address": "0376 John Route Apt. 805\nDavidshire, MT 48396",
+      "phone": "+1-527-210-9104",
+      "email": "fryraymond@example.com",
+      "insurance": "NHIS",
+      "condition": "hypertension",
+      "symptoms": [
+        "headaches",
+        "shortness of breath"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "Patient: I called earlier about seeing someone today",
+      "Receptionist: What's your name?",
+      "Patient: My name is Kathryn Perry",
+      "Receptionist: When were you born?",
+      "Patient: 1991-10-27",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Enterprise Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing frequent urination for the past month",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have unexplained weight loss",
+      "Patient: The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Kathryn Perry",
+      "date_of_birth": "1991-10-27",
+      "address": "1418 Terri Drives\nPeterland, ME 92077",
+      "phone": "(230)431-6179x90421",
+      "email": "martinstephanie@example.net",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "frequent urination"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I need to see a doctor about some symptoms What's your name?",
+      "My name is Samantha Green When were you born?",
+      "1969-05-21 Do you have insurance coverage?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "For the past the past month, I've had chills Is there anything that makes it better or worse?",
+      "Well, I also have fever I'm scheduled to see Dr.",
+      "Dr.",
+      "White today I'm here because malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Samantha Green",
+      "date_of_birth": "1969-05-21",
+      "address": "105 Nelson Circles Suite 917\nDixonton, NM 74803",
+      "phone": "(252)241-9138",
+      "email": "sanchezthomas@example.com",
+      "insurance": "MiLife",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "chills"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "04:08",
+        "doctor": "Dr. White",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I called earlier about seeing someone today",
+      "> What's your name?",
+      "- My name is Robert Klein",
+      "> When were you born?",
+      "- 1988-09-07",
+      "> What insurance will you be using today?",
+      "- I'm with Prudential Life Insurance",
+      "- I have a 20:00 appointment",
+      "- The reason for my visit is prescription refill"
+    ],
+    "metadata": {
+      "name": "Robert Klein",
+      "date_of_birth": "1988-09-07",
+      "address": "5419 Wilson Spring\nEast Jeffreyhaven, AZ 53051",
+      "phone": "774-545-1870",
+      "email": "anne49@example.org",
+      "insurance": "Prudential Life Insurance",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "prescription refill",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "20:00",
+        "doctor": "Dr. Vargas",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I have an appointment today",
+      "Receptionist: What's your name?",
+      "Patient: My name is Christie Mccullough",
+      "Receptionist: Date of birth?",
+      "Patient: 1995-10-24",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with Vanguard Assurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past about a week, I've had chest tightness",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have wheezing",
+      "Patient: I need to see the doctor about asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Christie Mccullough",
+      "date_of_birth": "1995-10-24",
+      "address": "0385 Stephanie Alley\nSweeneyport, CT 27396",
+      "phone": "336.370.2410x38657",
+      "email": "danafoster@example.net",
+      "insurance": "Vanguard Assurance",
+      "condition": "asthma",
+      "symptoms": [
+        "wheezing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I have an appointment today What's your name?",
+      "My name is Jessica Brandt When were you born?",
+      "1960-03-13 Who's your insurance provider?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "For the past a few days, I've had sweating Is there anything that makes it better or worse?",
+      "Well, I also have chills I'm here because malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Jessica Brandt",
+      "date_of_birth": "1960-03-13",
+      "address": "5574 Charles Flats Apt. 912\nEast Shannonmouth, MT 16326",
+      "phone": "+1-453-674-7411",
+      "email": "lewismelissa@example.org",
+      "insurance": "MiLife",
+      "condition": "malaria",
+      "symptoms": [
+        "chills",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I have an appointment today What's your name?",
+      "My name is David Kelly When were you born?",
+      "1979-01-05 What insurance will you be using today?",
+      "I'm with Prudential Life Insurance What symptoms are you experiencing today?",
+      "For the past a few days, I've had shortness of breath Is there anything that makes it better or worse?",
+      "Well, I also have headaches I need to see the doctor about hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "David Kelly",
+      "date_of_birth": "1979-01-05",
+      "address": "06788 Cody Cove Apt. 100\nEast James, MO 49291",
+      "phone": "+1-219-994-1013x72151",
+      "email": "jacksonaudrey@example.net",
+      "insurance": "Prudential Life Insurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "headaches",
+        "shortness of breath"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I'm here to see the doctor",
+      "> Who am I speaking with today?",
+      "- My name is Allen Vega",
+      "> When were you born?",
+      "- 1955-11-07",
+      "> Who's your insurance provider?",
+      "- I'm with Star Assurance",
+      "> What symptoms are you experiencing today?",
+      "- For the past about a week, I've had chest tightness",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have coughing",
+      "- I have an appointment scheduled for today",
+      "- I'm here because asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Allen Vega",
+      "date_of_birth": "1955-11-07",
+      "address": "4720 Deborah Parks\nAndradefort, AR 11998",
+      "phone": "962-763-8380x657",
+      "email": "paul20@example.com",
+      "insurance": "Star Assurance",
+      "condition": "asthma",
+      "symptoms": [
+        "chest tightness",
+        "coughing"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": {
+        "type": "consultation",
+        "time": "08:44",
+        "doctor": "Dr. Johnson",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Robert Ruiz",
+      "Receptionist: When were you born?",
+      "Patient: 1968-05-27",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with SIC Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing loose stools for about a week",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have nausea",
+      "Patient: I have an appointment scheduled for today",
+      "Patient: I need to see the doctor about diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Robert Ruiz",
+      "date_of_birth": "1968-05-27",
+      "address": "13348 Kathryn Forges\nKellyburgh, HI 31506",
+      "phone": "001-555-990-5992",
+      "email": "gregory01@example.org",
+      "insurance": "SIC Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "loose stools",
+        "nausea"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "consultation",
+        "time": "16:48",
+        "doctor": "Dr. Robinson",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I called earlier about seeing someone today",
+      "> What's your name?",
+      "- My name is Thomas Harris",
+      "> Date of birth?",
+      "- 1952-12-20",
+      "> Do you have insurance coverage?",
+      "- I'm with Enterprise Life Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I have this unexplained weight loss that won't go away",
+      "> Could you tell me more about that?",
+      "- Well, I also have excessive thirst",
+      "- The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Thomas Harris",
+      "date_of_birth": "1952-12-20",
+      "address": "02921 Yu Landing Suite 915\nMarcusburgh, VA 57762",
+      "phone": "+1-475-428-9539x2644",
+      "email": "rushstacy@example.com",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "excessive thirst"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Hi there! How can we help you today at City General?",
+      "- I have an appointment today",
+      "> Could I get your name, please?",
+      "- My name is Patricia Bradley",
+      "> Date of birth?",
+      "- 1956-06-24",
+      "> Who's your insurance provider?",
+      "- I'm with Glico Life Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I have this stomach cramps that won't go away",
+      "> When did you first notice these symptoms?",
+      "- Well, I also have nausea",
+      "- The reason for my visit is diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Patricia Bradley",
+      "date_of_birth": "1956-06-24",
+      "address": "917 Mark Club\nWest Toni, GA 83887",
+      "phone": "657-304-3315",
+      "email": "williamssamuel@example.com",
+      "insurance": "Glico Life Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "stomach cramps",
+        "nausea"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I'm here to see the doctor",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Stacey Snyder",
+      "Receptionist: When were you born?",
+      "Patient: 1969-11-07",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with Enterprise Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I have this excessive thirst that won't go away",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have unexplained weight loss",
+      "Patient: I have an appointment scheduled for today",
+      "Patient: The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Stacey Snyder",
+      "date_of_birth": "1969-11-07",
+      "address": "9327 Lauren Bypass\nAndrewview, CT 10226",
+      "phone": "826-421-8159x97062",
+      "email": "garciajamie@example.org",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "excessive thirst"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "00:43",
+        "doctor": "Dr. Spencer",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I called earlier about seeing someone today What's your name?",
+      "My name is Mary Evans Date of birth?",
+      "1950-08-15 Who's your insurance provider?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "I've been experiencing excessive thirst for several weeks Is there anything that makes it better or worse?",
+      "Well, I also have unexplained weight loss The reason for my visit is diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Mary Evans",
+      "date_of_birth": "1950-08-15",
+      "address": "05061 Colon Road Suite 310\nEast Danielle, CO 62572",
+      "phone": "446-777-4186",
+      "email": "cwood@example.org",
+      "insurance": "MiLife",
+      "condition": "diabetes",
+      "symptoms": [
+        "excessive thirst",
+        "unexplained weight loss"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I called earlier about seeing someone today",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is John Perez",
+      "Receptionist: Date of birth?",
+      "Patient: 1962-05-12",
+      "Receptionist: Who's your insurance provider?",
+      "Patient: I'm with MiLife",
+      "Patient: The reason for my visit is annual checkup"
+    ],
+    "metadata": {
+      "name": "John Perez",
+      "date_of_birth": "1962-05-12",
+      "address": "58693 Mary Viaduct\nSheppardfort, OK 31387",
+      "phone": "441.460.8989x9217",
+      "email": "lindseymartinez@example.com",
+      "insurance": "MiLife",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "annual checkup",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I have an appointment today",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Michael Harris",
+      "Receptionist: When were you born?",
+      "Patient: 2000-01-13",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Prudential Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past several weeks, I've had stomach cramps",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have loose stools",
+      "Patient: I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Michael Harris",
+      "date_of_birth": "2000-01-13",
+      "address": "1168 Arnold Walks Suite 870\nRodriguezberg, FL 74765",
+      "phone": "001-891-619-1485",
+      "email": "kpena@example.net",
+      "insurance": "Prudential Life Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "loose stools",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I have an appointment today Could I get your name, please?",
+      "My name is Christopher Powell When were you born?",
+      "1986-02-20 Who's your insurance provider?",
+      "I'm with Star Assurance What symptoms are you experiencing today?",
+      "For the past the past month, I've had headaches Is there anything that makes it better or worse?",
+      "Well, I also have shortness of breath I have a 18:08 appointment I need to see the doctor about hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Christopher Powell",
+      "date_of_birth": "1986-02-20",
+      "address": "65307 Prince Brooks Suite 444\nGarrisonville, VI 30379",
+      "phone": "(947)554-6913",
+      "email": "wfigueroa@example.net",
+      "insurance": "Star Assurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "shortness of breath",
+        "headaches"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "18:08",
+        "doctor": "Dr. Nicholson",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I have an appointment today What's your name?",
+      "My name is Eric Hunter When were you born?",
+      "1953-04-28 What insurance will you be using today?",
+      "I'm with Enterprise Life Insurance What symptoms are you experiencing today?",
+      "I have this chest tightness that won't go away Could you tell me more about that?",
+      "Well, I also have wheezing I have an appointment scheduled for today The reason for my visit is asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Eric Hunter",
+      "date_of_birth": "1953-04-28",
+      "address": "33030 Williams Lake\nWest Micheal, NH 66708",
+      "phone": "(710)435-7972x7985",
+      "email": "kaitlyn14@example.org",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "wheezing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "21:23",
+        "doctor": "Dr. Martin",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hi there! How can we help you today at City General?",
+      "- I have an appointment today",
+      "> What's your name?",
+      "- My name is Shannon Holland",
+      "> When were you born?",
+      "- 1990-03-07",
+      "> Do you have insurance coverage?",
+      "- I'm with MiLife",
+      "- I'm here because prescription refill"
+    ],
+    "metadata": {
+      "name": "Shannon Holland",
+      "date_of_birth": "1990-03-07",
+      "address": "007 Deborah Rapid Apt. 349\nJenniferview, NE 49846",
+      "phone": "(774)637-4896x910",
+      "email": "gabrielle71@example.com",
+      "insurance": "MiLife",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "prescription refill",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "Patient: I have an appointment today",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Margaret Hensley MD",
+      "Receptionist: When were you born?",
+      "Patient: 1992-06-14",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Star Assurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past about a week, I've had wheezing",
+      "Receptionist: When did you first notice these symptoms?",
+      "Patient: Well, I also have chest tightness",
+      "Patient: The reason for my visit is asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Margaret Hensley MD",
+      "date_of_birth": "1992-06-14",
+      "address": "28309 Guerrero Springs Apt. 074\nRebeccafurt, MS 97065",
+      "phone": "6994353875",
+      "email": "kellyruiz@example.net",
+      "insurance": "Star Assurance",
+      "condition": "asthma",
+      "symptoms": [
+        "wheezing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I have an appointment today",
+      "> Who am I speaking with today?",
+      "- My name is Robert Hines",
+      "> When were you born?",
+      "- 1956-07-18",
+      "> Who's your insurance provider?",
+      "- I'm with Vanguard Assurance",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing chills for several weeks",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have sweating",
+      "- I'm scheduled to see Dr. Dr. Hatfield today",
+      "- The reason for my visit is malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Robert Hines",
+      "date_of_birth": "1956-07-18",
+      "address": "135 Julie Inlet Suite 554\nStevenville, NJ 07536",
+      "phone": "+1-299-491-7381x6846",
+      "email": "victoriacooper@example.net",
+      "insurance": "Vanguard Assurance",
+      "condition": "malaria",
+      "symptoms": [
+        "chills",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "02:28",
+        "doctor": "Dr. Hatfield",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hi there! How can we help you today at City General?",
+      "- I called earlier about seeing someone today",
+      "> Could I get your name, please?",
+      "- My name is Catherine Miller",
+      "> When were you born?",
+      "- 1966-09-19",
+      "> Do you have insurance coverage?",
+      "- I'm with Vanguard Assurance",
+      "> What symptoms are you experiencing today?",
+      "- For the past several weeks, I've had wheezing",
+      "> When did you first notice these symptoms?",
+      "- Well, I also have coughing",
+      "- I have a 00:10 appointment",
+      "- I'm here because asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Catherine Miller",
+      "date_of_birth": "1966-09-19",
+      "address": "Unit 5007 Box 4329\nDPO AE 64670",
+      "phone": "001-712-296-6667x60083",
+      "email": "katherine83@example.org",
+      "insurance": "Vanguard Assurance",
+      "condition": "asthma",
+      "symptoms": [
+        "wheezing",
+        "coughing"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": {
+        "type": "consultation",
+        "time": "00:10",
+        "doctor": "Dr. Sims",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I'm here to see the doctor",
+      "> What's your name?",
+      "- My name is Haley Anderson",
+      "> Could you confirm your date of birth for me?",
+      "- 1970-03-07",
+      "> What insurance will you be using today?",
+      "- I'm with SIC Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing nausea for about a week",
+      "> Could you tell me more about that?",
+      "- Well, I also have loose stools",
+      "- I have a 00:03 appointment",
+      "- I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Haley Anderson",
+      "date_of_birth": "1970-03-07",
+      "address": "04478 Hamilton Spur\nWest Wendy, NM 47588",
+      "phone": "001-732-260-3323x09821",
+      "email": "qmcdowell@example.net",
+      "insurance": "SIC Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "loose stools"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "00:03",
+        "doctor": "Dr. Wheeler",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I'm here to see the doctor",
+      "> Who am I speaking with today?",
+      "- My name is Russell Williams",
+      "> When were you born?",
+      "- 1951-12-21",
+      "> What insurance will you be using today?",
+      "- I'm with Vanguard Assurance",
+      "> What symptoms are you experiencing today?",
+      "- I have this fever that won't go away",
+      "> When did you first notice these symptoms?",
+      "- Well, I also have sweating",
+      "- I'm here for my prescription refill",
+      "- The reason for my visit is malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Russell Williams",
+      "date_of_birth": "1951-12-21",
+      "address": "472 Heather Roads\nWest Robertville, TN 68698",
+      "phone": "999-526-1891x411",
+      "email": "kimberlydecker@example.org",
+      "insurance": "Vanguard Assurance",
+      "condition": "malaria",
+      "symptoms": [
+        "sweating",
+        "fever"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "09:58",
+        "doctor": "Dr. Ortiz",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I'm here to see the doctor",
+      "> What's your name?",
+      "- My name is Susan Watts",
+      "> When were you born?",
+      "- 1976-10-13",
+      "> Do you have insurance coverage?",
+      "- I'm with Enterprise Life Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I have this sweating that won't go away",
+      "> When did you first notice these symptoms?",
+      "- Well, I also have fever",
+      "- I need to see the doctor about malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Susan Watts",
+      "date_of_birth": "1976-10-13",
+      "address": "119 Hernandez Course\nLake Jenniferview, SD 30799",
+      "phone": "344.370.1204x556",
+      "email": "smithdevon@example.net",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I called earlier about seeing someone today What's your name?",
+      "My name is Hunter Kim When were you born?",
+      "1986-05-19 What insurance will you be using today?",
+      "I'm with Star Assurance What symptoms are you experiencing today?",
+      "I've been experiencing fever for several weeks Could you tell me more about that?",
+      "Well, I also have sweating The reason for my visit is malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Hunter Kim",
+      "date_of_birth": "1986-05-19",
+      "address": "5216 Rivers Groves\nVaughnfort, AS 55779",
+      "phone": "+1-821-720-2169x7972",
+      "email": "huffmannichole@example.net",
+      "insurance": "Star Assurance",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I called earlier about seeing someone today Could I get your name, please?",
+      "My name is Bianca Knapp Could you confirm your date of birth for me?",
+      "1951-10-12 Do you have insurance coverage?",
+      "I'm with SIC Insurance What symptoms are you experiencing today?",
+      "I have this swelling that won't go away Could you tell me more about that?",
+      "Well, I also have joint pain I have a 19:34 appointment I'm here because arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Bianca Knapp",
+      "date_of_birth": "1951-10-12",
+      "address": "45089 Tiffany Skyway\nAprilville, NE 87233",
+      "phone": "001-937-456-2890x0287",
+      "email": "waltonmalik@example.com",
+      "insurance": "SIC Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "joint pain",
+        "swelling"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "19:34",
+        "doctor": "Dr. Williams",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I have an appointment today What's your name?",
+      "My name is Jennifer Young Could you confirm your date of birth for me?",
+      "1975-04-26 Do you have insurance coverage?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "I have this unexplained weight loss that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have excessive thirst I'm here because diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Jennifer Young",
+      "date_of_birth": "1975-04-26",
+      "address": "77517 Curtis Loop Apt. 880\nPort Cassandraport, FM 67129",
+      "phone": "+1-937-755-0375",
+      "email": "wwilson@example.net",
+      "insurance": "MiLife",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "excessive thirst"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I called earlier about seeing someone today Could I get your name, please?",
+      "My name is Glenn Gallegos Could you confirm your date of birth for me?",
+      "2009-09-05 What insurance will you be using today?",
+      "I'm with Glico Life Insurance What symptoms are you experiencing today?",
+      "I've been experiencing unexplained weight loss for a few days Could you tell me more about that?",
+      "Well, I also have frequent urination I'm scheduled to see Dr.",
+      "Dr.",
+      "Mcconnell today I need to see the doctor about diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Glenn Gallegos",
+      "date_of_birth": "2009-09-05",
+      "address": "102 Taylor Stravenue Suite 149\nEast David, PR 51998",
+      "phone": "973.951.6091",
+      "email": "tamarasmith@example.net",
+      "insurance": "Glico Life Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "frequent urination",
+        "unexplained weight loss"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "12:51",
+        "doctor": "Dr. Mcconnell",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I'm here to see the doctor Who am I speaking with today?",
+      "My name is Mr.",
+      "Thomas Thompson Date of birth?",
+      "1983-06-10 Who's your insurance provider?",
+      "I'm with MiLife The reason for my visit is prescription refill"
+    ],
+    "metadata": {
+      "name": "Mr. Thomas Thompson",
+      "date_of_birth": "1983-06-10",
+      "address": "69958 Barnes Rest\nWest Raymond, MA 39058",
+      "phone": "522.669.8485x833",
+      "email": "samantha22@example.net",
+      "insurance": "MiLife",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "prescription refill",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I have an appointment today",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Mallory Page",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1995-10-31",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Prudential Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I have this unexplained weight loss that won't go away",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have excessive thirst",
+      "Patient: I need to see the doctor about diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Mallory Page",
+      "date_of_birth": "1995-10-31",
+      "address": "846 Alexandra Burg Suite 200\nWest Karen, GA 38068",
+      "phone": "+1-842-504-3805x71983",
+      "email": "heather06@example.com",
+      "insurance": "Prudential Life Insurance",
+      "condition": "diabetes",
+      "symptoms": [
+        "unexplained weight loss",
+        "excessive thirst"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I need to see a doctor about some symptoms",
+      "> Could I get your name, please?",
+      "- My name is Richard Jennings",
+      "> When were you born?",
+      "- 2009-10-10",
+      "> Do you have insurance coverage?",
+      "- I'm with Glico Life Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing swelling for several weeks",
+      "> Could you tell me more about that?",
+      "- Well, I also have joint pain",
+      "- The reason for my visit is arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Richard Jennings",
+      "date_of_birth": "2009-10-10",
+      "address": "97359 Kimberly Fields Suite 721\nEast Jill, DE 49941",
+      "phone": "2647842294",
+      "email": "jmckinney@example.org",
+      "insurance": "Glico Life Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "swelling",
+        "joint pain"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I'm here to see the doctor Could I get your name, please?",
+      "My name is Frank Williams Date of birth?",
+      "2007-07-02 Do you have insurance coverage?",
+      "I'm with Star Assurance What symptoms are you experiencing today?",
+      "I have this chills that won't go away Could you tell me more about that?",
+      "Well, I also have sweating I'm here because malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Frank Williams",
+      "date_of_birth": "2007-07-02",
+      "address": "9851 Fox Ferry Apt. 826\nDavisbury, FM 28465",
+      "phone": "+1-555-554-3987x80157",
+      "email": "flemingmanuel@example.org",
+      "insurance": "Star Assurance",
+      "condition": "malaria",
+      "symptoms": [
+        "sweating",
+        "chills"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Hi there! How can we help you today at City General?",
+      "- I called earlier about seeing someone today",
+      "> What's your name?",
+      "- My name is Joshua Campbell",
+      "> Date of birth?",
+      "- 2006-01-25",
+      "> Do you have insurance coverage?",
+      "- I'm with NHIS",
+      "- I'm here for my prescription refill",
+      "- The reason for my visit is vaccination appointment"
+    ],
+    "metadata": {
+      "name": "Joshua Campbell",
+      "date_of_birth": "2006-01-25",
+      "address": "877 Kenneth Run Apt. 581\nEast Teresaside, ND 01461",
+      "phone": "+1-713-236-1386x1207",
+      "email": "jonesgregory@example.com",
+      "insurance": "NHIS",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "vaccination appointment",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "19:35",
+        "doctor": "Dr. Andrews",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I called earlier about seeing someone today",
+      "> What's your name?",
+      "- My name is James Mccoy",
+      "> Could you confirm your date of birth for me?",
+      "- 1973-07-18",
+      "> What insurance will you be using today?",
+      "- I'm with Vanguard Assurance",
+      "> What symptoms are you experiencing today?",
+      "- I have this wheezing that won't go away",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have chest tightness",
+      "- I have a 05:40 appointment",
+      "- I'm here because asthma symptoms"
+    ],
+    "metadata": {
+      "name": "James Mccoy",
+      "date_of_birth": "1973-07-18",
+      "address": "091 Jaclyn Cliffs\nSarahville, LA 90400",
+      "phone": "891-647-6607x2832",
+      "email": "kennetheaton@example.net",
+      "insurance": "Vanguard Assurance",
+      "condition": "asthma",
+      "symptoms": [
+        "chest tightness",
+        "wheezing"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": {
+        "type": "consultation",
+        "time": "05:40",
+        "doctor": "Dr. Bernard",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I have an appointment today Could I get your name, please?",
+      "My name is Brenda Williams Could you confirm your date of birth for me?",
+      "1983-01-16 Do you have insurance coverage?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "I have this stomach cramps that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have loose stools I need to see the doctor about diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Brenda Williams",
+      "date_of_birth": "1983-01-16",
+      "address": "3536 Eugene Forges\nJamesburgh, TN 74857",
+      "phone": "5879814141",
+      "email": "michael31@example.com",
+      "insurance": "MiLife",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "loose stools",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I called earlier about seeing someone today What's your name?",
+      "My name is Stephanie Stewart When were you born?",
+      "1974-09-28 What insurance will you be using today?",
+      "I'm with Enterprise Life Insurance What symptoms are you experiencing today?",
+      "I have this stiffness that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have swelling I'm here for my routine checkup I'm here because arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Stephanie Stewart",
+      "date_of_birth": "1974-09-28",
+      "address": "929 Aguirre Meadow Apt. 053\nLake Jodi, NE 36765",
+      "phone": "(325)677-7547x812",
+      "email": "patriciagonzalez@example.net",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "stiffness",
+        "swelling"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "02:22",
+        "doctor": "Dr. Jones",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: What's your name?",
+      "Patient: My name is Jonathon Johnson",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1983-09-01",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with NHIS",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past about a week, I've had headaches",
+      "Receptionist: When did you first notice these symptoms?",
+      "Patient: Well, I also have nosebleeds",
+      "Patient: The reason for my visit is hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Jonathon Johnson",
+      "date_of_birth": "1983-09-01",
+      "address": "84887 Michael Fork\nDennishaven, NY 12370",
+      "phone": "(458)903-9282x7229",
+      "email": "billy73@example.org",
+      "insurance": "NHIS",
+      "condition": "hypertension",
+      "symptoms": [
+        "headaches",
+        "nosebleeds"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I need to see a doctor about some symptoms Who am I speaking with today?",
+      "My name is David Barnett Could you confirm your date of birth for me?",
+      "1979-04-25 What insurance will you be using today?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "For the past a few days, I've had coughing Could you tell me more about that?",
+      "Well, I also have wheezing The reason for my visit is asthma symptoms"
+    ],
+    "metadata": {
+      "name": "David Barnett",
+      "date_of_birth": "1979-04-25",
+      "address": "7005 Jane Pike Suite 498\nSouth Desiree, MN 77529",
+      "phone": "+1-218-446-3865x5779",
+      "email": "emartin@example.net",
+      "insurance": "MiLife",
+      "condition": "asthma",
+      "symptoms": [
+        "coughing",
+        "wheezing"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I need to see a doctor about some symptoms Who am I speaking with today?",
+      "My name is Christine Lopez Could you confirm your date of birth for me?",
+      "1968-09-23 What insurance will you be using today?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "I've been experiencing chills for about a week When did you first notice these symptoms?",
+      "Well, I also have sweating I'm here because malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Christine Lopez",
+      "date_of_birth": "1968-09-23",
+      "address": "365 Timothy Neck\nClarkburgh, SD 54358",
+      "phone": "2304299228",
+      "email": "jacksonsandra@example.net",
+      "insurance": "MiLife",
+      "condition": "malaria",
+      "symptoms": [
+        "chills",
+        "sweating"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I have an appointment today Who am I speaking with today?",
+      "My name is Linda Elliott When were you born?",
+      "1945-05-13 Who's your insurance provider?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "For the past about a week, I've had loose stools Is there anything that makes it better or worse?",
+      "Well, I also have nausea I need to see the doctor about diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Linda Elliott",
+      "date_of_birth": "1945-05-13",
+      "address": "37977 Jeffrey Loop Apt. 929\nGarymouth, NH 78689",
+      "phone": "001-813-466-2103",
+      "email": "thompsonrachel@example.net",
+      "insurance": "MiLife",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "loose stools"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I'm here to see the doctor What's your name?",
+      "My name is Richard Gordon Date of birth?",
+      "1952-02-02 Who's your insurance provider?",
+      "I'm with Vanguard Assurance What symptoms are you experiencing today?",
+      "For the past the past month, I've had stomach cramps Could you tell me more about that?",
+      "Well, I also have nausea I have an appointment scheduled for today I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Richard Gordon",
+      "date_of_birth": "1952-02-02",
+      "address": "806 Wood Cape\nPerezfort, WY 50470",
+      "phone": "(899)616-2473x149",
+      "email": "adammanning@example.org",
+      "insurance": "Vanguard Assurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "09:01",
+        "doctor": "Dr. Wilson",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I have an appointment today Could I get your name, please?",
+      "My name is Melissa Stewart Could you confirm your date of birth for me?",
+      "1968-09-24 Do you have insurance coverage?",
+      "I'm with Enterprise Life Insurance What symptoms are you experiencing today?",
+      "I have this coughing that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have chest tightness I need to see the doctor about asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Melissa Stewart",
+      "date_of_birth": "1968-09-24",
+      "address": "8695 Braun Locks Apt. 688\nWhiteside, OH 63908",
+      "phone": "849-756-2137x213",
+      "email": "martintamara@example.org",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "coughing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I have an appointment today Who am I speaking with today?",
+      "My name is Samantha Ruiz Date of birth?",
+      "1984-11-30 Who's your insurance provider?",
+      "I'm with Star Assurance What symptoms are you experiencing today?",
+      "I have this wheezing that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have chest tightness I'm here for my prescription refill The reason for my visit is asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Samantha Ruiz",
+      "date_of_birth": "1984-11-30",
+      "address": "51906 Mendez Pike Suite 902\nGonzalesborough, PR 86600",
+      "phone": "443.309.8839x20530",
+      "email": "kimberly56@example.com",
+      "insurance": "Star Assurance",
+      "condition": "asthma",
+      "symptoms": [
+        "wheezing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "06:05",
+        "doctor": "Dr. Holmes",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I need to see a doctor about some symptoms Could I get your name, please?",
+      "My name is Brandon Mitchell When were you born?",
+      "2000-07-09 Who's your insurance provider?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "For the past about a week, I've had chills Is there anything that makes it better or worse?",
+      "Well, I also have fever I'm here because malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Brandon Mitchell",
+      "date_of_birth": "2000-07-09",
+      "address": "PSC 5543, Box 9376\nAPO AP 01110",
+      "phone": "626-681-8184x518",
+      "email": "kchurch@example.com",
+      "insurance": "MiLife",
+      "condition": "malaria",
+      "symptoms": [
+        "chills",
+        "fever"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hi there! How can we help you today at City General?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Nina Ali",
+      "Receptionist: Date of birth?",
+      "Patient: 1975-04-20",
+      "Receptionist: Do you have insurance coverage?",
+      "Patient: I'm with NHIS",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I have this nosebleeds that won't go away",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have headaches",
+      "Patient: I need to see the doctor about hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Nina Ali",
+      "date_of_birth": "1975-04-20",
+      "address": "1416 Erica Forks\nRobertstad, NC 70709",
+      "phone": "4439416518",
+      "email": "michael94@example.org",
+      "insurance": "NHIS",
+      "condition": "hypertension",
+      "symptoms": [
+        "headaches",
+        "nosebleeds"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I have an appointment today",
+      "Receptionist: Could I get your name, please?",
+      "Patient: My name is Melanie Browning",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1978-01-11",
+      "Receptionist: Who's your insurance provider?",
+      "Patient: I'm with Enterprise Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing chest tightness for the past month",
+      "Receptionist: When did you first notice these symptoms?",
+      "Patient: Well, I also have wheezing",
+      "Patient: I need to see the doctor about asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Melanie Browning",
+      "date_of_birth": "1978-01-11",
+      "address": "3333 Moore Coves\nNorth Emmafort, RI 01369",
+      "phone": "001-880-575-9579x47284",
+      "email": "brianlloyd@example.com",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "wheezing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I need to see a doctor about some symptoms Who am I speaking with today?",
+      "My name is Amanda Reed When were you born?",
+      "2002-08-09 What insurance will you be using today?",
+      "I'm with Vanguard Assurance What symptoms are you experiencing today?",
+      "I have this shortness of breath that won't go away Could you tell me more about that?",
+      "Well, I also have nosebleeds The reason for my visit is hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Amanda Reed",
+      "date_of_birth": "2002-08-09",
+      "address": "87500 Nicolas Courts Suite 594\nNew Jose, KY 62281",
+      "phone": "+1-955-427-6365x564",
+      "email": "tiffanyparks@example.org",
+      "insurance": "Vanguard Assurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "nosebleeds",
+        "shortness of breath"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I called earlier about seeing someone today Could I get your name, please?",
+      "My name is Regina Peters Date of birth?",
+      "2002-04-30 Who's your insurance provider?",
+      "I'm with Star Assurance What symptoms are you experiencing today?",
+      "I've been experiencing swelling for about a week When did you first notice these symptoms?",
+      "Well, I also have joint pain I'm scheduled to see Dr.",
+      "Dr.",
+      "Scott today The reason for my visit is arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Regina Peters",
+      "date_of_birth": "2002-04-30",
+      "address": "0267 Wendy Vista\nKristenport, KS 74181",
+      "phone": "001-306-912-0347",
+      "email": "jordan58@example.net",
+      "insurance": "Star Assurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "joint pain",
+        "swelling"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": {
+        "type": "consultation",
+        "time": "23:49",
+        "doctor": "Dr. Scott",
+        "scheduled_date": "2025-02-01"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I'm here to see the doctor Who am I speaking with today?",
+      "My name is Sean Mccarty Could you confirm your date of birth for me?",
+      "1957-08-17 What insurance will you be using today?",
+      "I'm with NHIS What symptoms are you experiencing today?",
+      "I have this wheezing that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have chest tightness I need to see the doctor about asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Sean Mccarty",
+      "date_of_birth": "1957-08-17",
+      "address": "5587 Preston Light\nStevenberg, VI 22465",
+      "phone": "+1-656-699-6112x5355",
+      "email": "cnelson@example.com",
+      "insurance": "NHIS",
+      "condition": "asthma",
+      "symptoms": [
+        "wheezing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I'm here to see the doctor What's your name?",
+      "My name is Kelly Cole When were you born?",
+      "1955-06-23 Who's your insurance provider?",
+      "I'm with Glico Life Insurance What symptoms are you experiencing today?",
+      "I've been experiencing stomach cramps for several weeks When did you first notice these symptoms?",
+      "Well, I also have nausea I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Kelly Cole",
+      "date_of_birth": "1955-06-23",
+      "address": "341 Garrett Cove\nNorth Sharonfort, OH 07556",
+      "phone": "8686114921",
+      "email": "johnmitchell@example.net",
+      "insurance": "Glico Life Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "nausea",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I need to see a doctor about some symptoms",
+      "> Who am I speaking with today?",
+      "- My name is Joseph Jackson",
+      "> When were you born?",
+      "- 1946-06-28",
+      "> Do you have insurance coverage?",
+      "- I'm with Vanguard Assurance",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing sweating for about a week",
+      "> When did you first notice these symptoms?",
+      "- Well, I also have chills",
+      "- I have a 20:40 appointment",
+      "- The reason for my visit is malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Joseph Jackson",
+      "date_of_birth": "1946-06-28",
+      "address": "7848 Taylor Square Apt. 997\nMillsside, ME 46005",
+      "phone": "483.717.4564x2400",
+      "email": "taylor07@example.com",
+      "insurance": "Vanguard Assurance",
+      "condition": "malaria",
+      "symptoms": [
+        "sweating",
+        "chills"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "20:40",
+        "doctor": "Dr. Cannon",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I have an appointment today Could I get your name, please?",
+      "My name is Rebecca Kelley When were you born?",
+      "1956-12-02 Who's your insurance provider?",
+      "I'm with Star Assurance What symptoms are you experiencing today?",
+      "I've been experiencing chills for the past month Is there anything that makes it better or worse?",
+      "Well, I also have fever I need to see the doctor about malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Rebecca Kelley",
+      "date_of_birth": "1956-12-02",
+      "address": "3266 Jose Manors Apt. 894\nDeborahside, AS 35736",
+      "phone": "(731)222-4179x74973",
+      "email": "brandonnichols@example.org",
+      "insurance": "Star Assurance",
+      "condition": "malaria",
+      "symptoms": [
+        "fever",
+        "chills"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I need to see a doctor about some symptoms Who am I speaking with today?",
+      "My name is Diane Martinez Could you confirm your date of birth for me?",
+      "1973-11-28 Do you have insurance coverage?",
+      "I'm with Vanguard Assurance What symptoms are you experiencing today?",
+      "I have this shortness of breath that won't go away Could you tell me more about that?",
+      "Well, I also have headaches The reason for my visit is hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Diane Martinez",
+      "date_of_birth": "1973-11-28",
+      "address": "07356 Floyd Parks\nSteventon, MA 11016",
+      "phone": "001-520-846-1872x34601",
+      "email": "cwright@example.org",
+      "insurance": "Vanguard Assurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "headaches",
+        "shortness of breath"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I'm here to see the doctor Who am I speaking with today?",
+      "My name is Ray Boyd Date of birth?",
+      "2010-11-18 Do you have insurance coverage?",
+      "I'm with SIC Insurance What symptoms are you experiencing today?",
+      "For the past about a week, I've had chest tightness Is there anything that makes it better or worse?",
+      "Well, I also have coughing I'm scheduled to see Dr.",
+      "Dr.",
+      "Montgomery today I'm here because asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Ray Boyd",
+      "date_of_birth": "2010-11-18",
+      "address": "2088 Jon Route Suite 350\nNorth Joel, NE 43035",
+      "phone": "9244916300",
+      "email": "kelli32@example.com",
+      "insurance": "SIC Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "coughing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "12:24",
+        "doctor": "Dr. Montgomery",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I'm here to see the doctor",
+      "> What's your name?",
+      "- My name is Lori Brown DDS",
+      "> When were you born?",
+      "- 1991-10-15",
+      "> What insurance will you be using today?",
+      "- I'm with NHIS",
+      "- I'm scheduled to see Dr. Dr. Gibson today",
+      "- I need to see the doctor about routine physical"
+    ],
+    "metadata": {
+      "name": "Lori Brown DDS",
+      "date_of_birth": "1991-10-15",
+      "address": "3585 Quinn Brooks\nHowardberg, KS 05676",
+      "phone": "678.448.7392x8557",
+      "email": "schmidtshannon@example.com",
+      "insurance": "NHIS",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "routine physical",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "04:20",
+        "doctor": "Dr. Gibson",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I called earlier about seeing someone today Who am I speaking with today?",
+      "My name is Morgan Andrade Could you confirm your date of birth for me?",
+      "1986-03-29 Who's your insurance provider?",
+      "I'm with NHIS I'm here because routine physical"
+    ],
+    "metadata": {
+      "name": "Morgan Andrade",
+      "date_of_birth": "1986-03-29",
+      "address": "1863 Cannon Drives\nMarcusmouth, DE 13117",
+      "phone": "910.622.0317x31096",
+      "email": "diazcatherine@example.org",
+      "insurance": "NHIS",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "routine physical",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I'm here to see the doctor What's your name?",
+      "My name is Thomas Rios When were you born?",
+      "2007-03-25 Who's your insurance provider?",
+      "I'm with Vanguard Assurance What symptoms are you experiencing today?",
+      "I have this swelling that won't go away Is there anything that makes it better or worse?",
+      "Well, I also have stiffness I'm here because arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Thomas Rios",
+      "date_of_birth": "2007-03-25",
+      "address": "058 Short Underpass Apt. 948\nLake Chadport, CA 28799",
+      "phone": "811.338.6338x39288",
+      "email": "emily61@example.org",
+      "insurance": "Vanguard Assurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "swelling",
+        "stiffness"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I need to see a doctor about some symptoms What's your name?",
+      "My name is Krista Wagner Date of birth?",
+      "1988-10-23 Do you have insurance coverage?",
+      "I'm with Vanguard Assurance What symptoms are you experiencing today?",
+      "I have this nausea that won't go away Could you tell me more about that?",
+      "Well, I also have loose stools The reason for my visit is diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Krista Wagner",
+      "date_of_birth": "1988-10-23",
+      "address": "5855 Duran Meadows Suite 939\nSouth Katie, WA 33804",
+      "phone": "(277)660-0490x824",
+      "email": "jasonedwards@example.net",
+      "insurance": "Vanguard Assurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "loose stools",
+        "nausea"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I called earlier about seeing someone today Could I get your name, please?",
+      "My name is Tamara Dixon Date of birth?",
+      "1982-11-26 Do you have insurance coverage?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "I've been experiencing unexplained weight loss for several weeks Could you tell me more about that?",
+      "Well, I also have excessive thirst I need to see the doctor about diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Tamara Dixon",
+      "date_of_birth": "1982-11-26",
+      "address": "75224 Preston Gateway\nWest Lisa, CO 75275",
+      "phone": "(893)315-7279x1940",
+      "email": "weeksmatthew@example.com",
+      "insurance": "MiLife",
+      "condition": "diabetes",
+      "symptoms": [
+        "excessive thirst",
+        "unexplained weight loss"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Sean Kane",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1959-07-07",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Prudential Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past a few days, I've had stomach cramps",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have nausea",
+      "Patient: I'm scheduled to see Dr. Dr. Kelley today",
+      "Patient: I need to see the doctor about diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Sean Kane",
+      "date_of_birth": "1959-07-07",
+      "address": "604 Luis Port\nWest Wayne, IN 20580",
+      "phone": "6678998136",
+      "email": "davidmiller@example.net",
+      "insurance": "Prudential Life Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "stomach cramps",
+        "nausea"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "follow-up visit",
+        "time": "23:04",
+        "doctor": "Dr. Kelley",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I have an appointment today",
+      "Receptionist: Who am I speaking with today?",
+      "Patient: My name is Jeffrey Wolfe",
+      "Receptionist: When were you born?",
+      "Patient: 1995-12-01",
+      "Receptionist: What insurance will you be using today?",
+      "Patient: I'm with Prudential Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I have this stiffness that won't go away",
+      "Receptionist: Could you tell me more about that?",
+      "Patient: Well, I also have swelling",
+      "Patient: I'm here because arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "Jeffrey Wolfe",
+      "date_of_birth": "1995-12-01",
+      "address": "6938 John Grove\nMorrisshire, CO 15250",
+      "phone": "+1-966-455-3559x04259",
+      "email": "owilliams@example.org",
+      "insurance": "Prudential Life Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "stiffness",
+        "swelling"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I need to see a doctor about some symptoms Who am I speaking with today?",
+      "My name is Brittney Chandler When were you born?",
+      "1949-12-07 What insurance will you be using today?",
+      "I'm with Enterprise Life Insurance The reason for my visit is vaccination appointment"
+    ],
+    "metadata": {
+      "name": "Brittney Chandler",
+      "date_of_birth": "1949-12-07",
+      "address": "240 Benson Creek\nShannontown, MA 27896",
+      "phone": "001-283-638-8487x9206",
+      "email": "briangonzalez@example.net",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "vaccination appointment",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I need to see a doctor about some symptoms",
+      "Receptionist: Could I get your name, please?",
+      "Patient: My name is Amy Pena",
+      "Receptionist: When were you born?",
+      "Patient: 1944-08-30",
+      "Receptionist: Who's your insurance provider?",
+      "Patient: I'm with Enterprise Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: I've been experiencing chest tightness for about a week",
+      "Receptionist: Is there anything that makes it better or worse?",
+      "Patient: Well, I also have wheezing",
+      "Patient: The reason for my visit is asthma symptoms"
+    ],
+    "metadata": {
+      "name": "Amy Pena",
+      "date_of_birth": "1944-08-30",
+      "address": "510 Dillon Run Suite 368\nWest Toddside, CO 24935",
+      "phone": "787.980.0384",
+      "email": "bgarner@example.com",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "asthma",
+      "symptoms": [
+        "wheezing",
+        "chest tightness"
+      ],
+      "reason_for_visit": "asthma symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I need to see a doctor about some symptoms Could I get your name, please?",
+      "My name is Heather Turner Could you confirm your date of birth for me?",
+      "2011-10-29 Do you have insurance coverage?",
+      "I'm with Prudential Life Insurance I'm here because prescription refill"
+    ],
+    "metadata": {
+      "name": "Heather Turner",
+      "date_of_birth": "2011-10-29",
+      "address": "Unit 4046 Box 0843\nDPO AE 45299",
+      "phone": "(721)968-9363x9264",
+      "email": "jamietaylor@example.net",
+      "insurance": "Prudential Life Insurance",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "prescription refill",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Receptionist: Hello, welcome to City General Hospital. How may I assist you today?",
+      "Patient: I called earlier about seeing someone today",
+      "Receptionist: What's your name?",
+      "Patient: My name is Christina Taylor",
+      "Receptionist: Could you confirm your date of birth for me?",
+      "Patient: 1990-12-02",
+      "Receptionist: Who's your insurance provider?",
+      "Patient: I'm with Enterprise Life Insurance",
+      "Receptionist: What symptoms are you experiencing today?",
+      "Patient: For the past several weeks, I've had shortness of breath",
+      "Receptionist: When did you first notice these symptoms?",
+      "Patient: Well, I also have headaches",
+      "Patient: I'm here for my routine checkup",
+      "Patient: I'm here because hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Christina Taylor",
+      "date_of_birth": "1990-12-02",
+      "address": "PSC 2629, Box 2518\nAPO AP 94799",
+      "phone": "925-620-5664",
+      "email": "kimberlyrodriguez@example.org",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "shortness of breath",
+        "headaches"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": {
+        "type": "routine checkup",
+        "time": "06:09",
+        "doctor": "Dr. Odom",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I need to see a doctor about some symptoms Who am I speaking with today?",
+      "My name is Lisa Carlson Date of birth?",
+      "1959-10-20 Do you have insurance coverage?",
+      "I'm with Enterprise Life Insurance What symptoms are you experiencing today?",
+      "For the past several weeks, I've had stomach cramps Could you tell me more about that?",
+      "Well, I also have loose stools I'm here for my vaccination I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "Lisa Carlson",
+      "date_of_birth": "1959-10-20",
+      "address": "728 Joseph Landing\nPort Paul, NJ 18525",
+      "phone": "(533)506-0463",
+      "email": "thompsonstephanie@example.com",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "loose stools",
+        "stomach cramps"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "13:10",
+        "doctor": "Dr. Burns",
+        "scheduled_date": "2025-02-02"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Good morning/afternoon, welcome to our clinic.",
+      "What brings you in today?",
+      "I'm here to see the doctor Could I get your name, please?",
+      "My name is David Sullivan When were you born?",
+      "1946-12-10 Do you have insurance coverage?",
+      "I'm with Enterprise Life Insurance What symptoms are you experiencing today?",
+      "For the past the past month, I've had swelling Is there anything that makes it better or worse?",
+      "Well, I also have stiffness I have a 00:27 appointment I'm here because arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "David Sullivan",
+      "date_of_birth": "1946-12-10",
+      "address": "569 Abigail Mission Suite 038\nTerrellton, OH 51278",
+      "phone": "403.947.6447x26490",
+      "email": "gdavis@example.org",
+      "insurance": "Enterprise Life Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "swelling",
+        "stiffness"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "00:27",
+        "doctor": "Dr. Richards",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hello, welcome to City General Hospital.",
+      "How may I assist you today?",
+      "I need to see a doctor about some symptoms Who am I speaking with today?",
+      "My name is Jenna Morris Could you confirm your date of birth for me?",
+      "1945-10-16 What insurance will you be using today?",
+      "I'm with NHIS What symptoms are you experiencing today?",
+      "I've been experiencing sweating for the past month Is there anything that makes it better or worse?",
+      "Well, I also have fever I'm scheduled to see Dr.",
+      "Dr.",
+      "White today I'm here because malaria symptoms"
+    ],
+    "metadata": {
+      "name": "Jenna Morris",
+      "date_of_birth": "1945-10-16",
+      "address": "1452 Christopher Squares\nWaltersland, NC 93205",
+      "phone": "(489)426-8602x5922",
+      "email": "barneskyle@example.com",
+      "insurance": "NHIS",
+      "condition": "malaria",
+      "symptoms": [
+        "sweating",
+        "fever"
+      ],
+      "reason_for_visit": "malaria symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "21:37",
+        "doctor": "Dr. White",
+        "scheduled_date": "2025-02-05"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Good morning/afternoon, welcome to our clinic. What brings you in today?",
+      "- I have an appointment today",
+      "> What's your name?",
+      "- My name is April Cannon",
+      "> Could you confirm your date of birth for me?",
+      "- 1944-12-05",
+      "> What insurance will you be using today?",
+      "- I'm with SIC Insurance",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing stiffness for a few days",
+      "> When did you first notice these symptoms?",
+      "- Well, I also have joint pain",
+      "- I have a 23:29 appointment",
+      "- I need to see the doctor about arthritis symptoms"
+    ],
+    "metadata": {
+      "name": "April Cannon",
+      "date_of_birth": "1944-12-05",
+      "address": "097 Jay Shoals Suite 767\nNew Carolbury, FM 72242",
+      "phone": "698-730-2205x020",
+      "email": "williamsrobert@example.org",
+      "insurance": "SIC Insurance",
+      "condition": "arthritis",
+      "symptoms": [
+        "stiffness",
+        "joint pain"
+      ],
+      "reason_for_visit": "arthritis symptoms",
+      "appointment_details": {
+        "type": "prescription refill",
+        "time": "23:29",
+        "doctor": "Dr. Mitchell",
+        "scheduled_date": "2025-02-04"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I called earlier about seeing someone today",
+      "> What's your name?",
+      "- My name is Laura Hart",
+      "> Could you confirm your date of birth for me?",
+      "- 2009-10-21",
+      "> Who's your insurance provider?",
+      "- I'm with MiLife",
+      "> What symptoms are you experiencing today?",
+      "- I've been experiencing frequent urination for the past month",
+      "> Is there anything that makes it better or worse?",
+      "- Well, I also have excessive thirst",
+      "- I'm here for my consultation",
+      "- I need to see the doctor about diabetes symptoms"
+    ],
+    "metadata": {
+      "name": "Laura Hart",
+      "date_of_birth": "2009-10-21",
+      "address": "14556 Katherine Ville Apt. 472\nLake Michelemouth, NC 54733",
+      "phone": "733.690.1981x79469",
+      "email": "sara99@example.com",
+      "insurance": "MiLife",
+      "condition": "diabetes",
+      "symptoms": [
+        "excessive thirst",
+        "frequent urination"
+      ],
+      "reason_for_visit": "diabetes symptoms",
+      "appointment_details": {
+        "type": "consultation",
+        "time": "10:12",
+        "doctor": "Dr. Welch",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I'm here to see the doctor Could I get your name, please?",
+      "My name is Leon Erickson Date of birth?",
+      "2010-09-08 Who's your insurance provider?",
+      "I'm with MiLife The reason for my visit is prescription refill"
+    ],
+    "metadata": {
+      "name": "Leon Erickson",
+      "date_of_birth": "2010-09-08",
+      "address": "1396 Williams Keys\nNorth Danielle, UT 37414",
+      "phone": "214-448-8501x556",
+      "email": "markmorgan@example.net",
+      "insurance": "MiLife",
+      "condition": "none",
+      "symptoms": [
+        "no symptoms"
+      ],
+      "reason_for_visit": "prescription refill",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "> Hello, welcome to City General Hospital. How may I assist you today?",
+      "- I need to see a doctor about some symptoms",
+      "> Could I get your name, please?",
+      "- My name is John Johnson",
+      "> When were you born?",
+      "- 1953-04-30",
+      "> What insurance will you be using today?",
+      "- I'm with SIC Insurance",
+      "> What symptoms are you experiencing today?",
+      "- For the past the past month, I've had stomach cramps",
+      "> Could you tell me more about that?",
+      "- Well, I also have nausea",
+      "- I'm here because diarrhoea symptoms"
+    ],
+    "metadata": {
+      "name": "John Johnson",
+      "date_of_birth": "1953-04-30",
+      "address": "576 Mary Hills Suite 880\nNew Gina, AS 46847",
+      "phone": "824-405-6829",
+      "email": "hancockkaren@example.net",
+      "insurance": "SIC Insurance",
+      "condition": "diarrhoea",
+      "symptoms": [
+        "stomach cramps",
+        "nausea"
+      ],
+      "reason_for_visit": "diarrhoea symptoms",
+      "appointment_details": null
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I have an appointment today Could I get your name, please?",
+      "My name is Michelle Nelson When were you born?",
+      "1949-12-31 What insurance will you be using today?",
+      "I'm with MiLife What symptoms are you experiencing today?",
+      "I've been experiencing headaches for the past month Is there anything that makes it better or worse?",
+      "Well, I also have nosebleeds I'm here for my vaccination I'm here because hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Michelle Nelson",
+      "date_of_birth": "1949-12-31",
+      "address": "4384 Daniel Tunnel Apt. 317\nPort Timothyhaven, FL 25432",
+      "phone": "378-245-2182x30768",
+      "email": "sarah91@example.com",
+      "insurance": "MiLife",
+      "condition": "hypertension",
+      "symptoms": [
+        "nosebleeds",
+        "headaches"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": {
+        "type": "vaccination",
+        "time": "04:31",
+        "doctor": "Dr. Williams",
+        "scheduled_date": "2025-02-03"
+      }
+    }
+  },
+  {
+    "conversation": [
+      "Hi there!",
+      "How can we help you today at City General?",
+      "I need to see a doctor about some symptoms Could I get your name, please?",
+      "My name is Emily Lane Could you confirm your date of birth for me?",
+      "1965-04-28 What insurance will you be using today?",
+      "I'm with Prudential Life Insurance What symptoms are you experiencing today?",
+      "I have this nosebleeds that won't go away When did you first notice these symptoms?",
+      "Well, I also have shortness of breath I'm here because hypertension symptoms"
+    ],
+    "metadata": {
+      "name": "Emily Lane",
+      "date_of_birth": "1965-04-28",
+      "address": "34485 Lambert Groves Apt. 241\nNew Anitaville, IL 71611",
+      "phone": "(785)942-4932x149",
+      "email": "andersonthomas@example.net",
+      "insurance": "Prudential Life Insurance",
+      "condition": "hypertension",
+      "symptoms": [
+        "nosebleeds",
+        "shortness of breath"
+      ],
+      "reason_for_visit": "hypertension symptoms",
+      "appointment_details": null
+    }
+  }
+]

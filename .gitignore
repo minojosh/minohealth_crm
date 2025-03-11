@@ -171,3 +171,15 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+*.log
+*.wav
+*data/ground_truth/
+*data/ground_truth/*
+*.yaml
+*.yml
+~.ssh/
+.github/
+*.txt
+*conversation_*
+*response_*

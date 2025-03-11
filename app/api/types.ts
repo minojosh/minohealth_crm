@@ -5,10 +5,12 @@ export interface AudioTranscriptionRequest {
   audioData: string; // Base64 encoded audio data
   language?: string; // Optional language code
   processComplete?: boolean; // Flag to indicate this is a complete recording (not a streaming chunk)
+  sampleRate?: number; // Sample rate of the audio in Hz
 }
 
 export interface AudioTranscriptionResponse {
   text: string;
+  transcription?: string; // Alias for text for backward compatibility
   confidence?: number;
   segments?: TranscriptionSegment[];
   error?: string;
@@ -32,6 +34,7 @@ export interface TextToSpeechResponse {
   audioData: string; // Base64 encoded audio data
   duration?: number; // Duration in seconds
   error?: string;
+  sampleRate?: number; // Sample rate of the audio in Hz
 }
 
 // WebSocket Message Types

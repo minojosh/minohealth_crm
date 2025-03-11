@@ -14,7 +14,7 @@ DATABASE_FILE = os.path.join(root_dir, 'healthcare.db')
 os.makedirs(os.path.dirname(DATABASE_FILE), exist_ok=True)
 
 DATABASE_URL = f"sqlite:///{DATABASE_FILE}"
-LLM_API_URL = "http://46.101.91.139:5000/inference"
+LLM_API_URL = "http://46.101.91.139:5003/v1"
 
 import requests
 from tenacity import retry, stop_after_attempt, wait_fixed

@@ -216,17 +216,10 @@ class TTSClient:
             text (str): Text to convert to speech
             play_locally (bool): Whether to play the audio locally
             return_data (bool): Whether to return the audio data and sample rate
-            
-        Returns:
-            If return_data is True: tuple of (audio_data, sample_rate, base64_audio)
-            Otherwise: None
         """
         if not text:
             logger.warning("No text provided for TTS")
-            # Return empty/default values if return_data is True
-            if return_data:
-                return np.array([]).astype(np.float32), 16000, None
-            return None, None, None
+            return np.array([]).astype(np.float32), 16000, None if return_data else (None, None, None)
 
         # Generate audio
         audio_data, sample_rate = self.generate_speech(text)
@@ -246,7 +239,7 @@ class TTSClient:
         # Return data if requested
         if return_data:
             return audio_data, sample_rate, base64_audio
-            
+        
         return None, None, None
 
     def get_audio_for_frontend(self, text, speaker="jude"):

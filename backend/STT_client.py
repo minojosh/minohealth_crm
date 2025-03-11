@@ -29,7 +29,7 @@ class SpeechRecognitionClient:
         if server_url:
             self.server_url = server_url.rstrip('/')
         else:
-            env_url = os.getenv('SPEECH_SERVICE_URL', '')
+            env_url = os.getenv('STT_URL', '')
             if env_url:
                 self.server_url = env_url.rstrip('/')
             else:
@@ -459,17 +459,35 @@ class SpeechRecognitionClient:
     async def _send_audio_for_transcription(self, audio_bytes):
         """Helper method to send audio data to the transcription server"""
         try:
-            # First convert the audio data to float32 format with proper normalization
-            audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
+            # Check if the audio data is valid for conversion to float32
+            if len(audio_bytes) % 4 != 0:
+                # If not divisible by 4 (float32 size), try to interpret as int16
+                try:
+                    # Convert from int16 to float32
+                    audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+                    logging.info(f"Converted audio from int16 to float32 format, shape: {audio_np.shape}")
+                except ValueError as e:
+                    logging.error(f"Error converting audio: {e}")
+                    return f"Processing error: {str(e)}"
+            else:
+                # Try to interpret as float32
+                try:
+                    audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
+                    logging.info(f"Interpreted audio as float32 format, shape: {audio_np.shape}")
+                except ValueError as e:
+                    # If that fails, try int16 as a fallback
+                    try:
+                        audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+                        logging.info(f"Fallback: converted audio from int16 to float32, shape: {audio_np.shape}")
+                    except ValueError as e2:
+                        logging.error(f"Error converting audio: {e2}")
+                        return f"Processing error: {str(e2)}"
             
             # Check audio level and normalize if needed
             max_val = np.abs(audio_np).max()
             if max_val > 0:  # Avoid division by zero
                 if max_val > 1.0:  # If values are outside [-1, 1]
                     audio_np = audio_np / max_val  # Normalize to [-1, 1]
-            else:
-                logger.warning("Audio data contains all zeros")
-                return "No speech detected"
             
             # Ensure we have the right number of samples for float32
             if len(audio_np) % 4 != 0:

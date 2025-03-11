@@ -19,7 +19,7 @@ import logging
 import argparse
 import traceback
 from .STT_client import SpeechRecognitionClient
-from .TTS_client import TTSClient
+from .XTTS_adapter import TTSClient
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_fixed
 from pathlib import Path
@@ -32,15 +32,35 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize Database Variables
-session = Session()
-client = SpeechRecognitionClient()
+# Load environment variables
 load_dotenv()
+
+# Initialize API and TTS clients
+client = SpeechRecognitionClient()
 speech_client = TTSClient(os.getenv("TTS_SERVER_URL"))
-LLM = ConversationManager(os.getenv("MOREMI_API_BASE_URL"))
-db_manager = SchedulerManager(3)  # Default value of days ahead is 3
+
+# Initialize Database session
+session = Session()
 doctors = session.query(Doctor).all()
 patients = session.query(Patient).all()
+
+# Initialize ConversationManager with proper API credentials
+moremi_base_url = os.getenv("MOREMI_API_BASE_URL")
+moremi_api_key = os.getenv("MOREMI_API_KEY") or os.getenv("OPENAI_API_KEY")
+
+try:
+    # Initialize with both URL and key specified
+    LLM = ConversationManager(moremi_base_url, moremi_api_key)
+    logger.info(f"Successfully initialized ConversationManager with URL: {moremi_base_url}")
+except Exception as e:
+    # Log the error but don't crash during module import
+    logger.error(f"Failed to initialize ConversationManager: {str(e)}")
+    logger.error(traceback.format_exc())
+    # Set LLM to None - individual functions will need to check and reinitialize if needed
+    LLM = None
+
+# Initialize scheduler
+db_manager = SchedulerManager(3)  # Default value of days ahead is 3
 
 # Get all current doctors into a list
 docs = []
@@ -165,28 +185,33 @@ class SpeechAssistant:
     def __init__(self):
         """Initialize the speech assistant with necessary configurations."""
         # Get the absolute path to the current directory containing the module
-        current_dir = Path(__file__).resolve().parent
+        current_dir = Path(__file__).parent.parent.absolute()
         env_path = current_dir / ".env"
-
         # Load environment variables with explicit path
         load_dotenv(dotenv_path=env_path)
         logger.info(f"Loading .env file from: {env_path}")  # Add debug logging
-
         self.messages: List[Message] = []
         self.suit_doc = []
         self.patient_id = None
         self.SILENCE_TIMEOUT = 3  # seconds
-        self.url = os.getenv("MOREMI_API_URL")
-        self.key = os.getenv("MOREMI_API_URL")
+        self.url = os.getenv("MOREMI_API_BASE_URL")
+        self.key = os.getenv("MOREMI_API_KEY")  # Fixed: was incorrectly using MOREMI_API_BASE_URL
+        
+        # Add validation for environment variables
         if not self.url:
-            logger.error(f"API_URL is not set. Checked .env file at: {env_path}")
-            raise ValueError("API_URL is not set")
+            logger.error(f"MOREMI_API_BASE_URL is not set. Checked .env file at: {env_path}")
+            raise ValueError("MOREMI_API_BASE_URL is not set")
+        if not self.key:
+            logger.warning(f"MOREMI_API_KEY is not set. Checked .env file at: {env_path}")
+            logger.warning("Will attempt to use default authentication mechanism")
+        
+        logger.info(f"Initialized SpeechAssistant with API URL: {self.url}")
         self._load_prompts()
 
     def _load_prompts(self) -> None:
         """Load system prompts from configuration file."""
         try:
-            with open("scheduler/prompt.json", "r") as file:
+            with open("prompt.json", "r") as file:
                 schema = json.load(file)
             self.system_prompt = schema.get("systemprompt", "")
             self.summary_system_prompt = schema.get("summarysystemprompt", "")
@@ -202,6 +227,7 @@ class SpeechAssistant:
 
         if not isinstance(messages, list):
             raise ValueError("messages must be a list")
+        
         query = [msg.to_dict() for msg in messages]
 
         data = {
@@ -213,17 +239,58 @@ class SpeechAssistant:
         }
         if system_prompt:
             data["systemPrompt"] = system_prompt
-
+            
+        # Add detailed logging before making the request
+        logger.info(f"Sending request to Moremi API at URL: {self.url}")
+        
         headers = {
             "Authorization": f"Bearer {self.key}",
             "azureml-model-deployment": "llava-deployment",
             "Content-Type": "application/json",
         }
+        
+        # Log request details (safely hiding the full authorization token)
+        auth_header = headers["Authorization"]
+        safe_auth = auth_header[:15] + "..." if len(auth_header) > 15 else auth_header
+        safe_headers = {**headers, "Authorization": safe_auth}
+        
+        logger.info(f"Request headers: {safe_headers}")
+        logger.info(f"Request data size: {len(str(data))} characters")
+        logger.info(f"Request contains {len(query)} messages")
+        
+        # Log a truncated version of the data for debugging
+        if query:
+            last_msg = query[-1]
+            logger.info(f"Last message in query: {json.dumps(last_msg, indent=2)[:200]}...")
+        
+        if system_prompt:
+            logger.info(f"Using system prompt (first 100 chars): {system_prompt[:100]}...")
+            
         try:
-            response = requests.post(self.url, json=data).text
-            return response
+            logger.info("Making API request to Moremi...")
+            start_time = time.time()
+            response = requests.post(self.url, json=data)
+            elapsed_time = time.time() - start_time
+            logger.info(f"API request completed in {elapsed_time:.2f} seconds")
+            
+            # Log response details
+            logger.info(f"Response status code: {response.status_code}")
+            
+            if response.status_code != 200:
+                logger.error(f"API error: {response.status_code} - {response.reason}")
+                logger.error(f"Response content: {response.text[:200]}...")
+                response.raise_for_status()
+                
+            response_text = response.text
+            logger.info(f"Response length: {len(response_text)} chars")
+            logger.info(f"Response preview (first 200 chars): {response_text[:200]}...")
+            
+            return response_text
         except requests.exceptions.RequestException as e:
             logger.error(f"Error calling Moremi API: {str(e)}")
+            logger.error(f"Request that caused error: URL={self.url}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise
 
     def save_conversation(self) -> None:
@@ -239,7 +306,7 @@ class SpeechAssistant:
         if context is not None:
             context = context
         else:
-            with open("scheduler/contexts.json", "r") as f:
+            with open("contexts.json", "r") as f:
                 contexts = json.load(f)
             context = contexts["context3"]
 

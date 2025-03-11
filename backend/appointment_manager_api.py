@@ -6,9 +6,9 @@ from .appointment_manager import (
     SchedulerManager, 
     MedicalAgent, 
     ReminderMessage,
-    SpeechRecognitionClient,
-    TTSClient
+    SpeechRecognitionClient
 )
+from .XTTS_adapter import TTSClient
 from datetime import datetime
 import logging
 from dotenv import load_dotenv
@@ -30,7 +30,7 @@ app = FastAPI(title="Medical Appointment Scheduler API")
 # Initialize clients
 speech_client = SpeechRecognitionClient()
 load_dotenv()
-tts_client = TTSClient(os.getenv("SPEECH_SERVICE_URL"))
+tts_client = TTSClient(api_url=os.getenv("XTTS_URL") or os.getenv("SPEECH_SERVICE_URL"))
 
 class SchedulerRequest(BaseModel):
     hours_ahead: int
@@ -141,12 +141,16 @@ async def generate_speech_output(text: str):
     """
     try:
         # Generate speech using the TTS client
-        tts_client.generate_speech(text)
-        return {"status": "success", "message": "Speech generated successfully"}
-
+        audio_data, sample_rate, base64_audio, _ = tts_client.TTS(text, play_locally=False)
+        return {
+            "status": "success", 
+            "message": "Speech generated successfully",
+            "audio": base64_audio,
+            "sample_rate": sample_rate
+        }
     except Exception as e:
-        logger.error(f"Error generating speech: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error generating speech: {e}")
+        return {"status": "error", "message": str(e)}
 
 @app.get("/health")
 async def health_check():

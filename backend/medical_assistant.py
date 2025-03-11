@@ -28,8 +28,8 @@ from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_fixed
 from .database import Patient, Session, get_session
 from .moremi import ConversationManager
-# from .database_utils import PatientDatabaseManager
-from .TTS_client import TTSClient
+from .database_utils import PatientDatabaseManager
+from .XTTS_adapter import TTSClient
 from .STT_client import SpeechRecognitionClient
 
 # Configure logging
@@ -62,7 +62,7 @@ class Message:
         """Convert message to dictionary format."""
         return asdict(self)
 
-class SpeechAssistant:
+class Assistant:
     """Main speech assistant class that handles speech recognition."""
     
     def __init__(self):
@@ -77,11 +77,11 @@ class SpeechAssistant:
         load_dotenv(config_path)
         
         # Initialize STT client settings
-        self.stt_server_url = os.getenv("STT_SERVER_URL", "https://1bf3-34-142-255-155.ngrok-free.app/")
+        self.stt_server_url = os.getenv("STT_SERVER_URL", "")
         
         # Initialize other components
         self.messages: List[Message] = []
-        self.api = os.getenv("MOREMI_API_URL")  # Fix: Use correct env var name
+        self.api = os.getenv("MOREMI_API_BASE_URL")  # Fix: Use correct env var name
         self._load_prompts()
         self.db_manager = PatientDatabaseManager()
         self.patient_id = None
@@ -126,8 +126,8 @@ class SpeechAssistant:
     def recognize_speech(self) -> str:
         """Record and transcribe speech from microphone using STT client."""
         timestamp = self._get_timestamp()
-        audio_path = Path(__file__).parent.parent / 'data' / 'audio' / f'recording_{timestamp}.wav'
-        transcript_path = Path(__file__).parent.parent / 'data' / 'transcripts' / f'transcript_{timestamp}.txt'
+        audio_path = Path(__file__).parent / 'data' / 'audio' / f'recording_{timestamp}.wav'
+        transcript_path = Path(__file__).parent / 'data' / 'transcripts' / f'transcript_{timestamp}.txt'
         
         logger.info("Starting speech recognition using STT client")
         print("\nListening... Press 'f' to finish recording")
@@ -162,28 +162,30 @@ class SpeechAssistant:
             return ""
 
     def get_moremi_response(self, messages: List[Message], system_prompt: Optional[str] = None) -> str:
-        """Get response from Moremi API."""
+        """Get response from Moremi API using the ConversationManager."""
         if not self.api:
             raise ValueError("Moremi API URL not configured")
 
         try:
-            headers = {
-                "Authorization": f"Bearer {os.getenv('MOREMI_API_KEY')}",
-                # "azureml-model-deployment": os.getenv('MOREMI_DEPLOYMENT', 'llava-deployment'),
-                "Content-Type": "application/json"
-            }
+            # Initialize the ConversationManager with the API URL
+            conversation_manager = ConversationManager(base_url=self.api)
             
-            # Structure the context more clearly
+            # Set the system prompt if provided
+            if system_prompt:
+                conversation_manager.custom_params["system_prompt"] = system_prompt
+            
+            # Get the current message to process
             current_message = messages[-1] if messages else None
             if not current_message:
                 raise ValueError("No message to process")
-
-            # Create example YAML
+            
+            # Create example YAML for system understanding
             example_yaml = """
 name: John Smith
 dob: 1980-01-15
 address: 123 Main Street
 phone: 024-5678-123
+email: john.smith@example.com
 insurance: ABC Insurance
 condition: flu
 symptoms:
@@ -197,73 +199,54 @@ appointment_details:
   scheduled_date: "2025-01-15"
 """
             
-            # Prepare the request data with clear context and query
-            data = {
-                'context': {
-                    'transcript': current_message.user_input,
-                    'timestamp': self._get_timestamp(),
-                    'conversation_history': [
-                        {
-                            'user_input': msg.user_input,
-                            'response': msg.response
-                        } for msg in messages[:-1]
-                    ] if len(messages) > 1 else []
-                },
-                'system_prompt': system_prompt or self.system_prompt,
-                'query': (
-                    f"Extract medical information from this transcript:\n\n"
-                    f"{current_message.user_input}\n\n"
-                    f"Format the extracted information as YAML, following this example structure:\n\n"
-                    f"{example_yaml}\n\n"
-                    "Remember:\n"
-                    "1. Only include information explicitly stated in the transcript\n"
-                    "2. Use the exact same field names as the example\n"
-                    "3. For missing information, use None\n"
-                    "4. Ensure the output is valid YAML\n"
-                    "5. Do not include any other text, ONLY the YAML output"
-                ),
-                'temperature': 0.2,
-                'max_tokens': 500
-            }
-
-            response = self._make_api_request(data, headers)
+            # Format the query to extract medical information as YAML
+            extraction_prompt = (
+                f"Extract medical information from this transcript:\n\n"
+                f"{current_message.user_input}\n\n"
+                f"Format the extracted information as YAML, following this example structure:\n\n"
+                f"{example_yaml}\n\n"
+                "Remember:\n"
+                "1. Only include information explicitly stated in the transcript\n"
+                "2. Use the exact same field names as the example\n"
+                "3. For missing information, use None\n"
+                "4. Ensure the output is valid YAML\n"
+                "5. Do not include any explanations or markdown formatting, ONLY the YAML output"
+            )
             
-            if not response.ok:
-                raise Exception(f"API request failed with status {response.status_code}: {response.text}")
+            logger.info(f"Sending transcript to Moremi API: {current_message.user_input[:100]}...")
             
-            # Parse response
+            # Add the user message with extraction prompt
+            conversation_manager.add_user_message(text=extraction_prompt)
+            
+            # Get the response (with non-streaming to get the full response at once)
+            response = conversation_manager.get_assistant_response(
+                stream=False,
+                max_tokens=500,
+                temperature=0.2
+            )
+            
+            # Clean up the response
+            extracted_info = response.strip().replace('```yaml', '').replace('```', '').strip()
+            
+            # Validate YAML
+            import yaml
             try:
-                response_data = response.json()
-                # Extract YAML content from response
-                if isinstance(response_data, dict):
-                    extracted_info = response_data.get('response', response_data)
-                else:
-                    extracted_info = response_data
-                
-                # Clean up YAML content
-                if isinstance(extracted_info, str):
-                    extracted_info = (extracted_info
-                        .strip()
-                        .replace('```yaml', '')
-                        .replace('```', '')
-                        .strip())
-                
-                # Validate YAML
-                import yaml
                 parsed_yaml = yaml.safe_load(extracted_info)
                 if not isinstance(parsed_yaml, dict):
+                    logger.warning(f"Non-dictionary YAML received: {extracted_info}")
                     raise ValueError(f"Invalid YAML structure: {extracted_info}")
                 
-                # Convert back to string
+                # Convert back to string with proper formatting
                 extracted_info = yaml.dump(parsed_yaml, default_flow_style=False)
                 
-                logger.debug(f"Parsed YAML: {extracted_info}")
-                return extracted_info
-                
-            except Exception as e:
-                logger.error(f"Failed to parse response: {str(e)}")
-                raise
-
+            except yaml.YAMLError as e:
+                logger.error(f"Invalid YAML received: {str(e)}")
+                logger.error(f"Raw content: {extracted_info}")
+                raise ValueError(f"Invalid YAML received from API: {str(e)}")
+            
+            logger.info("Successfully extracted medical information")
+            return extracted_info
+            
         except Exception as e:
             logger.error(f"Error getting Moremi response: {str(e)}")
             raise
@@ -310,7 +293,7 @@ appointment_details:
     def _load_prompts(self) -> None:
         """Load system prompts from configuration."""
         try:
-            prompt_path = Path(__file__).parent.parent / 'data' / 'prompts' / 'prompt_config.json'
+            prompt_path = Path(__file__).parent / 'data' / 'prompts' / 'prompt_config.json'
             if not prompt_path.exists():
                 raise FileNotFoundError("Prompt configuration file not found")
             
@@ -588,7 +571,7 @@ def main():
         parser.add_argument('--patient-id', type=int, help='Patient ID for database updates')
         args = parser.parse_args()
         
-        assistant = SpeechAssistant()
+        assistant = Assistant()
         assistant.run(patient_id=args.patient_id)
     except Exception as e:
         logger.critical(f"Critical error in main: {str(e)}")

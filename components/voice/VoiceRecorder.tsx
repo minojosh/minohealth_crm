@@ -10,6 +10,7 @@ interface VoiceRecorderProps {
   onRecordingStatusChange?: (status: TranscriptionStatus) => void;
   showTranscription?: boolean;
   autoConnect?: boolean;
+  sampleRate?: number;
 }
 
 export default function VoiceRecorder({
@@ -17,6 +18,7 @@ export default function VoiceRecorder({
   onRecordingStatusChange,
   showTranscription = false, // Changed from true to false to avoid duplicate display
   autoConnect = true,
+  sampleRate = 16000, // Changed from 24000 to 16000 to match STT expectations
 }: VoiceRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -43,8 +45,15 @@ export default function VoiceRecorder({
     audioService.onTranscription((response) => {
       console.log('Received transcription response:', response);
       
+      // Check for error messages
+      if (response.error) {
+        console.error('Transcription error:', response.error);
+        setError(response.error);
+        return;
+      }
+      
       // Handle both response formats (text or transcription)
-      const transcriptionText = response.text || response.transcription;
+      const transcriptionText = response.text || response.transcription || '';
       
       if (transcriptionText) {
         console.log('Setting transcription:', transcriptionText);
@@ -104,24 +113,33 @@ export default function VoiceRecorder({
   const startRecording = async () => {
     try {
       setError(null);
-      setTranscription(''); // Clear previous transcription
       
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 16000 // Request 16kHz sample rate for optimal speech recognition
+        } 
+      });
       
-      // Start audio visualization
+      // Start visualization
       startVisualization(stream);
       
       // Start recording
-      mediaRecorderRef.current = await audioService.startTranscription(stream);
+      const recorder = await audioService.startTranscription(stream);
+      mediaRecorderRef.current = recorder;
       
+      // Update state
       setIsRecording(true);
-      setIsProcessing(false);
       setStatus({
         isRecording: true,
         duration: 0,
         status: 'recording',
       });
       
+      // Notify parent component
       if (onRecordingStatusChange) {
         onRecordingStatusChange({
           isRecording: true,
@@ -129,116 +147,139 @@ export default function VoiceRecorder({
           status: 'recording',
         });
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start recording');
-      console.error('Recording error:', err);
+      
+      console.log('Recording started');
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setError(error instanceof Error ? error.message : 'Failed to start recording');
+      stopVisualization();
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    // Stop the media recorder if it exists
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
       
-      // Stop all tracks in the stream
-      if (mediaRecorderRef.current.stream) {
-        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-      }
-      
-      // Stop visualization
-      stopVisualization();
-      
-      // Show processing state
+      // Update state
       setIsRecording(false);
       setIsProcessing(true);
       setStatus({
         isRecording: false,
-        duration: status.duration,
+        duration: 0,
         status: 'processing',
       });
       
+      // Notify parent component
       if (onRecordingStatusChange) {
         onRecordingStatusChange({
           isRecording: false,
-          duration: status.duration,
+          duration: 0,
           status: 'processing',
         });
       }
+      
+      console.log('Recording stopped, processing audio...');
     }
+    
+    // Stop visualization
+    stopVisualization();
   };
 
   const startVisualization = (stream: MediaStream) => {
     if (!audioVisualizerRef.current) return;
     
-    // Initialize audio context and analyzer
-    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    analyserRef.current = audioContextRef.current.createAnalyser();
-    analyserRef.current.fftSize = 256;
-    
-    // Connect the stream to the analyzer
-    const source = audioContextRef.current.createMediaStreamSource(stream);
-    source.connect(analyserRef.current);
-    
-    // Start drawing the visualization
-    drawVisualization();
+    try {
+      // Create audio context for visualization only
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = audioCtx;
+      
+      // Create analyzer
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256; // Smaller FFT size for better performance
+      analyser.smoothingTimeConstant = 0.8; // Smoother transitions
+      analyserRef.current = analyser;
+      
+      // Connect stream to analyzer
+      const source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+      
+      // Start drawing
+      drawVisualization();
+    } catch (error) {
+      console.error('Error starting visualization:', error);
+    }
   };
 
   const drawVisualization = () => {
-    if (!audioVisualizerRef.current || !analyserRef.current) return;
+    if (!audioVisualizerRef.current || !analyserRef.current || !audioContextRef.current) return;
     
     const canvas = audioVisualizerRef.current;
     const canvasCtx = canvas.getContext('2d');
     if (!canvasCtx) return;
     
-    const bufferLength = analyserRef.current.frequencyBinCount;
+    const analyser = analyserRef.current;
+    const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
     
     const draw = () => {
-      if (!canvasCtx || !analyserRef.current) return;
+      // Stop if we're no longer recording
+      if (!isRecording) return;
       
+      // Schedule next frame
       animationFrameRef.current = requestAnimationFrame(draw);
       
-      analyserRef.current.getByteFrequencyData(dataArray);
+      // Get frequency data
+      analyser.getByteFrequencyData(dataArray);
       
-      canvasCtx.fillStyle = 'rgb(240, 240, 240)';
-      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      // Clear canvas
+      canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
       
+      // Set up drawing
       const barWidth = (canvas.width / bufferLength) * 2.5;
       let x = 0;
       
+      // Draw bars with gradient
+      const gradient = canvasCtx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#4f46e5'); // Indigo
+      gradient.addColorStop(1, '#818cf8'); // Light indigo
+      
+      // Draw each bar
       for (let i = 0; i < bufferLength; i++) {
-        const barHeight = dataArray[i] / 2;
+        const barHeight = (dataArray[i] / 255) * canvas.height;
         
-        canvasCtx.fillStyle = `rgb(${barHeight + 100}, 134, 244)`;
+        canvasCtx.fillStyle = gradient;
         canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
         
         x += barWidth + 1;
       }
     };
     
+    // Start animation
     draw();
   };
 
   const stopVisualization = () => {
+    // Cancel animation frame
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
     
+    // Close audio context
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      audioContextRef.current.close().catch(err => {
+        console.warn('Error closing audio context:', err);
+      });
       audioContextRef.current = null;
     }
     
-    // Clear the canvas
+    // Clear canvas
     if (audioVisualizerRef.current) {
       const canvasCtx = audioVisualizerRef.current.getContext('2d');
       if (canvasCtx) {
-        canvasCtx.clearRect(
-          0, 
-          0, 
-          audioVisualizerRef.current.width, 
-          audioVisualizerRef.current.height
-        );
+        canvasCtx.clearRect(0, 0, audioVisualizerRef.current.width, audioVisualizerRef.current.height);
       }
     }
   };
