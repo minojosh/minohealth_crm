@@ -1,23 +1,17 @@
 import base64
 from openai import OpenAI
-from dotenv import load_dotenv
-import os
+from typing import Optional
 
 
 class ConversationManager:
-    def __init__(self, base_url, api_key="None"):
+    def __init__(self, base_url, api_key="None", system_prompt: Optional[str] = None):
         self.client = OpenAI(base_url=base_url, api_key=api_key)
         self.conversation_history = []
         self.custom_params = {
-            # "country": "Ghana",
-            "mode": "inference",
-            # "modality": "chest x-ray",
-            # "worker_type":"general practitiooner",
-            # "user_role":"health seeker",
-            "system_prompt":'' # set this only when a user passes a system prompt on staging
-
+            "mode": "inference"
         }
-
+        if system_prompt is not None:
+            self.custom_params["system_prompt"] = system_prompt
     
     def add_user_message(self, text=None, image_path=None):
         """Add a user message to the conversation history"""
@@ -115,30 +109,19 @@ class ConversationManager:
 # Example usage
 def main():
     # Initialize conversation manager
-    load_dotenv()
-    base_url = os.getenv("MOREMI_API_BASE_URL")
-    conversation = ConversationManager(base_url)
+    conversation = ConversationManager(base_url="http://46.101.91.139:5003/v1")
     
-    # First turn - with image
-    # conversation.add_user_message(
-    #     text="What do you see in this chest X-ray?",
-    #     # image_path="path/to/xray.jpg"
-    # )
-        
-    # # Get first response
-    # conversation.get_assistant_response()
+    text="Tell me my name"
     
-    # Second turn - text only follow-up
+    #text only follow-up
     conversation.add_user_message(
-        text="Can you explain what pneumonia would look like on this image?"
+        text = text
+        
     )
     
     # Get second response
     conversation.get_assistant_response()
     
-    
-    # Get third response
-    # conversation.get_assistant_response()
     
     # Display full conversation
     print("\nFull Conversation:")
@@ -150,39 +133,3 @@ if __name__ == "__main__":
 
 
 
-# Report Generation
-# client = OpenAI(base_url, api_key="None")
-# response = client.chat.completions.create(
-#     model= "workspace/merged-llava-model",
-#     messages=[
-
-#         {
-#             "role": "user",
-#             "content": [
-#                 {
-#                     "type": "image_url",
-#                     "image_url": {
-#                         "url":  image_path,
-#                     },
-#                 },
-#                 {
-#                     "type": "text",
-#                     "text": context_data,
-#                 },
-#             ],
-#         },
-#     ],
-#     stream= True,
-#     max_tokens= 300,
-#     temperature= 1.0,
-#     # you can add other params supported by openai api
-#     extra_body={"country":"Ghana","mode":"report generation","modality":"chest x-ray"}
-    
-# )
-
-# collected_content=""
-# for chunk in response:
-#     if chunk.choices[0].delta.content is not None:
-#         content_piece =chunk.choices[0].delta.content
-#         collected_content += content_piece
-#         print(content_piece, end="", flush=True)

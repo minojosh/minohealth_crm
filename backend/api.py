@@ -21,6 +21,11 @@ import numpy as np
 from typing import Optional, List
 from pydantic import BaseModel
 from .TTS_client import TTSClient
+from .STT_client import SpeechRecognitionClient
+from fastapi.websockets import WebSocketState  # Add this import
+import tempfile
+import os
+from scipy import signal
 
 # Configure logging
 logging.basicConfig(
@@ -41,6 +46,9 @@ app = FastAPI(
 
 # Initialize TTS client
 tts_client = TTSClient()
+
+#Initialize STT client
+client = SpeechRecognitionClient("https://82fa-34-168-173-207.ngrok-free.app")
 
 print(f"FastAPI version: {fastapi.__version__}") # Print version at startup
 
@@ -168,7 +176,6 @@ async def transcribe_audio_endpoint(request: Request):
         
         # Check if this is a finish command or audio data
         if 'command' in data and data['command'] == 'finish':
-            # Forward finish command to STT service
             logger.info("Finish command received, proxying to STT service")
             return {"transcription": "", "status": "finished"}
         
@@ -176,22 +183,40 @@ async def transcribe_audio_endpoint(request: Request):
             # Process audio data
             audio_data = data['audio']
             try:
+                # Log incoming data stats
+                logger.info(f"Received base64 audio data of length: {len(audio_data)}")
+                
                 # Convert from base64 to bytes
                 audio_bytes = base64.b64decode(audio_data)
+                logger.info(f"Decoded audio bytes length: {len(audio_bytes)}")
+                
+                # Convert to numpy array for analysis
+                audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
+                audio_stats = {
+                    "length": len(audio_np),
+                    "duration": len(audio_np) / 16000,  # Assuming 16kHz sample rate
+                    "min": float(np.min(audio_np)),
+                    "max": float(np.max(audio_np)),
+                    "mean": float(np.mean(audio_np)),
+                    "std": float(np.std(audio_np)),
+                    "non_zero": int(np.count_nonzero(audio_np))
+                }
+                logger.info(f"Audio statistics: {audio_stats}")
                 
                 # Process using the STT client
+                logger.info("Sending audio to STT service...")
                 transcription = client.transcribe_audio(audio_bytes)
                 
                 logger.info(f"Transcription result: {transcription}")
                 return {"transcription": transcription}
             except Exception as e:
-                logger.error(f"Error processing audio data: {str(e)}")
+                logger.error(f"Error processing audio data: {str(e)}", exc_info=True)
                 return {"error": f"Failed to process audio: {str(e)}"}
         
         return {"error": "Invalid request format"}
     
     except Exception as e:
-        logger.error(f"Error in transcribe endpoint: {str(e)}")
+        logger.error(f"Error in transcribe endpoint: {str(e)}", exc_info=True)
         return {"error": f"Internal server error: {str(e)}"}
 
 @app.post("/api/extract/data")
@@ -236,156 +261,114 @@ async def extract_data(request: Request):
 
 @app.websocket("/ws/audio")
 async def audio_websocket(websocket: WebSocket, token: str = Query(None)):
-    """
-    WebSocket endpoint for handling audio streaming and transcription.
-    Now supports both streaming mode and complete recording processing.
-    """
-    # Check authentication token
-    if token not in API_KEYS.values():
-        logger.warning(f"Authentication failed for WebSocket connection: {token}")
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        return
-        
     await websocket.accept()
     logger.info("Audio WebSocket connection established")
     
     try:
-        await websocket.send_json({
-            "type": "connection_status",
-            "status": "connected", 
-            "message": "WebSocket connection established successfully"
-        })
-        
         while True:
-            # Receive message from client
             try:
                 data = await websocket.receive_json()
                 message_type = data.get("type")
                 payload = data.get("payload", {})
-                timestamp = data.get("timestamp", 0)
                 
                 if message_type == "transcription":
                     try:
-                        # Process audio data received from client
                         audio_data = payload.get("audioData")
-                        sample_rate = payload.get("sampleRate", 16000)
-                        process_complete = payload.get("processComplete", False)
+                        audio_format = payload.get("format", "webm")
+                        codec = payload.get("codec", "opus")
                         
                         if not audio_data:
-                            raise ValueError("No audio data provided")
+                            await websocket.send_json({
+                                "type": "transcription",
+                                "text": "No audio data provided"
+                            })
+                            continue
                         
                         # Decode base64 audio data
                         audio_bytes = base64.b64decode(audio_data)
                         
-                        # Convert to float32 numpy array
-                        audio_np = safe_frombuffer(audio_bytes, dtype=np.float32)
-                        
-                        # Log the audio processing approach
-                        if process_complete:
-                            logger.info(f"Processing complete audio recording of {len(audio_np)/sample_rate:.2f} seconds")
+                        if audio_format == "webm" and codec == "opus":
+                            # For WebM/Opus, we need to decode it first
+                            import soundfile as sf
+                            import io
+                            
+                            # Create a temporary file to save the WebM audio
+                            with tempfile.NamedTemporaryFile(suffix='.webm', delete=False) as temp_file:
+                                temp_file.write(audio_bytes)
+                                temp_file_path = temp_file.name
+                            
+                            try:
+                                # Read the WebM file using soundfile
+                                with sf.SoundFile(temp_file_path) as f:
+                                    audio_np = f.read()
+                                    sample_rate = f.samplerate
+                                    
+                                # Convert to mono if stereo
+                                if len(audio_np.shape) > 1:
+                                    audio_np = np.mean(audio_np, axis=1)
+                                
+                                # Resample to 16kHz if needed
+                                if sample_rate != 16000:
+                                    num_samples = int(len(audio_np) * 16000 / sample_rate)
+                                    audio_np = signal.resample(audio_np, num_samples)
+                                
+                                # Normalize audio
+                                if len(audio_np) > 0:
+                                    max_val = np.max(np.abs(audio_np))
+                                    if max_val > 0:
+                                        audio_np = audio_np / max_val
+                                
+                                # Convert to float32
+                                audio_np = audio_np.astype(np.float32)
+                            finally:
+                                # Clean up temporary file
+                                os.unlink(temp_file_path)
                         else:
-                            logger.info(f"Processing streaming audio chunk of {len(audio_np)/sample_rate:.2f} seconds")
+                            # For raw PCM float32 data
+                            audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
+                        
+                        # Check if audio contains actual data
+                        if len(audio_np) == 0 or np.all(np.abs(audio_np) < 1e-6):
+                            logger.warning("Audio data contains all zeros or is too quiet")
+                            await websocket.send_json({
+                                "type": "transcription",
+                                "text": "No speech detected"
+                            })
+                            continue
                         
                         # Use the client's transcribe_audio method
                         transcription = client.transcribe_audio(audio_np.tobytes())
                         logger.info(f"Transcription result: {transcription}")
                         
-                        # Proper handling of different response types:
-                        # 1. Only treat as "No speech detected" if the transcription is specifically that phrase
-                        # 2. Handle error messages as errors
-                        # 3. Any other response is considered a valid transcription
-                        if not transcription:
-                            logger.warning("Empty transcription received from STT service")
+                        if transcription and not transcription.startswith("Processing error"):
                             await websocket.send_json({
                                 "type": "transcription",
-                                "payload": {
-                                    "text": "No speech detected",
-                                    "transcription": "No speech detected", 
-                                    "confidence": 0.0,
-                                    "isComplete": process_complete
-                                },
-                                "timestamp": timestamp
-                            })
-                        elif transcription == "No speech detected" or transcription == "No transcription result received":
-                            logger.warning("No speech detected in audio")
-                            await websocket.send_json({
-                                "type": "transcription",
-                                "payload": {
-                                    "text": "No speech detected",
-                                    "transcription": "No speech detected", 
-                                    "confidence": 0.0,
-                                    "isComplete": process_complete
-                                },
-                                "timestamp": timestamp
-                            })
-                        elif transcription.startswith(("Error", "Connection error", "Server error")):
-                            # This is an actual error, not a transcription
-                            logger.error(f"Error from STT service: {transcription}")
-                            await websocket.send_json({
-                                "type": "error",
-                                "payload": {
-                                    "message": transcription
-                                },
-                                "timestamp": timestamp
+                                "text": transcription
                             })
                         else:
-                            # Any other response is considered a valid transcription
-                            logger.info(f"Valid transcription received: '{transcription}'")
                             await websocket.send_json({
                                 "type": "transcription",
-                                "payload": {
-                                    "text": transcription,
-                                    "transcription": transcription,
-                                    "confidence": 0.9,
-                                    "isComplete": process_complete
-                                },
-                                "timestamp": timestamp
+                                "text": "No speech detected"
                             })
-                        
+                            
                     except Exception as e:
                         logger.error(f"Error processing audio data: {str(e)}")
-                        await websocket.send_json({
-                            "type": "error",
-                            "payload": {
-                                "message": f"Error processing audio: {str(e)}"
-                            },
-                            "timestamp": timestamp
-                        })
-                elif message_type == "ping":
-                    # Add a ping handler to keep connection alive
-                    await websocket.send_json({
-                        "type": "pong",
-                        "timestamp": timestamp
-                    })
-                else:
-                    # Handle other message types
-                    await websocket.send_json({
-                        "type": "status",
-                        "payload": {
-                            "message": f"Received message type: {message_type}"
-                        },
-                        "timestamp": timestamp
-                    })
-            except json.JSONDecodeError as e:
-                logger.error(f"Invalid JSON received: {e}")
-                await websocket.send_json({
-                    "type": "error",
-                    "payload": {
-                        "message": "Invalid JSON format"
-                    }
-                })
-                continue
-            except asyncio.CancelledError:
-                logger.info("WebSocket task was cancelled")
+                        if websocket.client_state == WebSocketState.CONNECTED:
+                            await websocket.send_json({
+                                "type": "error",
+                                "text": f"Error processing audio: {str(e)}"
+                            })
+                            
+            except WebSocketDisconnect:
+                logger.info("WebSocket client disconnected")
                 break
-                    
-    except WebSocketDisconnect:
-        logger.info("Audio WebSocket client disconnected")
+            except Exception as e:
+                logger.error(f"Error in websocket communication: {str(e)}")
+                break
+                
     except Exception as e:
         logger.error(f"Error in audio websocket: {str(e)}")
     finally:
-        if websocket.client_state == WebSocket.client_state.CONNECTED:
-            await websocket.close()
         logger.info("Audio WebSocket connection closed")
 
 @app.websocket("/ws/schedule/{patient_id}")
@@ -394,6 +377,7 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
     WebSocket endpoint that handles the entire scheduling flow
     """
     await websocket.accept()
+    logger.info(f"WebSocket connection accepted for patient {patient_id}")
     assistant = None
     
     try:
@@ -402,301 +386,269 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
         assistant.patient_id = patient_id
         
         # Send initial greeting
-        greeting = "Welcome to Moremi AI Scheduler! Please send the conversation context to begin."
+        greeting = "Welcome to Moremi AI Scheduler! Please hold while I process your conversation."
         await websocket.send_json({
             "type": "message",
             "text": greeting
         })
+        logger.info("Sent initial greeting")
 
-        # Wait for context from client
-        try:
-            message = await websocket.receive_json()
-            context = message.get("context")
-            if not context:
-                raise ValueError("No context provided")
+        while True:
+            try:
+                message = await websocket.receive_json()
+                logger.info(f"Received WebSocket message: {message}")
                 
-            # Process initial context and specialty search
-            initial_question = assistant.manage_context(context)  # Pass the received context
-            assistant.messages.append(Message(user_input=initial_question))
-            
-            # Send acknowledgment
-            await websocket.send_json({
-                "type": "message",
-                "text": "Context received. I am listening..."
-            })
-            
-            # Generate and send TTS
-            audio_data, sample_rate = speech_client.generate_speech("Context received. I am listening...")
-            if audio_data is not None:
-                base64_audio = convert_audio_to_base64(audio_data)
-                await websocket.send_json({
-                    "type": "audio",
-                    "audio": base64_audio,
-                    "sample_rate": sample_rate
-                })
-
-            # Get initial Moremi response for specialty/doctor matching
-            response = assistant.get_moremi_response(assistant.messages, assistant.system_prompt)
-            assistant.messages[-1].add_response(str(response))
-            
-            # Process specialty/doctor search
-            if 'search_specialty' in str(response).lower():
-                text = "Finding a suitable doctor"
-                await websocket.send_json({
-                    "type": "message",
-                    "text": text
-                })
-                
-                # Generate and send TTS
-                audio_data, sample_rate = speech_client.generate_speech(text)
-                if audio_data is not None:
-                    base64_audio = convert_audio_to_base64(audio_data)
-                    await websocket.send_json({
-                        "type": "audio",
-                        "audio": base64_audio,
-                        "sample_rate": sample_rate
-                    })
-                
-                for doc in docs:
-                    specialty = doc['specialty']
-                    if specialty.lower() in response.lower():
-                        assistant.suit_doc.append(doc)
-                        
-                if len(assistant.suit_doc) == 0:
-                    msg = "The required specialty is not available in our facility. Please speak to the present doctor about a referral."
-                    await websocket.send_json({
-                        "type": "message",
-                        "text": msg
-                    })
-                    audio_data, sample_rate = speech_client.generate_speech(msg)
-                    if audio_data is not None:
-                        base64_audio = convert_audio_to_base64(audio_data)
-                        await websocket.send_json({
-                            "type": "audio",
-                            "audio": base64_audio,
-                            "sample_rate": sample_rate
-                        })
-                
-            else:
-                text = 'Finding available days for the doctor'
-                await websocket.send_json({
-                    "type": "message",
-                    "text": text
-                })
-                
-                # Generate and send TTS
-                audio_data, sample_rate = speech_client.generate_speech(text)
-                if audio_data is not None:
-                    base64_audio = convert_audio_to_base64(audio_data)
-                    await websocket.send_json({
-                        "type": "audio",
-                        "audio": base64_audio,
-                        "sample_rate": sample_rate
-                    })
-                
-                for doc in docs:
-                    if doc['doctor_name'] in response:
-                        assistant.suit_doc.append(doc)
-                        
-                if len(assistant.suit_doc) == 0:
-                    msg = "The required doctor is not present in our facility. Please speak to the present doctor about a referral."
-                    await websocket.send_json({
-                        "type": "message",
-                        "text": msg
-                    })
-                    audio_data, sample_rate = speech_client.generate_speech(msg)
-                    if audio_data is not None:
-                        base64_audio = convert_audio_to_base64(audio_data)
-                        await websocket.send_json({
-                            "type": "audio",
-                            "audio": base64_audio,
-                            "sample_rate": sample_rate
-                        })
-
-            # If doctors were found, process and send available slots
-            if len(assistant.suit_doc) != 0:
-                doctors_with_slots = []
-                for doc in assistant.suit_doc:
-                    slots = []
-                    while True:
-                        new_slots = db_manager._get_new_date(doc['doctor_id'])
-                        if len(new_slots) != 0 or db_manager.days_ahead >= 90:
-                            slots.extend([slot.strftime('%Y-%m-%d %H:%M:%S') 
-                                        for slot in new_slots])
-                            break
-                        db_manager.days_ahead += 5
+                if message.get("type") == "context":
+                    context = message.get("context")
+                    if not context:
+                        raise ValueError("No context provided")
                     
-                    doc_info = doc.copy()
-                    doc_info['available_slots'] = slots
-                    doctors_with_slots.append(doc_info)
+                    logger.info(f"Received context: {context}")
+                    
+                    # Add initial context using ConversationManager
+                    assistant.LLM.add_user_message(
+                        text=assistant.manage_context(context)
+                    )
+                    
+                    # Get initial LLM response
+                    response = assistant.LLM.get_assistant_response()
+                    logger.info(f"Initial Moremi response: {response}")
 
-                await websocket.send_json({
-                    "type": "doctors",
-                    "data": doctors_with_slots
-                })
-
-            # Continue with the existing command loop
-            while True:
-                try:
-                    message = await websocket.receive_json()
-                    command = message.get("command")
-
-                    if command == "start_listening":
-                        # Start speech recognition
-                        transcription = client.recognize_speech()
+                    # Process initial response for specialty/doctor search
+                    if 'search_specialty' in str(response).lower():
+                        logger.info("Finding a suitable doctor")
+                        await websocket.send_json({
+                            "type": "message",
+                            "text": "Finding a suitable doctor"
+                        })
                         
-                        if transcription.strip():
-                            # Send transcription to client
-                            await websocket.send_json({
-                                "type": "transcription",
-                                "text": transcription
-                            })
+                        # Search for doctors by specialty
+                        for doc in docs:
+                            specialty = doc['specialty']
+                            if specialty.lower() in response.lower():
+                                assistant.suit_doc.append(doc)
+                    else:
+                        logger.info('Finding available days for the doctor')
+                        await websocket.send_json({
+                            "type": "message",
+                            "text": "Finding available days for the doctor"
+                        })
+                        
+                        # Search for specific doctor
+                        for doc in docs:
+                            if doc['doctor_name'] in response:
+                                assistant.suit_doc.append(doc)
 
-                            # Process with Moremi
-                            assistant.messages.append(Message(user_input=transcription))
-                            response = assistant.get_moremi_response(
-                                assistant.messages,
-                                assistant.system_prompt
-                            )
-                            assistant.messages[-1].add_response(response)
+                    # Process slots if doctors were found
+                    if assistant.suit_doc:
+                        slots_response = ''
+                        for doc in assistant.suit_doc:
+                            while True:
+                                slots = db_manager._get_new_date(doc['doctor_id'])
+                                if slots:
+                                    slots_response += f'\n{db_manager.format_available_slots(slots, doc["doctor_name"])}\n'
+                                    break
+                                elif db_manager.days_ahead == 90:
+                                    slots_response += f'\n{db_manager.format_available_slots(slots, doc["doctor_name"])}\n'
+                                    break
+                                else:
+                                    db_manager.days_ahead += 5
 
-                            # Send response text
+                        # Update LLM conversation with slots
+                        assistant.LLM.add_user_message(text="What slots are available")
+                        assistant.LLM.conversation_history.append({
+                            "role": "assistant",
+                            "content": slots_response
+                        })
+                        
+                        # Send slots to frontend
+                        await websocket.send_json({
+                            "type": "message",
+                            "text": slots_response
+                        })
+                        logger.info("Sent available slots")
+
+                    else:
+                        # No doctors found
+                        no_doctors_msg = "Unfortunately there are no doctors available at the moment. Please speak to the present doctor for clarification of subsequent steps."
+                        assistant.LLM.add_user_message(text="Find a suitable doctor")
+                        assistant.LLM.conversation_history.append({
+                            "role": "assistant",
+                            "content": no_doctors_msg
+                        })
+                        
+                        await websocket.send_json({
+                            "type": "message",
+                            "text": no_doctors_msg
+                        })
+                        logger.info("No doctors found")
+
+                elif message.get("type") == "message":
+                    try:
+                        text = message.get("text")
+                        role = message.get("role")
+                        logger.info(f"Received message from {role}: {text}")
+                        
+                        if text and role == "user":
+                            # Add user message to conversation
+                            assistant.LLM.add_user_message(text=text)
+                            logger.info("Added user message to conversation")
+                            
+                            # Get LLM response
+                            response = assistant.LLM.get_assistant_response()
+                            logger.info(f"Got LLM response: {response}")
+                            
+                            # Send response back to client
                             await websocket.send_json({
                                 "type": "message",
+                                "role": "assistant",
                                 "text": response
                             })
-
-                            # Generate and send TTS
-                            audio_data, sample_rate = speech_client.generate_speech(response)
-                            if audio_data is not None:
-                                base64_audio = convert_audio_to_base64(audio_data)
-                                await websocket.send_json({
-                                    "type": "audio",
-                                    "audio": base64_audio,
-                                    "sample_rate": sample_rate
-                                })
-
-                            # If doctors were found, send them
-                            if assistant.suit_doc:
-                                # Process available slots
-                                doctors_with_slots = []
-                                for doc in assistant.suit_doc:
-                                    slots = []
-                                    while True:
-                                        new_slots = db_manager._get_new_date(doc['doctor_id'])
-                                        if len(new_slots) != 0 or db_manager.days_ahead >= 90:
-                                            slots.extend([slot.strftime('%Y-%m-%d %H:%M:%S') 
-                                                        for slot in new_slots])
-                                            break
-                                        db_manager.days_ahead += 5
-                                    
-                                    doc_info = doc.copy()
-                                    doc_info['available_slots'] = slots
-                                    doctors_with_slots.append(doc_info)
-
-                                await websocket.send_json({
-                                    "type": "doctors",
-                                    "data": doctors_with_slots
-                                })
-
-                    elif command == "finish":
-                        # Get conversation summary
-                        assistant.messages.append(
-                            Message(user_input="Extract the agreed upon schedule from the interaction history. If there was no agreed upon appointment respond with the word null.")
-                        )
-                        summary = assistant.get_moremi_response(
-                            assistant.messages,
-                            assistant.summary_system_prompt
-                        )
-
-                        # Send summary to client
+                            logger.info("Sent assistant response")
+                        else:
+                            logger.warning(f"Invalid message format: {message}")
+                            
+                    except Exception as e:
+                        logger.error(f"Error processing message: {str(e)}", exc_info=True)
                         await websocket.send_json({
-                            "type": "summary",
-                            "text": summary
+                            "type": "error",
+                            "message": f"Error processing message: {str(e)}"
                         })
 
-                        # Generate and send TTS for summary
-                        audio_data, sample_rate = speech_client.generate_speech(f"Summary: {summary}")
-                        if audio_data is not None:
-                            base64_audio = convert_audio_to_base64(audio_data)
+                elif message.get("type") == "audio_input":
+                    try:
+                        audio_data = message.get("audio")
+                        import websockets
+                        # Use the websockets library for client connection
+                        async with websockets.connect(
+                            f"ws://localhost:8000/ws/audio?token={API_KEYS['websocket_key']}"
+                        ) as audio_ws:
+                            await audio_ws.send(json.dumps({
+                                "type": "transcription",
+                                "payload": {
+                                    "audioData": audio_data,
+                                    "sampleRate": message.get("sampleRate", 16000),
+                                    "processComplete": message.get("processComplete", False)
+                                }
+                            }))
+                            
+                            result = json.loads(await audio_ws.recv())
+                            
+                            # Forward the transcription result back to the frontend
+                            if result.get("type") == "transcription":
+                                transcription = result.get("payload", {}).get("text", "")
+                                
+                                # Only send message if we have actual transcription
+                                if transcription and transcription != "No speech detected":
+                                    # Send as a user message to show in conversation
+                                    await websocket.send_json({
+                                        "type": "message",
+                                        "role": "user",
+                                        "text": transcription
+                                    })
+                                    
+                                    # Get LLM response
+                                    assistant.LLM.add_user_message(text=transcription)
+                                    response = assistant.LLM.get_assistant_response()
+                                    
+                                    # Send response to client
+                                    await websocket.send_json({
+                                        "type": "message",
+                                        "role": "assistant",
+                                        "text": response
+                                    })
+                                else:
+                                    # Send feedback about no speech detected
+                                    await websocket.send_json({
+                                        "type": "status",
+                                        "message": "No speech detected, please try again"
+                                    })
+                    except Exception as e:
+                        logger.error(f"Error processing audio: {str(e)}")
+                        await websocket.send_json({
+                            "type": "error",
+                            "message": f"Error processing audio: {str(e)}"
+                        })
+
+                elif message.get("type") == "end_conversation":
+                  # Change to summary system prompt
+                    assistant.LLM.custom_params["system_prompt"] = assistant.summary_system_prompt
+                    assistant.LLM.add_user_message(
+                        text="Extract the agreed upon schedule from the interaction history. If there was no agreed upon appointment respond with the word null."
+                    )
+                    summary = assistant.LLM.get_assistant_response()
+                    
+                    if summary == "null":
+                        await websocket.send_json({
+                            "type": "summary",
+                            "text": "Couldn't schedule the appointment"
+                        })
+                    else:
+                        try:
+                            parsed = json.loads(summary)
+                            if isinstance(parsed, str):
+                                parsed_dict = json.loads(parsed)
+                            else:
+                                parsed_dict = parsed
+                            
+                            # Update database
+                            schedule_appointment(assistant.patient_id, parsed_dict)
+                                
+                            # Send summary to frontend
                             await websocket.send_json({
-                                "type": "audio",
-                                "audio": base64_audio,
-                                "sample_rate": sample_rate
+                                "type": "summary",
+                                "text": json.dumps(parsed_dict)
                             })
-
-                        if summary != "null":
-                            try:
-                                # Parse and save appointment
-                                parsed_dict = json.loads(summary)
-                                schedule_appointment(patient_id, parsed_dict)
                                 
-                                await websocket.send_json({
-                                    "type": "appointment",
-                                    "status": "success",
-                                    "data": parsed_dict
-                                })
-
-                                # Generate and send TTS for confirmation
-                                confirm_message = f"Your appointment with {parsed_dict['doctorName']} has been scheduled for {parsed_dict['appointmentDateTime']}."
-                                audio_data, sample_rate = speech_client.generate_speech(confirm_message)
-                                if audio_data is not None:
-                                    base64_audio = convert_audio_to_base64(audio_data)
-                                    await websocket.send_json({
-                                        "type": "audio",
-                                        "audio": base64_audio,
-                                        "sample_rate": sample_rate
-                                    })
-                            except Exception as e:
-                                logger.error(f"Error saving appointment: {str(e)}")
-                                error_message = "Failed to save appointment"
-                                await websocket.send_json({
-                                    "type": "error",
-                                    "message": error_message
-                                })
-                                
-                                # Generate and send TTS for error
-                                audio_data, sample_rate = speech_client.generate_speech(error_message)
-                                if audio_data is not None:
-                                    base64_audio = convert_audio_to_base64(audio_data)
-                                    await websocket.send_json({
-                                        "type": "audio",
-                                        "audio": base64_audio,
-                                        "sample_rate": sample_rate
-                                    })
+                        except json.JSONDecodeError as e:
+                            await websocket.send_json({
+                                "type": "error",
+                                "message": f"Invalid appointment format: {str(e)}"
+                            })
+                    
+                    # Save conversation and break
+                    try:
+                        # Convert conversation history to a list of dicts if not already
+                        conversation_to_save = []
+                        for msg in assistant.LLM.conversation_history:
+                            if hasattr(msg, 'to_dict'):
+                                conversation_to_save.append(msg.to_dict())
+                            else:
+                                conversation_to_save.append(msg)
                         
-                        break
+                        # Save the processed conversation
+                        with open('conversation.txt', 'w') as f:
+                            json.dump(conversation_to_save, f, indent=4)
+                        logger.info("Conversation saved successfully")
+                    except Exception as e:
+                        logger.error(f"Error saving conversation: {str(e)}")
+                    break
 
-                except json.JSONDecodeError:
-                    logger.error("Invalid JSON received")
-                    continue
-
-        except json.JSONDecodeError:
-            await websocket.send_json({
-                "type": "error",
-                "message": "Invalid JSON format for context"
-            })
-            return
-        except ValueError as e:
-            await websocket.send_json({
-                "type": "error",
-                "message": str(e)
-            })
-            return
+            except WebSocketDisconnect:
+                logger.info("WebSocket disconnected")
+            except Exception as e:
+                logger.error(f"Error in conversation: {str(e)}")
+                await websocket.send_json({
+                    "type": "error",
+                    "message": str(e)
+                })
+            finally:
+                if assistant:
+                    # Clean up any resources
+                    pass
 
     except WebSocketDisconnect:
-        logger.info("Client disconnected")
+        logger.info("WebSocket disconnected")
     except Exception as e:
-        logger.error(f"Error in scheduling session: {str(e)}")
-        if websocket.client_state.CONNECTED:
-            await websocket.send_json({
-                "type": "error",
-                "message": str(e)
-            })
+        logger.error(f"Error in conversation: {str(e)}")
+        await websocket.send_json({
+            "type": "error",
+            "message": str(e)
+        })
     finally:
         if assistant:
-            assistant.save_conversation()
-        await websocket.close()
+            # Clean up any resources
+            pass
 
 @app.websocket("/ws/conversation")
 async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(...), type: str = Query(...), token: str = Query(None)):
@@ -841,7 +793,8 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                             
                         # Send transcription back to client
                         await websocket.send_json({
-                            "type": "transcription",
+                            "type": "message",
+                            "role": "user",  # Add role to identify user messages
                             "text": transcription
                         })
                         
@@ -859,6 +812,7 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                             # Send text response
                             await websocket.send_json({
                                 "type": "message",
+                                "role": "assistant",  # Add role to identify assistant messages
                                 "text": response
                             })
                             
@@ -886,6 +840,7 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                             # Send text response
                             await websocket.send_json({
                                 "type": "message",
+                                "role": "assistant",  # Add role to identify assistant messages
                                 "text": response
                             })
                             
@@ -990,7 +945,7 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
     except Exception as e:
         logger.error(f"Error in conversation websocket: {str(e)}")
     finally:
-        if websocket.client_state == WebSocket.client_state.CONNECTED:
+        if websocket.client_state.CONNECTED:
             await websocket.close()
         logger.info(f"Conversation WebSocket connection closed for patient {patient_id}")
 
@@ -1081,6 +1036,7 @@ async def health_check():
     Health check endpoint
     """
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

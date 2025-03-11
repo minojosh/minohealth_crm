@@ -9,10 +9,9 @@ import requests
 import os
 import time
 from dataclasses import dataclass, asdict
-
-from .moremi import ConversationManager
 from .database import Doctor, Session, Patient, Appointment
 from .appointment_manager import SchedulerManager
+from .moremi import ConversationManager
 import json
 from typing import List, Optional
 import logging
@@ -27,104 +26,87 @@ from pathlib import Path
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("speech_assistant.log"), logging.StreamHandler()],
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('speech_assistant.log'),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger(__name__)
 
 # Initialize Database Variables
 session = Session()
 client = SpeechRecognitionClient()
-load_dotenv()
 speech_client = TTSClient(os.getenv("TTS_SERVER_URL"))
-LLM = ConversationManager(os.getenv("MOREMI_API_BASE_URL"))
-db_manager = SchedulerManager(3)  # Default value of days ahead is 3
+db_manager = SchedulerManager(3) # Default value of days ahead is 3
 doctors = session.query(Doctor).all()
 patients = session.query(Patient).all()
 
 # Get all current doctors into a list
 docs = []
 for doctor in doctors:
-    details = {
-        "doctor_id": doctor.doctor_id,  # Add doctor_id to details
-        "doctor_name": doctor.name,
-        "specialty": doctor.specialization,
-    }
+    details={
+            'doctor_id': doctor.doctor_id,  # Add doctor_id to details
+            'doctor_name': doctor.name,
+            'specialty': doctor.specialization
+            }
     docs.append(details)
-
-
+    
+    
 def schedule_appointment(patient_id: int, appointment_details: dict) -> dict:
     """
     Schedule the appointment for a given patient.
-
+    
     Args:
         patient_id: The ID of the patient
         appointment_details: A dictionary of the appointment details
-
-
+        
+        
     Returns:
         dict: A dictionary containing the status and message of the operation
     """
-
+    
     try:
         # Check if patient exists
         patient = session.query(Patient).filter_by(patient_id=patient_id).first()
         if not patient:
             return {
                 "success": False,
-                "message": f"Patient with name and ID {patient.name}(ID:{patient_id}) not found in database",
+                "message": f"Patient with name and ID {patient.name}(ID:{patient_id}) not found in database"
             }
-        elif patient.name != appointment_details["patientName"]:
-            logger.info(
-                f"Updating patient name as {patient.name} instead of {appointment_details['patientName']} in database"
-            )
-
+        elif patient.name != appointment_details['patientName']:
+            logger.info(f"Updating patient name as {patient.name} instead of {appointment_details['patientName']} in database")
+        
         # Find an existing appointment for the patient
-        appointment = (
-            session.query(Appointment).filter_by(patient_id=patient_id).first()
-        )
+        appointment = session.query(Appointment).filter_by(patient_id=patient_id).first()
         if appointment:
-            logger.info(
-                f"An appointment exists for the patient on {appointment.datetime} with {[doc['doctor_name'] for doc in docs if doc['doctor_id'] == appointment.doctor_id]}"
-            )
-
+            logger.info(f"An appointment exists for the patient on {appointment.datetime} with {[doc['doctor_name'] for doc in docs if doc['doctor_id'] == appointment.doctor_id]}")
+        
         try:
             logger.info("Attempting to update the database")
             # Try to extract doctor_id
-            matching_doctors = [
-                doc["doctor_id"]
-                for doc in docs
-                if doc["doctor_name"] == appointment_details["doctorName"]
-            ]
-
+            matching_doctors = [doc["doctor_id"] for doc in docs if doc['doctor_name'] == appointment_details['doctorName']]
+            
             if not matching_doctors:
-                logger.error(
-                    f"No matching doctor found for name: {appointment_details['doctorName']}"
-                )
-                raise ValueError(
-                    f"No doctor found with name {appointment_details['doctorName']}"
-                )
-
+                logger.error(f"No matching doctor found for name: {appointment_details['doctorName']}")
+                raise ValueError(f"No doctor found with name {appointment_details['doctorName']}")
+            
             doctor_id = matching_doctors[0]
-
+            
             # Convert datetime
             try:
-                appointment_datetime = datetime.strptime(
-                    str(appointment_details["appointmentDateTime"]), "%Y-%m-%d %H:%M:%S"
-                ).replace(microsecond=0)
+                appointment_datetime = datetime.strptime(str(appointment_details['appointmentDateTime']), '%Y-%m-%d %H:%M:%S').replace(microsecond=0)
             except ValueError as dt_error:
-                logger.error(
-                    f"Failed to parse datetime: {appointment_details['appointmentDateTime']}"
-                )
+                logger.error(f"Failed to parse datetime: {appointment_details['appointmentDateTime']}")
                 logger.error(f"Datetime parsing error: {dt_error}")
                 raise
-
+            
             new_appointment = Appointment(
                 patient_id=patient_id,
                 doctor_id=doctor_id,
                 datetime=appointment_datetime,
                 appointment_type=appointment_details["appointmentType"],
-                notes=appointment_details["summary"],
+                notes=appointment_details["summary"]
             )
             session.add(new_appointment)
             session.commit()
@@ -137,12 +119,18 @@ def schedule_appointment(patient_id: int, appointment_details: dict) -> dict:
             logger.error(f"Error details: {str(e)}")
             logger.error(traceback.format_exc())
             raise  # Re-raise the exception for higher-level error handling
-
-        return {"success": True, "message": "Appointment updated successfully"}
-
+        
+        return {
+            "success": True,
+            "message": "Appointment updated successfully"
+        }
+        
     except Exception as e:
         session.rollback()
-        return {"success": False, "message": f"Database error: {str(e)}"}
+        return {
+            "success": False,
+            "message": f"Database error: {str(e)}"
+        }
     finally:
         session.close()
 
@@ -158,35 +146,37 @@ class Message:
     def to_dict(self):
         return asdict(self)
 
-
 class SpeechAssistant:
     """Main speech assistant class that handles speech recognition and synthesis."""
-
     def __init__(self):
         """Initialize the speech assistant with necessary configurations."""
-        # Get the absolute path to the current directory containing the module
         current_dir = Path(__file__).resolve().parent
-        env_path = current_dir / ".env"
-
-        # Load environment variables with explicit path
+        env_path = current_dir / '.env'
+        
         load_dotenv(dotenv_path=env_path)
-        logger.info(f"Loading .env file from: {env_path}")  # Add debug logging
-
-        self.messages: List[Message] = []
-        self.suit_doc = []
-        self.patient_id = None
-        self.SILENCE_TIMEOUT = 3  # seconds
-        self.url = os.getenv("MOREMI_API_URL")
-        self.key = os.getenv("MOREMI_API_URL")
+        logger.info(f"Loading .env file from: {env_path}")
+        
+        self.url = os.getenv("LLM_URL")
+        self.key = os.getenv("API_KEY")
+        self.LLM = ConversationManager(self.url)
+        
         if not self.url:
             logger.error(f"API_URL is not set. Checked .env file at: {env_path}")
             raise ValueError("API_URL is not set")
+            
         self._load_prompts()
+        self.LLM.custom_params["system_prompt"] = self.system_prompt
+        
+        # Initialize other attributes
+        self.suit_doc = []
+        self.patient_id = None
+        self.SILENCE_TIMEOUT = 3  # seconds
+        self.messages: List[Message] = []
 
     def _load_prompts(self) -> None:
         """Load system prompts from configuration file."""
         try:
-            with open("scheduler/prompt.json", "r") as file:
+            with open('backend/prompt.json', 'r') as file:
                 schema = json.load(file)
             self.system_prompt = schema.get("systemprompt", "")
             self.summary_system_prompt = schema.get("summarysystemprompt", "")
@@ -195,29 +185,27 @@ class SpeechAssistant:
             self.system_prompt = ""
             self.summary_system_prompt = ""
 
-    def get_moremi_response(
-        self, messages: List[Message], system_prompt: Optional[str] = None
-    ) -> str:
+    def get_moremi_response(self, messages: List[Message],  system_prompt: Optional[str] = None) -> str:
         """Get response from Moremi API with retry logic."""
 
         if not isinstance(messages, list):
             raise ValueError("messages must be a list")
         query = [msg.to_dict() for msg in messages]
-
+        
         data = {
             "query": query,
             "temperature": 0.5,
             "max_new_token": 100,
             "top_p": 0.9,
-            "history": True,
+            "history": True
         }
         if system_prompt:
             data["systemPrompt"] = system_prompt
 
-        headers = {
-            "Authorization": f"Bearer {self.key}",
-            "azureml-model-deployment": "llava-deployment",
-            "Content-Type": "application/json",
+        headers ={
+        "Authorization": f"Bearer {self.key}",
+        "azureml-model-deployment": "llava-deployment",
+        "Content-Type": "application/json"     
         }
         try:
             response = requests.post(self.url, json=data).text
@@ -226,11 +214,20 @@ class SpeechAssistant:
             logger.error(f"Error calling Moremi API: {str(e)}")
             raise
 
-    def save_conversation(self) -> None:
+    def save_conversation(self, messages) -> None:
         """Save the conversation history to a file."""
         try:
-            with open("conversation.txt", "w") as f:
-                json.dump([msg.to_dict() for msg in self.messages], f, indent=4)
+            # Convert messages to serializable format
+            conversation_to_save = []
+            for msg in messages:
+                if hasattr(msg, 'to_dict'):
+                    conversation_to_save.append(msg.to_dict())
+                else:
+                    conversation_to_save.append(msg)
+                    
+            # Save to file
+            with open('conversation.txt', 'w') as f:
+                json.dump(conversation_to_save, f, indent=4)
             logger.info("Conversation saved successfully")
         except Exception as e:
             logger.error(f"Error saving conversation: {str(e)}")
@@ -239,16 +236,16 @@ class SpeechAssistant:
         if context is not None:
             context = context
         else:
-            with open("scheduler/contexts.json", "r") as f:
+            with open('scheduler/contexts.json', 'r') as f:
                 contexts = json.load(f)
-            context = contexts["context3"]
-
+            context = contexts['context3']
+        
         # Extract doctor names and specialties
-        names = [doc["doctor_name"] for doc in docs]
-        specialties = [doc["specialty"] for doc in docs]
+        names = [doc['doctor_name'] for doc in docs]
+        specialties = [doc['specialty'] for doc in docs]
 
         # Initial Doctor paitient conversation
-        question = f"""
+        question = f'''
 Task: You are a doctor's medical assistant that strictly follows the given instructions. Never deviate or add anything extra. Follow these rules exactly as written. Think step by step.
 The current user is not the patient but is scheduling an appointment for the patient.  NEVER address the patient directly instead all question should be routed to through the user.
 Your task is to aid the user schedule an appointment by following these steps:
@@ -263,111 +260,195 @@ Your task is to aid the user schedule an appointment by following these steps:
      
 Conversation:
 {context}  
-"""
+'''
         print(context)
         return question
-
+            
     def run(self) -> None:
         """Run the main conversation loop."""
-
-        # Initial Greeting
+        # Initial Greeting 
         print("Welcome to Moremi AI Scheduler!, I am listening")
         speech_client.TTS("Welcome to Moremi AI Scheduler!, I am listening")
         logger.info("Starting conversation")
         print("Starting conversation. Press Ctrl+C to exit.")
-
-        # Add user message with no response yet
-        # self.messages.append(Message(user_input=self.manage_context()))
-
-        # Get response from Moremi AI
-        LLM.custom_params["system_prompt"] = self.system_prompt
-
-        LLM.add_user_message(text=self.manage_context())
-
-        # Get second response
-
-        response = LLM.get_assistant_response()
+        
+        # Add initial context and get response
+        self.LLM.custom_params["system_prompt"] = self.system_prompt
+        self.LLM.add_user_message(text=self.manage_context())
+        response = self.LLM.get_assistant_response()
         logger.info(f"Moremi response: {response}")
 
-        # Process LLM's response
-        if "search_specialty" in str(response).lower():
-            text = "Finding a suitable doctor"
-            logger.info(text)
-
-            speech_client.TTS(text)
-
-            for doc in docs:
-                specialty = doc["specialty"]
-                if specialty.lower() in response.lower():
-                    print(doc["doctor_name"])
-                    self.suit_doc.append(doc)
-
-            if len(self.suit_doc) == 0:
-                logger.info(
-                    "The required specialty is not available in our facility. Please speak to the present doctor about a referral."
-                )
-                speech_client.TTS(
-                    "The required specialty is not available in our facility. Please speak to the present doctor about a referral."
-                )
-
-        else:
-            logger.info("Finding available days for the doctor")
-            speech_client.TTS("Finding available days for the doctor")
-
-            for doc in docs:
-                if doc["doctor_name"] in response:
-                    print(doc["doctor_name"])
-                    self.suit_doc.append(doc)
-            if len(self.suit_doc) == 0:
-                logger.info(
-                    "The required doctor is not present in our facility. Please speak to the present doctor about a referral."
-                )
-                speech_client.TTS(
-                    "The required doctor is not present in our facility. Please speak to the present doctor about a referral."
-                )
-
-        if len(self.suit_doc) != 0:
-            # Process response for User
-            response = ""
-            for i in self.suit_doc:
-                # Check slots with icrements of five days (Default is 3)
+        # Process initial response for specialty/doctor search
+        self.process_initial_response(response)
+        
+        # Process slots if doctors were found
+        if self.suit_doc:
+            response = ''
+            for doc in self.suit_doc:
                 while True:
-                    slots = db_manager._get_new_date(i["doctor_id"])
-
-                    # If slots are found update response and end the loop
-                    if len(slots) != 0:
-                        logger.info("Slots found")
-                        response = f'{response}\n{(db_manager.format_available_slots(slots, i["doctor_name"]))}\n'
+                    slots = db_manager._get_new_date(doc['doctor_id'])
+                    if slots:
+                        response += f'\n{db_manager.format_available_slots(slots, doc["doctor_name"])}\n'
                         break
-
-                    # If no slots are found for 3 months process response to user and end the loop
                     elif db_manager.days_ahead == 90:
-                        response = f'{response}\n{(db_manager.format_available_slots(slots, i["doctor_name"]))}\n'
+                        response += f'\n{db_manager.format_available_slots(slots, doc["doctor_name"])}\n'
                         break
-
-                    # If no slots are found and days ahead are less than 3 months
                     else:
-                        # Update the days ahead
                         db_manager.days_ahead += 5
+
+            # Update LLM conversation
+            self.LLM.add_user_message(text="What slots are available")
+            self.LLM.conversation_history.append({
+                "role": "assistant",
+                "content": response
+            })
+            logger.info(response)
+            speech_client.TTS(response)
+            print("\nReady for next input...")
+        else:
+            # No doctors found - add message to LLM
+            self.LLM.add_user_message(text="Find a suitable doctor")
+            response = "Unfortunately there are no doctors available at the moment. Please speak to the present doctor for clarification of subsequent steps."
+            self.LLM.conversation_history.append({
+                "role": "assistant",
+                "content": response
+            })
+            speech_client.TTS(response)
+            print("\nReady for next input...")
+        
+        # Main conversation loop
+        while True:
+            try:
+                # Get speech input
+                client = SpeechRecognitionClient()
+                client.recognize_speech()
+                user_input = client.get_transcription()
+                if not user_input.strip():
+                    logger.warning("Empty input received. Please say something.")
+                    continue
+
+                logger.info(f"User input: {user_input}")
+                
+                # Get Moremi response
+                self.LLM.add_user_message(text=user_input)
+                response = self.LLM.get_assistant_response()
+                logger.info(f"Moremi response: {response}")
+
+                # Synthesize response
+                speech_client.TTS(response)
+
+            except KeyboardInterrupt:
+                logger.info("Conversation ended by user")
+                print('\nEnding conversation...')
+                
+                # Get conversation summary
+                try:
+                    # Change to summary system prompt
+                    self.LLM.custom_params["system_prompt"] = self.summary_system_prompt
+                    self.LLM.add_user_message(
+                        text="Extract the agreed upon schedule from the interaction history. If there was no agreed upon appointment respond with the word null."
+                    )
+                    summary = self.LLM.get_assistant_response()
+                    
+                    print(summary)
+                    if summary == "null":
+                        logger.info("No schedule was determined")
+                        speech_client.TTS('No schedule was determined')
+                    else:
+                        try:
+                            parsed = json.loads(summary)
+                            # Convert string to dict if needed
+                            if isinstance(parsed, str):
+                                parsed_dict = json.loads(parsed)
+                            else:
+                                parsed_dict = parsed
+                                
+                            # Write to temporary file
+                            with open('schedules_t.json', 'w') as f:
+                                json.dump(parsed_dict, f, indent=4)
+                                
+                            # Synthesize success message
+                            print(f"The appointment for {parsed_dict['patientName']} with {parsed_dict['doctorName']} on {parsed_dict['appointmentDateTime']} has been booked successfully")
+                            
+                            # Update the database
+                            schedule_appointment(self.patient_id, parsed_dict)
+                            
+                        except json.JSONDecodeError as e:
+                            print("Invalid JSON format:", e)
+                    
+                    print(f'\nSummary: {summary}')
+                    
+                except Exception as e:
+                    logger.error(f"Failed to generate summary: {str(e)}")
+                
+                self.save_conversation(self.LLM.conversation_history)
+                break
+                
+            except Exception as e:
+                logger.error(f"Error in conversation loop: {str(e)}")
+                error_response = 'Sorry. The system is currently unavailable.'
+                try:
+                    speech_client.TTS(error_response)
+                except:
+                    pass
+                break
+
+    def process_initial_response(self, response):
+        if 'search_specialty' in str(response).lower():
+            self.handle_specialty_search(response)
+        else:
+            self.handle_doctor_search(response)
+
+    def handle_specialty_search(self, response):
+        text = "Finding a suitable doctor"
+        logger.info(text)
+        speech_client.TTS(text)
+        
+        for doc in docs:
+            specialty = doc['specialty']
+            if specialty.lower() in response.lower():
+                self.suit_doc.append(doc)
+        
+        if not self.suit_doc:
+            self.handle_no_doctors_found("specialty")
+
+    def handle_doctor_search(self, response):
+        logger.info('Finding available days for the doctor')
+        speech_client.TTS('Finding available days for the doctor')
+        
+        for doc in docs:
+            if doc['doctor_name'] in response:
+                self.suit_doc.append(doc)
+        
+        if not self.suit_doc:
+            self.handle_no_doctors_found("doctor")
+
+
+    def handle_no_doctors_found(self, search_type):
+        logger.info(f"The required {search_type} is not available in our facility. Please speak to the present doctor about a referral.")
+        speech_client.TTS(f"The required {search_type} is not available in our facility. Please speak to the present doctor about a referral.")
 
 
 def main():
     """Main entry point of the application."""
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Run the appointment scheduler.")
-    parser.add_argument(
-        "--patient-id", type=int, required=True, help="Patient identifier"
-    )
-
+    parser = argparse.ArgumentParser(description='Run the appointment scheduler.')
+    parser.add_argument('--patient-id', type=int, required=True,
+                    help='Patient identifier')
+    
     args = parser.parse_args()
-    try:
+    try: 
         assistant = SpeechAssistant()
         assistant.patient_id = args.patient_id
         assistant.run()
     except Exception as e:
         logger.critical(f"Critical error in main: {str(e)}")
         print("An error occurred. Please check the logs for details.")
-
-
-if __name__ == "__main__":
+   
+   
+if __name__ == '__main__':
     main()
+ 
+
+
+
