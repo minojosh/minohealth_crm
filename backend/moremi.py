@@ -6,7 +6,7 @@ import logging
 import json
 import time
 from typing import Dict, List, Optional, Union
-
+from pathlib import Path
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,10 @@ class ConversationManager:
     
     def __init__(self, base_url=None, api_key="None"):
         """Initialize with API base URL - api_key is not used but kept for backward compatibility."""
-        load_dotenv()
+        config_path = Path(__file__).parent.parent / '.env'
+        if not config_path.exists():
+            logger.warning(f"Environment file not found at {config_path}, using environment variables")
+        load_dotenv(config_path)
         
         # Only base_url is required, api_key parameter is maintained for compatibility
         self.base_url = base_url or os.getenv("MOREMI_API_BASE_URL")
@@ -26,7 +29,11 @@ class ConversationManager:
         
         # Initialize client without API key as per developer specifications
         try:
-            self.client = OpenAI(base_url=self.base_url)
+            # Use a dummy API key since the custom base_url implementation doesn't actually need it
+            self.client = OpenAI(
+                base_url=self.base_url,
+                api_key="dummy-key"  # Add dummy key to satisfy OpenAI client requirements
+            )
             logger.info("Successfully initialized OpenAI client")
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")

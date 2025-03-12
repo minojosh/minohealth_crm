@@ -7,8 +7,9 @@ python-dotenv==1.0.1
 PyYAML==6.0.2
 tenacity==9.0.0
 websocket-client==1.3.3
-websockets==14.2
-webrtcvad==2.0.1
+# websockets==13.2
+websockets>=13.0
+# webrtcvad==2.0.10
 uvicorn==0.34.0
 soundfile==0.13.0
 sounddevice==0.5.1
@@ -18,3 +19,5 @@ pyAudio==0.2.14
 fastapi==0.115.8
 pydantic==2.10.4
 openai==1.65.4
+aiohttp
+

@@ -12,10 +12,12 @@ from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from datetime import datetime
-import sys
-import select
-import termios
-import tty
+# import select
+# import termios
+# import tty
+import sys, asyncio
+if sys.platform.startswith("linux"):
+    asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
 
 # Add project root to Python path
 project_root = str(Path(__file__).parent.parent.parent)
@@ -77,7 +79,7 @@ class Assistant:
         load_dotenv(config_path)
         
         # Initialize STT client settings
-        self.stt_server_url = os.getenv("STT_SERVER_URL", "")
+        self.stt_server_url = os.getenv("STT_URL", "")
         
         # Initialize other components
         self.messages: List[Message] = []
@@ -88,7 +90,7 @@ class Assistant:
 
     def _setup_logging(self):
         """Configure logging to file and console."""
-        log_dir = Path(__file__).parent.parent / 'data' / 'logs'
+        log_dir = Path(__file__).parent / 'data' / 'logs'
         log_dir.mkdir(parents=True, exist_ok=True)
         
         log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -106,7 +108,7 @@ class Assistant:
 
     def _setup_directories(self):
         """Create necessary directories if they don't exist."""
-        data_dir = Path(__file__).parent.parent / 'data'
+        data_dir = Path(__file__).parent / 'data'
         dirs = [
             'audio',
             'transcripts',
@@ -201,16 +203,28 @@ appointment_details:
             
             # Format the query to extract medical information as YAML
             extraction_prompt = (
-                f"Extract medical information from this transcript:\n\n"
-                f"{current_message.user_input}\n\n"
-                f"Format the extracted information as YAML, following this example structure:\n\n"
-                f"{example_yaml}\n\n"
-                "Remember:\n"
-                "1. Only include information explicitly stated in the transcript\n"
-                "2. Use the exact same field names as the example\n"
-                "3. For missing information, use None\n"
-                "4. Ensure the output is valid YAML\n"
-                "5. Do not include any explanations or markdown formatting, ONLY the YAML output"
+                f"Extract medical information from this transcript and format it STRICTLY as YAML.\n\n"
+                f"Transcript: {current_message.user_input}\n\n"
+                f"Rules:\n"
+                f"1. ONLY output valid YAML\n"
+                f"2. DO NOT include any explanatory text or comments\n"
+                f"3. Use null for missing values, not None\n"
+                f"4. If no medical information is found, still output the structure with null values\n"
+                f"5. Format must be exactly:\n\n"
+                f"name: [string or null]\n"
+                f"dob: [YYYY-MM-DD or null]\n"
+                f"address: [string or null]\n"
+                f"phone: [string or null]\n"
+                f"email: [string or null]\n"
+                f"insurance: [string or null]\n"
+                f"condition: [string or null]\n"
+                f"symptoms: [list of strings or null]\n"
+                f"reason_for_visit: [string or null]\n"
+                f"appointment_details:\n"
+                f"  type: [string or null]\n"
+                f"  time: [HH:MM or null]\n"
+                f"  doctor: [string or null]\n"
+                f"  scheduled_date: [YYYY-MM-DD or null]\n"
             )
             
             logger.info(f"Sending transcript to Moremi API: {current_message.user_input[:100]}...")
@@ -225,27 +239,77 @@ appointment_details:
                 temperature=0.2
             )
             
-            # Clean up the response
-            extracted_info = response.strip().replace('```yaml', '').replace('```', '').strip()
+            # Clean up the response - remove any non-YAML content
+            response_lines = response.split('\n')
+            yaml_lines = []
+            in_yaml = False
+            
+            for line in response_lines:
+                # Start capturing at the first YAML key
+                if line.strip().startswith('name:'):
+                    in_yaml = True
+                
+                if in_yaml:
+                    # Stop if we hit an empty line after YAML content
+                    if not line.strip() and yaml_lines:
+                        break
+                    if line.strip():  # Only add non-empty lines
+                        yaml_lines.append(line)
+            
+            yaml_content = '\n'.join(yaml_lines)
+            logger.debug(f"Extracted YAML content:\n{yaml_content}")
             
             # Validate YAML
             import yaml
             try:
-                parsed_yaml = yaml.safe_load(extracted_info)
+                parsed_yaml = yaml.safe_load(yaml_content)
                 if not isinstance(parsed_yaml, dict):
-                    logger.warning(f"Non-dictionary YAML received: {extracted_info}")
-                    raise ValueError(f"Invalid YAML structure: {extracted_info}")
+                    raise ValueError(f"Invalid YAML structure")
                 
-                # Convert back to string with proper formatting
-                extracted_info = yaml.dump(parsed_yaml, default_flow_style=False)
+                # Ensure all required fields exist with proper types
+                required_fields = {
+                    'name': str, 
+                    'dob': str,
+                    'address': str,
+                    'phone': str,
+                    'email': str,
+                    'insurance': str,
+                    'condition': str,
+                    'symptoms': list,
+                    'reason_for_visit': str,
+                    'appointment_details': dict
+                }
+                
+                # Initialize with null values if missing
+                cleaned_data = {}
+                for field, field_type in required_fields.items():
+                    value = parsed_yaml.get(field)
+                    if value is None or value == "None" or value == "null":
+                        cleaned_data[field] = None
+                    elif isinstance(value, field_type):
+                        cleaned_data[field] = value
+                    else:
+                        cleaned_data[field] = None
+                
+                # Handle appointment details specifically
+                appt_details = cleaned_data.get('appointment_details', {})
+                if not isinstance(appt_details, dict):
+                    appt_details = {}
+                
+                cleaned_data['appointment_details'] = {
+                    'type': appt_details.get('type'),
+                    'time': appt_details.get('time'),
+                    'doctor': appt_details.get('doctor'),
+                    'scheduled_date': appt_details.get('scheduled_date')
+                }
+                
+                # Convert back to YAML string
+                return yaml.dump(cleaned_data, default_flow_style=False)
                 
             except yaml.YAMLError as e:
                 logger.error(f"Invalid YAML received: {str(e)}")
-                logger.error(f"Raw content: {extracted_info}")
+                logger.error(f"Raw content: {yaml_content}")
                 raise ValueError(f"Invalid YAML received from API: {str(e)}")
-            
-            logger.info("Successfully extracted medical information")
-            return extracted_info
             
         except Exception as e:
             logger.error(f"Error getting Moremi response: {str(e)}")
@@ -428,20 +492,21 @@ appointment_details:
         try:
             logger.debug(f"Creating patient from YAML: {yaml_data}")
             
-            # Extract patient data
+            # Extract patient data, converting None to None explicitly
             patient_data = {
-                'name': yaml_data.get('name'),
-                'phone': yaml_data.get('phone'),
-                'email': yaml_data.get('email'),
-                'address': yaml_data.get('address'),
-                'date_of_birth': yaml_data.get('dob')
+                'name': yaml_data.get('name') if yaml_data.get('name') != 'null' else None,
+                'phone': yaml_data.get('phone') if yaml_data.get('phone') != 'null' else None,
+                'email': yaml_data.get('email') if yaml_data.get('email') != 'null' else None,
+                'address': yaml_data.get('address') if yaml_data.get('address') != 'null' else None,
+                'date_of_birth': yaml_data.get('dob') if yaml_data.get('dob') != 'null' else None
             }
             
-            # Remove None values
-            patient_data = {k: v for k, v in patient_data.items() if v is not None}
+            # Remove None values and empty strings
+            patient_data = {k: v for k, v in patient_data.items() if v not in (None, '', 'null')}
             
-            if not patient_data.get('name'):
-                logger.error("Missing required field: name")
+            # Check if we have any valid data to create a patient
+            if not any(patient_data.values()):
+                logger.warning("No valid patient data extracted from transcript")
                 return None
                 
             logger.debug(f"Attempting to create patient with data: {patient_data}")
@@ -453,18 +518,30 @@ appointment_details:
                 logger.info(f"Created patient with ID: {patient_id}")
                 
                 # Handle appointment if present
-                appt = yaml_data.get('appointment_details')
-                if appt and isinstance(appt, dict):
+                appt = yaml_data.get('appointment_details', {})
+                if appt and isinstance(appt, dict) and any(v not in (None, '', 'null') for v in appt.values()):
                     logger.debug(f"Creating appointment with details: {appt}")
                     appt_id = self.db_manager.create_appointment(
                         patient_id=patient_id,
-                        appointment_type=appt.get('type'),
-                        scheduled_date=appt.get('scheduled_date'),
-                        scheduled_time=appt.get('time'),
-                        doctor_name=appt.get('doctor')
+                        appointment_type=appt.get('type') if appt.get('type') != 'null' else None,
+                        scheduled_date=appt.get('scheduled_date') if appt.get('scheduled_date') != 'null' else None,
+                        scheduled_time=appt.get('time') if appt.get('time') != 'null' else None,
+                        doctor_name=appt.get('doctor') if appt.get('doctor') != 'null' else None
                     )
                     if appt_id:
                         logger.info(f"Created appointment {appt_id} for patient {patient_id}")
+                
+                # Handle medical condition and symptoms if present
+                condition = yaml_data.get('condition')
+                symptoms = yaml_data.get('symptoms', [])
+                if condition not in (None, '', 'null') or (symptoms and any(s not in (None, '', 'null') for s in symptoms)):
+                    logger.debug(f"Adding medical condition: {condition} and symptoms: {symptoms}")
+                    # Assuming you have a method to add medical conditions
+                    self.db_manager.add_medical_condition(
+                        patient_id=patient_id,
+                        condition=condition if condition != 'null' else None,
+                        symptoms=[s for s in symptoms if s not in (None, '', 'null')]
+                    )
             
             return patient_id
             
