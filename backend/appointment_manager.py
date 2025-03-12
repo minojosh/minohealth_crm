@@ -26,9 +26,12 @@ import asyncio
 
 # Initialize clients
 client = SpeechRecognitionClient()
-load_dotenv()
+dotenv_path = os.path.join(os.path.dirname(__file__), '../.env')
+load_dotenv(dotenv_path)
+tts_url = os.getenv("XTTS_URL")
+print(f"tts_url: {tts_url}")
 # Initialize TTSClient with speech service URL
-clientjosh = TTSClient(os.getenv("SPEECH_SERVICE_URL"))
+clientjosh = TTSClient(tts_url)
 
 # Configure logging
 logging.basicConfig(

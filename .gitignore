@@ -180,6 +180,6 @@ dist
 *.yml
 ~.ssh/
 .github/
-*.txt
+*transcript*.txt
 *conversation_*
 *response_*
