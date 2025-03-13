@@ -53,13 +53,14 @@ class TTSClient:
             audio_dir (str): Directory to save audio files
         """
         # Load environment variables from .env file
-        load_dotenv()
+        dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+        load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
 
         # Initialize server URL - prioritize provided URL, then env var, then default
         if api_url is not None:
             self.api_url = api_url.rstrip('/')
         else:
-            env_url = os.getenv('XTTS_URL') or os.getenv('SPEECH_SERVICE_URL')
+            env_url = os.getenv('XTTS_URL') or os.getenv('STT_SERVER_URL')
             if env_url:
                 self.api_url = env_url.rstrip('/')
             else:

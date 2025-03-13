@@ -23,13 +23,14 @@ class SpeechRecognitionClient:
                  buffer_size=100):
         
         # Load environment variables from .env file
-        load_dotenv()
+        dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+        load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
         
         # Connection settings - prioritize provided URL, then env var, then default
         if server_url:
             self.server_url = server_url.rstrip('/')
         else:
-            env_url = os.getenv('STT_URL', '')
+            env_url = os.getenv('STT_SERVER_URL', '')
             if env_url:
                 self.server_url = env_url.rstrip('/')
             else:

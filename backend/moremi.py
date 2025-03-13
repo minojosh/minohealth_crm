@@ -7,7 +7,7 @@ import json
 import time
 from typing import Dict, List, Optional, Union
 from pathlib import Path
-from XTTS_adapter import TTSClient
+from .XTTS_adapter import TTSClient
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -19,10 +19,14 @@ class ConversationManager:
         config_path = Path(__file__).parent.parent / '.env'
         if not config_path.exists():
             logger.warning(f"Environment file not found at {config_path}, using environment variables")
-        load_dotenv(config_path)
+        load_dotenv(dotenv_path=config_path, encoding='utf-8')
         
         # Only base_url is required, api_key parameter is maintained for compatibility
-        self.base_url = base_url or os.getenv("MOREMI_API_BASE_URL")
+        if base_url is None:
+            self.base_url = os.getenv("MOREMI_API_BASE_URL")
+        else:
+            self.base_url = base_url
+            
         if not self.base_url:
             raise ValueError("Base URL for Moremi API required")
         
@@ -39,7 +43,7 @@ class ConversationManager:
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
             raise
-        self.tts = TTSClient(server_url=os.getenv("XTTS_SERVER_URL"))
+        self.tts = TTSClient(api_url=os.getenv("XTTS_SERVER_URL"))
             
         self.conversation_history = []
         self.custom_params = {"mode": "inference", "system_prompt": ''}
@@ -119,11 +123,13 @@ class ConversationManager:
                 try:
                     self.tts.stream_text(content_piece)
                 except KeyboardInterrupt:
+                    self.tts.stop()
                     pass
         if should_print:
             print("\n")
-            self.tts.wait_for_completion()
-            self.tts.stop()
+            
+        self.tts.wait_for_completion()
+        self.tts.stop()
         
         self.conversation_history.append({"role": "assistant", "content": collected_content})
         return collected_content
@@ -145,7 +151,11 @@ class ConversationManager:
 
 def moremi(prompt, system_prompt="", max_tokens=300, temperature=1.0):
     """Quick utility function to get a response from Moremi."""
-    load_dotenv()
+    dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+    if not os.path.exists(dotenv_path):
+        logger.warning(f"Environment file not found at {dotenv_path}, using environment variables")
+    load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
+    
     base_url = os.getenv("MOREMI_API_BASE_URL")
     
     if not base_url:

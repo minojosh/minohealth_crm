@@ -27,7 +27,9 @@ import asyncio
 # Initialize clients
 client = SpeechRecognitionClient()
 dotenv_path = os.path.join(os.path.dirname(__file__), '../.env')
-load_dotenv(dotenv_path)
+if not os.path.exists(dotenv_path):
+    logger.warning(f"Environment file not found at {dotenv_path}, using environment variables")
+load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
 tts_url = os.getenv("XTTS_URL")
 print(f"tts_url: {tts_url}")
 # Initialize TTSClient with speech service URL

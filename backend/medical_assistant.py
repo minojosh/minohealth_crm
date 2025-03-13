@@ -76,7 +76,7 @@ class Assistant:
         config_path = Path(__file__).parent.parent / '.env'
         if not config_path.exists():
             logger.warning(f"Environment file not found at {config_path}, using environment variables")
-        load_dotenv(config_path)
+        load_dotenv(dotenv_path=config_path, encoding='utf-8')
         
         # Initialize STT client settings
         self.stt_server_url = os.getenv("STT_URL", "")

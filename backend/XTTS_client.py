@@ -10,7 +10,7 @@ import argparse
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from typint import Optional
+from typing import Optional
 
 class TTSClient:
     def __init__(self, server_url):

@@ -29,7 +29,8 @@ app = FastAPI(title="Medical Appointment Scheduler API")
 
 # Initialize clients
 speech_client = SpeechRecognitionClient()
-load_dotenv()
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
 tts_client = TTSClient(api_url=os.getenv("XTTS_URL") or os.getenv("SPEECH_SERVICE_URL"))
 
 class SchedulerRequest(BaseModel):

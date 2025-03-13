@@ -35,9 +35,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Load environment variables
-load_dotenv()
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
 
 # Initialize API and TTS clients
+session = Session()
 client = SpeechRecognitionClient()
 speech_client = TTSClient(os.getenv("TTS_SERVER_URL"))
 db_manager = SchedulerManager(3) # Default value of days ahead is 3
@@ -48,16 +50,6 @@ patients = session.query(Patient).all()
 moremi_base_url = os.getenv("MOREMI_API_BASE_URL")
 moremi_api_key = os.getenv("MOREMI_API_KEY") or os.getenv("OPENAI_API_KEY")
 
-try:
-    # Initialize with both URL and key specified
-    LLM = ConversationManager(moremi_base_url, moremi_api_key)
-    logger.info(f"Successfully initialized ConversationManager with URL: {moremi_base_url}")
-except Exception as e:
-    # Log the error but don't crash during module import
-    logger.error(f"Failed to initialize ConversationManager: {str(e)}")
-    logger.error(traceback.format_exc())
-    # Set LLM to None - individual functions will need to check and reinitialize if needed
-    LLM = None
 
 # Initialize scheduler
 db_manager = SchedulerManager(3)  # Default value of days ahead is 3
@@ -170,19 +162,18 @@ class SpeechAssistant:
     """Main speech assistant class that handles speech recognition and synthesis."""
     def __init__(self):
         """Initialize the speech assistant with necessary configurations."""
-        current_dir = Path(__file__).resolve().parent
-        env_path = current_dir / '.env'
-        
-        load_dotenv(dotenv_path=env_path)
-        logger.info(f"Loading .env file from: {env_path}")
-        
-        self.url = os.getenv("LLM_URL")
+        try:
+            # Initialize with both URL and key specified
+            self.LLM = ConversationManager(moremi_base_url, moremi_api_key)
+            logger.info(f"Successfully initialized ConversationManager with URL: {moremi_base_url}")
+        except Exception as e:
+            # Log the error but don't crash during module import
+            logger.error(f"Failed to initialize ConversationManager: {str(e)}")
+            logger.error(traceback.format_exc())
+            # Set LLM to None - individual functions will need to check and reinitialize if needed
+            self.LLM = None
+            
         self.key = os.getenv("API_KEY")
-        self.LLM = ConversationManager(self.url)
-        
-        if not self.url:
-            logger.error(f"API_URL is not set. Checked .env file at: {env_path}")
-            raise ValueError("API_URL is not set")
             
         self._load_prompts()
         self.LLM.custom_params["system_prompt"] = self.system_prompt
@@ -196,7 +187,7 @@ class SpeechAssistant:
     def _load_prompts(self) -> None:
         """Load system prompts from configuration file."""
         try:
-            with open('backend/prompt.json', 'r') as file:
+            with open('backend/prompt.json', 'r', encoding='utf-8') as file:
                 schema = json.load(file)
             self.system_prompt = schema.get("systemprompt", "")
             self.summary_system_prompt = schema.get("summarysystemprompt", "")
@@ -204,74 +195,12 @@ class SpeechAssistant:
             logger.warning("prompt.json not found. Using default empty prompts.")
             self.system_prompt = ""
             self.summary_system_prompt = ""
+        except UnicodeDecodeError as e:
+            logger.error(f"Error reading prompt.json - encoding issue: {e}")
+            logger.warning("Using default empty prompts due to file reading error.")
+            self.system_prompt = ""
+            self.summary_system_prompt = ""
 
-    def get_moremi_response(self, messages: List[Message],  system_prompt: Optional[str] = None) -> str:
-        """Get response from Moremi API with retry logic."""
-
-        if not isinstance(messages, list):
-            raise ValueError("messages must be a list")
-        
-        query = [msg.to_dict() for msg in messages]
-        
-        data = {
-            "query": query,
-            "temperature": 0.5,
-            "max_new_token": 100,
-            "top_p": 0.9,
-            "history": True
-        }
-        if system_prompt:
-            data["systemPrompt"] = system_prompt
-
-        headers ={
-        "Authorization": f"Bearer {self.key}",
-        "azureml-model-deployment": "llava-deployment",
-        "Content-Type": "application/json"     
-        }
-        
-        # Log request details (safely hiding the full authorization token)
-        auth_header = headers["Authorization"]
-        safe_auth = auth_header[:15] + "..." if len(auth_header) > 15 else auth_header
-        safe_headers = {**headers, "Authorization": safe_auth}
-        
-        logger.info(f"Request headers: {safe_headers}")
-        logger.info(f"Request data size: {len(str(data))} characters")
-        logger.info(f"Request contains {len(query)} messages")
-        
-        # Log a truncated version of the data for debugging
-        if query:
-            last_msg = query[-1]
-            logger.info(f"Last message in query: {json.dumps(last_msg, indent=2)[:200]}...")
-        
-        if system_prompt:
-            logger.info(f"Using system prompt (first 100 chars): {system_prompt[:100]}...")
-            
-        try:
-            logger.info("Making API request to Moremi...")
-            start_time = time.time()
-            response = requests.post(self.url, json=data)
-            elapsed_time = time.time() - start_time
-            logger.info(f"API request completed in {elapsed_time:.2f} seconds")
-            
-            # Log response details
-            logger.info(f"Response status code: {response.status_code}")
-            
-            if response.status_code != 200:
-                logger.error(f"API error: {response.status_code} - {response.reason}")
-                logger.error(f"Response content: {response.text[:200]}...")
-                response.raise_for_status()
-                
-            response_text = response.text
-            logger.info(f"Response length: {len(response_text)} chars")
-            logger.info(f"Response preview (first 200 chars): {response_text[:200]}...")
-            
-            return response_text
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error calling Moremi API: {str(e)}")
-            logger.error(f"Request that caused error: URL={self.url}")
-            import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
-            raise
 
     def save_conversation(self, messages) -> None:
         """Save the conversation history to a file."""

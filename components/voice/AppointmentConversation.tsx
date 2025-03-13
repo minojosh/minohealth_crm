@@ -38,6 +38,7 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isWaitingForInput, setIsWaitingForInput] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
   const [error, setError] = useState<string | null>(null);
@@ -216,7 +217,7 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
         setError('Failed to connect to scheduling service. Please try again.');
       };
 
-      wsRef.current.onmessage = handleWebSocketMessage;
+      wsRef.current = ws;
 
     } catch (error) {
       console.error('Error creating WebSocket:', error);
@@ -495,9 +496,14 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
   // Add function to start voice input listening
   const startListening = async () => {
     setIsListening(true);
-    const stream = await setupAudioProcessing();
-    if (stream && mediaRecorderRef.current) {
-      mediaRecorderRef.current.start(1000); // Start recording in 1-second chunks
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (stream && mediaRecorderRef.current) {
+        mediaRecorderRef.current.start(1000); // Start recording in 1-second chunks
+      }
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      setError("Could not access microphone");
     }
   };
 
@@ -545,11 +551,10 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
               <p className="text-gray-400 mb-4">
                 Please provide any specific requirements or preferences for your appointment:
               </p>
-              <Input
-                as="textarea"
+              <textarea
                 className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 mb-4"
                 value={context}
-                onChange={(e) => setContext(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContext(e.target.value)}
                 placeholder="E.g., I need an appointment with a cardiologist, preferably in the morning..."
                 rows={4}
               />
