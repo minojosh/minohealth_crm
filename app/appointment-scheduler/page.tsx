@@ -84,10 +84,7 @@ export default function AppointmentScheduler() {
           <SchedulerConversation
             initialContext={context}
             patientId={patientId}
-            onComplete={(result) => {
-              console.log("Scheduling completed:", result);
-              setShowConversation(false);
-            }}
+            onComplete={() => setShowConversation(false)}
           />
         </div>
       )}

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from .scheduler import (
     SpeechAssistant, Message, docs, db_manager,
-    speech_client, client, schedule_appointment
+    speech_client, schedule_appointment
 )
 # Import appointment manager components
 from .appointment_manager import (
@@ -15,15 +15,14 @@ from .appointment_manager import (
 from datetime import datetime
 import json
 import asyncio
-import fastapi # Import the fastapi module itself
+import fastapi
 import base64
 import numpy as np
 from typing import Optional, List
 from pydantic import BaseModel
 from .TTS_client import TTSClient
 from .STT_client import SpeechRecognitionClient
-from fastapi.websockets import WebSocketState  # Add this import
-import tempfile
+from fastapi.websockets import WebSocketState
 import os
 from scipy import signal
 
@@ -47,8 +46,10 @@ app = FastAPI(
 # Initialize TTS client
 tts_client = TTSClient()
 
-#Initialize STT client
-client = SpeechRecognitionClient("https://82fa-34-168-173-207.ngrok-free.app")
+# Initialize STT client with URL from environment variable
+stt_server_url = os.getenv("STT_SERVICE_URL")
+client = SpeechRecognitionClient(server_url=stt_server_url)
+logger.info(f"STT Service URL: {stt_server_url or 'Using default'}")
 
 print(f"FastAPI version: {fastapi.__version__}") # Print version at startup
 

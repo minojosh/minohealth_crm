@@ -29,7 +29,7 @@ class SpeechRecognitionClient:
         if server_url:
             self.server_url = server_url.rstrip('/')
         else:
-            env_url = os.getenv('SPEECH_SERVICE_URL', '')
+            env_url = os.getenv('STT_SERVICE_URL', '')
             if env_url:
                 self.server_url = env_url.rstrip('/')
             else:

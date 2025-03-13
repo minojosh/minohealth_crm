@@ -336,85 +336,62 @@ export function SchedulerConversation({ initialContext, onComplete, patientId }:
             return;
           }
           
-          // Convert to base64 in chunks to avoid stack overflow
+          // Convert to base64
           const uint8Array = new Uint8Array(concatenated.buffer);
-          const CHUNK_SIZE = 8192;  // Process in 8KB chunks
           let base64Data = '';
           
-          console.log("Converting to base64 in chunks...");
+          console.log("Converting to base64...");
           console.log("Uint8Array length:", uint8Array.length);
           
-          for (let i = 0; i < uint8Array.length; i += CHUNK_SIZE) {
-            const chunk = uint8Array.slice(i, i + CHUNK_SIZE);
-            try {
-              base64Data += String.fromCharCode.apply(null, Array.from(chunk));
-              if (i % (CHUNK_SIZE * 10) === 0) {
-                console.log(`Processed ${i}/${uint8Array.length} bytes`);
-              }
-            } catch (e) {
-              console.error("Error in base64 conversion at chunk:", i, e);
-              throw e;
-            }
+          for (let i = 0; i < uint8Array.length; i++) {
+            base64Data += String.fromCharCode(uint8Array[i]);
           }
           
           base64Data = btoa(base64Data);
           console.log("Base64 conversion complete. Length:", base64Data.length);
           
           try {
-            console.log("Sending request to STT service...");
             // Send to STT service
-            const response = await fetch('https://82fa-34-168-173-207.ngrok-free.app/transcribe', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_STT_SERVER_URL || 'http://localhost:8000'}/transcribe`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                audio: base64Data
-              })
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ audio: base64Data })
             });
 
             if (!response.ok) {
-              console.error(`HTTP error from STT service: ${response.status}`);
               throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const result = await response.json();
-            console.log("Raw STT response:", result);
 
             if (result.transcription) {
-              console.log("Got transcription from STT:", result.transcription);
               // Send transcription to scheduler WebSocket
               if (wsRef.current?.readyState === WebSocket.OPEN) {
-                console.log("WebSocket is open, sending transcription");
-                const message = {
+                wsRef.current.send(JSON.stringify({
                   type: 'message',
                   role: 'user',
                   text: result.transcription
-                };
-                console.log("Sending WebSocket message:", message);
-                wsRef.current.send(JSON.stringify(message));
+                }));
                 
-                // Add message locally as well for immediate feedback
+                // Add message locally for immediate feedback
                 addMessage('user', result.transcription);
               } else {
-                console.error("WebSocket not open:", wsRef.current?.readyState);
                 setError('Connection lost. Please refresh the page.');
               }
             } else {
-              console.warn("No transcription in result:", result);
               setError('No speech detected');
             }
           } catch (error) {
-            console.error("Error sending audio to STT service:", error);
+            console.error("STT service error:", error);
             setError('Failed to process your recording');
           } finally {
             setIsProcessing(false);
+            
+            // Clean up audio processing
+            processor.disconnect();
+            source.disconnect();
+            audioContext.close();
           }
-          
-          // Clean up audio processing
-          processor.disconnect();
-          source.disconnect();
-          audioContext.close();
           
         } catch (error) {
           console.error("Error processing recording:", error);
