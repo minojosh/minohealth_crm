@@ -69,6 +69,7 @@ class SpeechRecognitionClient:
 
         # Transcription state
         self.transcription_text = ""
+        self.context_prompt = ""  # Maintain user context
         self.last_printed = ""
         self.current_transcription = ""  # Track current transcription for frontend
 
@@ -202,9 +203,7 @@ class SpeechRecognitionClient:
                     if transcription:
                         print(transcription, end='', flush=True)
                         # Store the transcription
-                        self.transcription_text += transcription
-                        # Update current transcription
-                        self.current_transcription = transcription
+                        self.update_context(transcription)
 
                     return result
                 else:
@@ -215,6 +214,10 @@ class SpeechRecognitionClient:
             logging.error(f"Error sending audio: {str(e)}", exc_info=True)
             raise
 
+    async def _send_audio_done(self, audio_data):
+        """This method helps in recognizing when the audio processing is done"""
+        logger.info(f"{audio_data} has been sent")
+
     async def _audio_buffer_consumer(self):
         """Consume audio from buffer and send to server"""
         while self.running and not self.shutdown_event.is_set():
@@ -222,6 +225,9 @@ class SpeechRecognitionClient:
                 audio_data = await asyncio.wait_for(self.audio_buffer.get(), timeout=1.0)
                 logging.info(f"Sending chunk of {len(audio_data)/self.rate:.1f} seconds")
                 result = await self._send_audio(audio_data)
+
+                # If we have finished processing the audio data, wait until done to send  it to the next method
+                await self._send_audio_done(audio_data)
                 # Mark that we're done processing this batch
                 if self.audio_buffer.empty():
                     self.is_processing = False
@@ -231,6 +237,40 @@ class SpeechRecognitionClient:
                 logging.error(f"Error in audio consumer: {e}")
                 self.is_processing = False
                 break
+
+    def update_context(self, transcription):
+        """
+        Update the transcription context with new transcription data.
+        This helps maintain conversational context for better transcription accuracy.
+        
+        Args:
+            transcription (str): New transcription to add to context
+        """
+        if not transcription:
+            return
+            
+        # Clean the transcription text before adding to context
+        transcription = transcription.strip()
+        if not transcription:
+            return
+            
+        # Append to context with proper spacing
+        if self.context_prompt:
+            self.context_prompt = f"{self.context_prompt} {transcription}".strip()
+        else:
+            self.context_prompt = transcription
+            
+        # Limit context size to prevent memory issues
+        words = self.context_prompt.split()
+        if len(words) > 500:
+            self.context_prompt = " ".join(words[-500:])
+            
+        logger.debug(f"Context updated, now contains {len(words)} words")
+        
+        # Also store the transcription for later retrieval
+        self.transcription_text += " " + transcription
+        self.transcription_text = self.transcription_text.strip()
+        self.current_transcription = transcription
 
     def on_press(self, key):
         """Handle keyboard events"""
@@ -252,7 +292,7 @@ class SpeechRecognitionClient:
                     if transcription:
                         print(transcription)
                         # Store the final transcription
-                        self.transcription_text += transcription
+                        self.update_context(transcription)
                     logging.info("Sent finish signal")
         except Exception as e:
             logging.error(f"Error sending finish signal: {e}")

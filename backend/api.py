@@ -6,7 +6,12 @@ from .scheduler import (
     SpeechAssistant, Message, docs, db_manager,
     speech_client, client, schedule_appointment
 )
-from .medical_assistant import Assistant
+from .services.transcription_service import TranscriptionService
+
+# Initialize services
+tts_client = TTSClient(api_url=os.getenv("XTTS_URL") or os.getenv("SPEECH_SERVICE_URL"))
+transcription_service = TranscriptionService(client)
+
 # Import appointment manager components
 from .appointment_manager import (
     SchedulerManager, 
@@ -51,11 +56,6 @@ app = FastAPI(
     description="API for scheduling appointments using AI assistance",
     version="1.0.0"
 )
-
-# Initialize TTS client
-tts_client = TTSClient(api_url=os.getenv("XTTS_URL") or os.getenv("SPEECH_SERVICE_URL"))
-
-print(f"FastAPI version: {fastapi.__version__}") # Print version at startup
 
 # Add CORS middleware
 app.add_middleware(
@@ -217,20 +217,14 @@ async def transcribe_audio_endpoint(request: Request):
             return {"transcription": "", "status": "finished"}
         
         if 'audio' in data:
-            # Process audio data
-            audio_data = data['audio']
-            try:
-                # Convert from base64 to bytes
-                audio_bytes = base64.b64decode(audio_data)
-                
-                # Process using the STT client
-                transcription = client.transcribe_audio(audio_bytes)
-                
+            # Process audio data using transcription service
+            transcription = await transcription_service.transcribe(data['audio'])
+            
+            if transcription:
                 logger.info(f"Transcription result: {transcription}")
                 return {"transcription": transcription}
-            except Exception as e:
-                logger.error(f"Error processing audio data: {str(e)}")
-                return {"error": f"Failed to process audio: {str(e)}"}
+            else:
+                return {"transcription": "No speech detected"}
         
         return {"error": "Invalid request format"}
     
@@ -248,24 +242,13 @@ async def extract_from_audio(request: Request):
         if not audio_base64:
             raise HTTPException(status_code=400, detail="No audio data provided")
         
-        # Decode audio data
-        try:
-            audio_bytes = base64.b64decode(audio_base64)
-        except Exception as e:
-            logger.error(f"Error decoding audio data: {str(e)}")
-            raise HTTPException(status_code=400, detail="Invalid audio data format")
+        # Transcribe audio using our service
+        transcript = await transcription_service.transcribe(audio_base64)
         
-        # Transcribe audio
-        try:
-            transcript = client.transcribe_audio(audio_bytes)
-            
-            if not transcript or transcript == "No speech detected":
-                raise HTTPException(status_code=400, detail="No speech detected in audio")
+        if not transcript:
+            raise HTTPException(status_code=400, detail="No speech detected in audio")
                 
-            logger.info(f"Transcription result: {transcript}")
-        except Exception as e:
-            logger.error(f"Error transcribing audio: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Error transcribing audio: {str(e)}")
+        logger.info(f"Transcription result: {transcript}")
         
         # Use the Assistant class from medical_assistant.py
         from .medical_assistant import Assistant, Message
@@ -426,39 +409,10 @@ async def audio_websocket(websocket: WebSocket, token: str = Query(None)):
                         if not audio_data:
                             raise ValueError("No audio data provided")
                         
-                        # Decode base64 audio data
-                        audio_bytes = base64.b64decode(audio_data)
+                        # Use transcription service for consistent handling
+                        transcription = await transcription_service.transcribe(audio_data)
                         
-                        # Convert to float32 numpy array
-                        audio_np = safe_frombuffer(audio_bytes, dtype=np.float32)
-                        
-                        # Log the audio processing approach
-                        if process_complete:
-                            logger.info(f"Processing complete audio recording of {len(audio_np)/sample_rate:.2f} seconds")
-                        else:
-                            logger.info(f"Processing streaming audio chunk of {len(audio_np)/sample_rate:.2f} seconds")
-                        
-                        # Use the client's transcribe_audio method
-                        transcription = client.transcribe_audio(audio_np.tobytes())
-                        logger.info(f"Transcription result: {transcription}")
-                        
-                        # Proper handling of different response types:
-                        # 1. Only treat as "No speech detected" if the transcription is specifically that phrase
-                        # 2. Handle error messages as errors
-                        # 3. Any other response is considered a valid transcription
                         if not transcription:
-                            logger.warning("Empty transcription received from STT service")
-                            await websocket.send_json({
-                                "type": "transcription",
-                                "payload": {
-                                    "text": "No speech detected",
-                                    "transcription": "No speech detected", 
-                                    "confidence": 0.0,
-                                    "isComplete": process_complete
-                                },
-                                "timestamp": timestamp
-                            })
-                        elif transcription == "No speech detected" or transcription == "No transcription result received":
                             logger.warning("No speech detected in audio")
                             await websocket.send_json({
                                 "type": "transcription",
@@ -470,18 +424,8 @@ async def audio_websocket(websocket: WebSocket, token: str = Query(None)):
                                 },
                                 "timestamp": timestamp
                             })
-                        elif transcription.startswith(("Error", "Connection error", "Server error")):
-                            # This is an actual error, not a transcription
-                            logger.error(f"Error from STT service: {transcription}")
-                            await websocket.send_json({
-                                "type": "error",
-                                "payload": {
-                                    "message": transcription
-                                },
-                                "timestamp": timestamp
-                            })
                         else:
-                            # Any other response is considered a valid transcription
+                            # Valid transcription
                             logger.info(f"Valid transcription received: '{transcription}'")
                             await websocket.send_json({
                                 "type": "transcription",

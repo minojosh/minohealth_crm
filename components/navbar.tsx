@@ -30,7 +30,13 @@ export const Navbar = () => {
             <p className="font-bold text-inherit">minoHealth CRM</p>
           </NextLink>
         </NavbarBrand>
-        <ul className="hidden lg:flex gap-4 justify-start ml-2">
+        
+      </NavbarContent>
+      <NavbarContent
+        className="hidden sm:flex basis-1/5 sm:basis-full"
+        // justify="end"
+      >
+<ul className="hidden lg:flex gap-4 justify-center ml-2">
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href}>
               <NextLink
@@ -46,16 +52,17 @@ export const Navbar = () => {
             </NavbarItem>
           ))}
         </ul>
+
       </NavbarContent>
       <NavbarContent
         className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
       >
-        <NavbarItem className="hidden sm:flex gap-2">
+        <NavbarItem className="hidden lg:flex gap-2">
           <ThemeSwitch />
         </NavbarItem>
       </NavbarContent>
-      <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
+      <NavbarContent className="lg:hidden basis-1 pl-4" justify="end">
         <ThemeSwitch />
         <NavbarMenuToggle />
       </NavbarContent>

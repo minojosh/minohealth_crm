@@ -51,11 +51,11 @@ export default function RootLayout({
               <Link
                 isExternal
                 className="flex items-center gap-1 text-current"
-                href="https://minohealth.com"
+                href="https://moremi.ai"
                 title="minoHealth homepage"
               >
                 <span className="text-default-600">Powered by</span>
-                <p className="text-primary">minoHealth CRM</p>
+                <p className="text-primary">moremi</p>
               </Link>
             </footer>
           </div>

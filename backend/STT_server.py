@@ -97,15 +97,37 @@ class AudioProcessor:
     def clear_context(self):
         self.recent_transcriptions = []
         self.last_chunk = ""
+        self.context_prompt = ""  # Also clear the context prompt
         logger.info("Clearing context")
 
     def update_context(self, transcription):
-        if transcription:
+        if not transcription:
+            return
+            
+        # Clean the transcription text
+        transcription = transcription.strip()
+        if not transcription:
+            return
+            
+        # Add to context with proper spacing
+        if self.context_prompt:
             self.context_prompt = f"{self.context_prompt} {transcription}".strip()
-            words = self.context_prompt.split()
-            if len(words) > 500:
-                self.context_prompt = " ".join(words[-500:])
-            logger.debug(f"Context updated, now contains {len(words)} words")
+        else:
+            self.context_prompt = transcription
+
+        # Limit context to last 500 words to prevent memory issues
+        words = self.context_prompt.split()
+        if len(words) > 500:
+            self.context_prompt = " ".join(words[-500:])
+
+        logger.debug(f"Context updated, now contains {len(words)} words")
+        
+        # Also store in recent transcriptions for alternative access patterns
+        self.recent_transcriptions.append(transcription)
+
+        # Keep only the last 10 transcriptions
+        if len(self.recent_transcriptions) > 10:
+            self.recent_transcriptions = self.recent_transcriptions[-10:]
 
     def get_context(self):
         return self.context_prompt
