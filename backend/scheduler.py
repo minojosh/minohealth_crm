@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Initialize API and TTS clients
+session = Session()
 client = SpeechRecognitionClient()
 speech_client = TTSClient(os.getenv("TTS_SERVER_URL"))
 db_manager = SchedulerManager(3) # Default value of days ahead is 3
