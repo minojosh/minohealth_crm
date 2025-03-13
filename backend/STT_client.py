@@ -434,7 +434,7 @@ class SpeechRecognitionClient:
                     loop.close()
                 except Exception as e:
                     error = str(e)
-                    logging.error(f"Error in transcription thread: {e}")
+                    logging.error(f"Error in transcription thread: {e}", exc_info=True)
             
             # Run the async code in a separate thread
             future = executor.submit(run_async_in_thread)
@@ -453,7 +453,7 @@ class SpeechRecognitionClient:
                 return "No transcription result received"
                 
         except Exception as e:
-            logging.error(f"Transcription error: {str(e)}")
+            logging.error(f"Transcription error: {str(e)}", exc_info=True)
             return "Transcription error occurred"
     
     async def _send_audio_for_transcription(self, audio_bytes):
@@ -489,10 +489,20 @@ class SpeechRecognitionClient:
                 if max_val > 1.0:  # If values are outside [-1, 1]
                     audio_np = audio_np / max_val  # Normalize to [-1, 1]
             
+            # Log post-normalization statistics
+            post_norm_stats = {
+                "min": float(np.min(audio_np)),
+                "max": float(np.max(audio_np)),
+                "mean": float(np.mean(audio_np)),
+                "std": float(np.std(audio_np))
+            }
+            logger.info(f"Audio statistics after normalization: {post_norm_stats}")
+            
             # Ensure we have the right number of samples for float32
             if len(audio_np) % 4 != 0:
                 padding = 4 - (len(audio_np) % 4)
                 audio_np = np.pad(audio_np, (0, padding), 'constant')
+                logger.info(f"Added {padding} padding samples for float32 alignment")
             
             message = {
                 'audio': base64.b64encode(audio_np.tobytes()).decode('utf-8')
@@ -505,12 +515,12 @@ class SpeechRecognitionClient:
                 return error_msg
                 
             logger.info(f"Sending request to: {self.transcribe_url}")
-            timeout = aiohttp.ClientTimeout(total=45)  # Increase timeout to 45 seconds for larger audio files
+            timeout = aiohttp.ClientTimeout(total=45)
             
             try:
                 async with aiohttp.ClientSession(timeout=timeout) as session:
                     audio_duration = len(audio_np) / self.rate if hasattr(self, 'rate') else len(audio_np) / 16000
-                    logger.info(f"Sending {len(audio_np)} samples ({audio_duration:.2f}s, level: {np.abs(audio_np).mean():.6f}) to transcription server")
+                    logger.info(f"Sending {len(audio_np)} samples ({audio_duration:.2f}s) to transcription server")
                     
                     # Set the flag to indicate we're processing audio
                     self.is_processing = True
@@ -533,47 +543,17 @@ class SpeechRecognitionClient:
                                     # Server returned no transcription - likely no speech was detected
                                     logger.warning("Empty transcription received from server")
                                     return "No speech detected"
-                                    
                             except Exception as e:
-                                logger.error(f"Error parsing server response: {str(e)}")
-                                # Try to get the raw text if JSON parsing failed
-                                text = await response.text()
-                                logger.info(f"Raw server response: {text}")
-                                
-                                # If we got text but couldn't parse JSON, use the text as transcription
-                                if text and not text.startswith(('Error', '{', '[')):
-                                    self.current_transcription = text  # Store the current transcription
-                                    return text
-                                self.is_processing = False
-                                return "Error parsing response"
+                                logger.error(f"Error parsing transcription response: {e}", exc_info=True)
+                                return f"Error parsing response: {str(e)}"
                         else:
-                            error_text = await response.text()
-                            logger.error(f"Server error: {response.status}, {error_text}")
-                            self.is_processing = False
-                            return f"Server error {response.status}: {error_text}"
-            except aiohttp.ClientConnectorError as ce:
-                error_msg = f"Cannot connect to server at {self.transcribe_url}. Please check if the server is running and accessible."
-                logger.error(f"{error_msg} Details: {str(ce)}")
-                self.is_processing = False
-                return error_msg
-            except aiohttp.InvalidURL as iue:
-                error_msg = f"Invalid URL format: {self.transcribe_url}. Please check your STT_SERVER_URL environment variable."
-                logger.error(f"{error_msg} Details: {str(iue)}")
-                self.is_processing = False
-                return error_msg
-            except asyncio.TimeoutError:
-                logger.error(f"Request timed out after {timeout.total} seconds")
-                self.is_processing = False
-                return "Request timed out - server may be overloaded"
+                            logger.error(f"Server returned status {response.status}")
+                            return f"Server error: {response.status}"
+                            
+            except Exception as e:
+                logger.error(f"Error in HTTP request: {e}", exc_info=True)
+                return f"Connection error: {str(e)}"
                 
-        except aiohttp.ClientError as e:
-            logger.error(f"Connection error: {str(e)}")
-            self.is_processing = False
-            return f"Connection error: {str(e)}"
-        
         except Exception as e:
-            import traceback
-            logger.error(f"Error in _send_audio_for_transcription: {str(e)}")
-            logger.error(traceback.format_exc())
-            self.is_processing = False
+            logger.error(f"Error processing audio for transcription: {e}", exc_info=True)
             return f"Processing error: {str(e)}"

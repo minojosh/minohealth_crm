@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@heroui/button';
 import { Card, CardBody } from '@heroui/card';
 import { ReminderResponse } from '../../app/appointment-manager/types';
@@ -16,49 +16,76 @@ interface Message {
 }
 
 interface ConversationPanelProps {
-  reminder?: ReminderResponse;
-  onComplete?: (result: any) => void;
+  reminder: ReminderResponse;
+  onComplete: () => void;
   className?: string;
 }
 
+const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+};
+
 export function AppointmentConversation({ reminder, onComplete, className = "" }: ConversationPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [context, setContext] = useState<string>('');
+  const [stage, setStage] = useState<'initial' | 'context' | 'conversation'>('initial');
+  const [isContextSent, setIsContextSent] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
   const [error, setError] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [audioData, setAudioData] = useState<string | null>(null);
   
   const wsRef = useRef<WebSocket | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioBufferRef = useRef<Float32Array[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef<number>(0);
   const latestAudioRef = useRef<string | null>(null);
 
+  // Add new state for conversation flow
+  const [conversationState, setConversationState] = useState<'initial' | 'context' | 'specialty_search' | 'doctor_selection' | 'appointment_scheduling' | 'confirmation'>('initial');
+  const [isListening, setIsListening] = useState(false);
+  const [specialtySearchComplete, setSpecialtySearchComplete] = useState(false);
+  
+  // Add to existing state declarations
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [appointmentDetails, setAppointmentDetails] = useState<any>(null);
+
   // Connect to the conversation when a reminder is selected
   useEffect(() => {
     if (reminder) {
-      // Create a unique ID for this conversation based on reminder details
+      console.log("Setting up conversation with reminder:", reminder);
       const id = `${reminder.message_type}_${reminder.details.patient_id || 'unknown'}_${Date.now()}`;
       setConversationId(id);
+      
+      // Force the initial state
+      setConversationState('initial');
+      console.log("Set conversation state to initial");
+      
       connectWebSocket(reminder.details.patient_id?.toString() || '1');
       
+      // Explicitly set the conversation state to initial
+      setConversationState('initial');
+      
       // Add welcome message
-      const welcomeMessage = reminder.message_type === 'appointment'
-        ? `Hello! I'm your appointment assistant. You have an appointment with Dr. ${reminder.details.doctor_name} on ${new Date(reminder.details.datetime).toLocaleString()}.`
-        : `Hello! I'm your medication assistant. This is a reminder about your medication: ${reminder.details.medication_name}, dosage: ${reminder.details.dosage}, frequency: ${reminder.details.frequency}.`;
+      const welcomeMessage = `Hello! I'm your appointment assistant. You have an appointment with Dr. ${reminder.details.doctor_name} on ${new Date(reminder.details.datetime).toLocaleString()}.`;
       
       setMessages([{ 
         role: 'system', 
         content: welcomeMessage, 
         timestamp: new Date() 
       }]);
-      
-      // Fetch audio for this conversation if available
-      fetchConversationAudio(id);
     }
     
     return () => {
@@ -186,17 +213,102 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         setConnectionStatus('error');
-        setError('Connection error. Please try again later.');
-        setIsRecording(false);
-        setIsProcessing(false);
+        setError('Failed to connect to scheduling service. Please try again.');
       };
-      
-      wsRef.current = ws;
-    } catch (e) {
-      console.error('Error creating WebSocket:', e);
+
+      wsRef.current.onmessage = handleWebSocketMessage;
+
+    } catch (error) {
+      console.error('Error creating WebSocket:', error);
       setConnectionStatus('error');
-      setError('Failed to establish connection. Please try again later.');
+      setError('Failed to establish connection');
     }
+  };
+
+  // Helper functions
+  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  };
+
+  const playAudioResponse = async (base64Audio: string, sampleRate: number = 24000) => {
+    try {
+      const audioContext = new AudioContext();
+      const audioData = atob(base64Audio);
+      const arrayBuffer = new ArrayBuffer(audioData.length);
+      const view = new Uint8Array(arrayBuffer);
+      
+      for (let i = 0; i < audioData.length; i++) {
+        view[i] = audioData.charCodeAt(i);
+      }
+
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContext.destination);
+      source.start(0);
+    } catch (error) {
+      console.error('Error playing audio response:', error);
+    }
+  };
+
+  const handleDoctorsList = (doctors: any[]) => {
+    const doctorsMessage = doctors
+      .map(doc => `${doc.doctor_name} (${doc.specialty})\nAvailable slots:\n${doc.available_slots.join('\n')}`)
+      .join('\n\n');
+    addMessage('agent', doctorsMessage);
+  };
+
+  const handleReconnection = (patientId: string) => {
+    if (reconnectAttemptsRef.current < 5) {
+      setTimeout(() => {
+        reconnectAttemptsRef.current += 1;
+        connectWebSocket(patientId);
+      }, 2000 * Math.pow(2, reconnectAttemptsRef.current));
+    }
+  };
+
+  // Cleanup function
+  const cleanup = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+  };
+
+  // Effect for cleanup
+  useEffect(() => {
+    return cleanup;
+  }, []);
+
+  // Modified handleContextSubmit to match scheduler.py flow
+  const handleContextSubmit = () => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      setError('Connection not established');
+      return;
+    }
+    
+    wsRef.current.send(JSON.stringify({
+      type: 'context',
+      context: context,
+      patient_id: reminder?.details.patient_id
+    }));
+    
+    setIsContextSent(true);
+    setConversationState('specialty_search');
+    startListening(); // Start listening for voice input after context is sent
   };
 
   const addMessage = (role: 'user' | 'system' | 'agent', content: string) => {
@@ -270,16 +382,11 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
     // If we have a reminder with backend conversation audio, try to fetch it
     if (reminder && conversationId) {
       try {
-        const response = await fetch(`/api/get-conversation-audio?conversation_id=${
-          reminder.message_type === 'appointment' 
-            ? `appointment_${reminder.patient_name}`
-            : `medication_${reminder.patient_name}`
-        }`);
+        const response = await fetch(`/api/get-conversation-audio?conversation_id=${conversationId}`);
         
         if (response.ok) {
           const data = await response.json();
           if (data.audio_data) {
-            // Save the audio data for potential playback
             await saveAudioData(conversationId, data.audio_data);
             setAudioData(data.audio_data);
           }
@@ -294,8 +401,8 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
       // Create a result object for the parent component
       const result: any = {
         status: 'completed',
-        type: reminder?.message_type,
-        patient_name: reminder?.patient_name,
+        type: reminder?.message_type || '',
+        patient_name: reminder?.details?.patient_name || '',
         datetime: new Date(),
         audioAvailable: !!audioData,
         audioData: audioData, // Include actual audio data in the result
@@ -312,7 +419,7 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
         result.adherence = "Confirmed";
       }
       
-      onComplete(result);
+      onComplete();
     }
   };
 
@@ -385,160 +492,144 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
     }
   };
 
+  // Add function to start voice input listening
+  const startListening = async () => {
+    setIsListening(true);
+    const stream = await setupAudioProcessing();
+    if (stream && mediaRecorderRef.current) {
+      mediaRecorderRef.current.start(1000); // Start recording in 1-second chunks
+    }
+  };
+
+  // Add function to stop listening
+  const stopListening = () => {
+    setIsListening(false);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  // Add conversation state effect
+  useEffect(() => {
+    if (conversationState === 'confirmation') {
+      cleanup();
+      onComplete && onComplete();
+    }
+  }, [conversationState]);
+
+  console.log("Current conversation state:", conversationState);
+
   return (
     <Card className={`w-full ${className}`}>
       <CardBody>
-        <div className="flex flex-col h-[600px]">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-medium">
-              {reminder?.message_type === 'appointment' ? 'Appointment' : 'Medication'} Conversation
-            </h3>
-            {getConnectionStatusIndicator()}
-          </div>
-          
-          {/* Messages area */}
-          <div className="flex-1 overflow-y-auto mb-4 space-y-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            {messages.map((message, index) => (
-              <div 
-                key={index} 
-                className={`p-3 rounded-lg ${
-                  message.role === 'user' 
-                    ? 'bg-blue-100 dark:bg-blue-900 ml-auto max-w-[75%] text-blue-900 dark:text-blue-100' 
-                    : message.role === 'system'
-                    ? 'bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-800 max-w-[85%] text-yellow-900 dark:text-yellow-100' 
-                    : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm max-w-[85%] text-gray-800 dark:text-gray-100'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {message.role === 'user' ? 'You' : message.role === 'system' ? 'System' : 'Assistant'}
-                  </span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
-                    {message.timestamp.toLocaleTimeString()}
-                  </span>
-                </div>
-                
-                <p className="whitespace-pre-line">{message.content}</p>
-                
-                {(message.audio || audioData) && message.role === 'agent' && (
-                  <button 
-                    onClick={() => replayAudio(message)}
-                    className="mt-2 text-xs flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 disabled:opacity-50"
-                    disabled={isSpeaking}
-                  >
-                    <SpeakerWaveIcon className="h-3 w-3 mr-1" />
-                    {isSpeaking ? 'Playing...' : 'Play audio'}
-                  </button>
-                )}
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-            
-            {/* Processing indicator */}
-            {isProcessing && !isRecording && (
-              <div className="flex items-center space-x-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse">
-                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">Processing...</span>
-              </div>
-            )}
-            
-            {/* Speaking indicator */}
-            {isSpeaking && (
-              <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
-                <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse delay-100"></div>
-                <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse delay-200"></div>
-                <span className="text-sm text-gray-600 dark:text-gray-300">Speaking...</span>
-              </div>
-            )}
-          </div>
+        {/* Debug Button */}
+        <Button
+          color="primary"
+          className="mb-4"
+          onClick={() => {
+            wsRef.current?.send(JSON.stringify({
+              type: 'debug',
+              message: 'Debug button clicked',
+              timestamp: new Date().toISOString()
+            }));
+          }}
+        >
+          Send Debug Message
+        </Button>
 
-          {/* Available slots section */}
-          {availableSlots.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-md font-semibold mb-2">Available Slots:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-white dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700">
-                {availableSlots.map((doctor, index) => (
-                  <Card key={index} className="bg-gray-50 dark:bg-gray-700">
-                    <CardBody className="p-2">
-                      <h4 className="font-semibold">{doctor.doctor_name}</h4>
-                      <p className="text-sm">{doctor.specialty}</p>
-                      {doctor.available_slots?.length > 0 ? (
-                        <div className="max-h-24 overflow-y-auto mt-1">
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Available slots:</p>
-                          <div className="grid grid-cols-2 gap-1 mt-1">
-                            {doctor.available_slots.slice(0, 4).map((slot: string, i: number) => (
-                              <div key={i} className="text-xs p-1 bg-white dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-500">
-                                {new Date(slot).toLocaleString(undefined, {
-                                  weekday: 'short',
-                                  day: 'numeric',
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </div>
-                            ))}
-                          </div>
-                          {doctor.available_slots.length > 4 && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              +{doctor.available_slots.length - 4} more slots
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">No available slots</p>
-                      )}
-                    </CardBody>
-                  </Card>
-                ))}
+        {/* Initial Context Stage */}
+        {conversationState === 'initial' && (
+          <div className="flex flex-col space-y-4">
+            <h2 className="text-xl font-semibold text-white">Start Scheduling Assistant</h2>
+            <div className="bg-gray-800 rounded-lg p-6">
+              <p className="text-gray-400 mb-4">
+                Please provide any specific requirements or preferences for your appointment:
+              </p>
+              <Input
+                as="textarea"
+                className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 mb-4"
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
+                placeholder="E.g., I need an appointment with a cardiologist, preferably in the morning..."
+                rows={4}
+              />
+              <Button
+                color="primary"
+                className="w-full"
+                onClick={handleContextSubmit}
+                disabled={!context.trim() || connectionStatus !== 'connected'}
+              >
+                Start Scheduling
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Recording and Transcription Stage */}
+        {conversationState !== 'initial' && (
+          <div className="flex flex-col space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Voice Input Panel */}
+              <div className="bg-gray-800 rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4 text-white">Voice Input</h2>
+                <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 mb-4 flex flex-col items-center justify-center text-gray-400">
+                  <p className="text-center mb-2">Click Start Recording to begin</p>
+                  <p className="text-sm text-center">Audio will be processed when you stop</p>
+                </div>
+                <Button
+                  color="primary"
+                  className="w-full flex items-center justify-center space-x-2"
+                  onClick={toggleRecording}
+                  disabled={!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN}
+                >
+                  {isRecording ? (
+                    <StopIcon className="h-5 w-5" />
+                  ) : (
+                    <MicrophoneIcon className="h-5 w-5" />
+                  )}
+                  <span>{isRecording ? 'Stop Recording' : 'Start Recording'}</span>
+                </Button>
+              </div>
+
+              {/* Transcription Panel */}
+              <div className="bg-gray-800 rounded-lg p-6">
+                <h2 className="text-xl font-semibold mb-4 text-white">Transcription</h2>
+                <div className="bg-gray-900 rounded-lg p-4 h-[200px] overflow-y-auto">
+                  <p className="text-gray-400">
+                    {messages.length > 0 
+                      ? messages[messages.length - 1].content 
+                      : 'Transcribed text will appear here...'}
+                  </p>
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Action buttons */}
-          <div className="flex items-center space-x-2 mt-2">
-            <Button
-              color={isRecording ? "danger" : "primary"}
-              onClick={toggleRecording}
-              className="flex-1 justify-center"
-              isLoading={isProcessing && !isRecording}
-              isDisabled={(isProcessing && !isRecording) || connectionStatus !== 'connected' || isSpeaking}
-              startContent={isRecording ? <StopIcon className="h-5 w-5" /> : <MicrophoneIcon className="h-5 w-5" />}
-            >
-              {isRecording ? "Stop Recording" : (isProcessing ? 'Processing...' : 'Start Speaking')}
-            </Button>
-            <Button
-              color="secondary"
-              onClick={finishConversation}
-              isDisabled={isRecording || messages.length < 2 || connectionStatus !== 'connected' || isSpeaking}
-              startContent={<CheckCircleIcon className="h-5 w-5" />}
-            >
-              Complete
-            </Button>
+            {/* Schedule Appointment Button */}
+            <div className="flex justify-end">
+              <Button
+                color="primary"
+                onClick={finishConversation}
+                disabled={isProcessing || messages.length === 0}
+              >
+                Schedule Appointment
+              </Button>
+            </div>
           </div>
-          
-          {/* Error messages */}
-          {error && (
-            <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 rounded-md text-sm border border-red-200 dark:border-red-800">
+        )}
+
+        {/* Connection Status */}
+        <div className="absolute top-4 right-4">
+          {getConnectionStatusIndicator()}
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="absolute bottom-4 left-4 right-4">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
               {error}
             </div>
-          )}
-          
-          {/* Status messages */}
-          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            {isRecording && (
-              <div className="flex items-center">
-                <span className="inline-block h-2 w-2 mr-1 bg-red-600 rounded-full animate-pulse"></span>
-                Recording... Speak clearly into your microphone.
-              </div>
-            )}
-            {connectionStatus === 'connected' && !isRecording && !isProcessing && !isSpeaking && (
-              <p>Ready for conversation. Click "Start Speaking" to begin.</p>
-            )}
           </div>
-        </div>
+        )}
       </CardBody>
     </Card>
   );
