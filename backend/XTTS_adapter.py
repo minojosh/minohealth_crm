@@ -225,16 +225,18 @@ class TTSClient:
             try:
                 # Queue text for streaming playback
                 logger.info(f"Using streaming client for text: {text[:30]}...")
-                self.streaming_client.stream_text(text)
+                all_audio_chunks = self.streaming_client.stream_text(text)
+                
                 
                 # Since streaming is asynchronous, we still need to get the audio data for return and saving
                 # So we fall back to direct request approach for the data
             except Exception as e:
                 logger.error(f"Error using streaming client: {e}")
         
-        # Collect audio chunks from server (this is needed even if streaming, to return the data)
-        all_audio_chunks = self._direct_request_to_server(text)
-        
+        else:
+            # Collect audio chunks from server (this is needed even if streaming, to return the data)
+            all_audio_chunks = self._direct_request_to_server(text)
+            
         if not all_audio_chunks:
             logger.warning("No audio chunks received from server")
             return np.array([]).astype(np.float32), self.target_sample_rate, None, None

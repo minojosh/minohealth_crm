@@ -67,6 +67,10 @@ stt_server_url = os.getenv("STT_SERVER_URL")
 client = SpeechRecognitionClient(server_url=stt_server_url)
 logger.info(f"STT Service URL: {stt_server_url or 'Using default'}")
 
+# Initialize TTS client
+tts_client = TTSClient(api_url=os.getenv("XTTS_SERVER_URL"))
+logger.info(f"TTS Service URL: {os.getenv('XTTS_SERVER_URL') or 'Using default'}")
+
 print(f"FastAPI version: {fastapi.__version__}") # Print version at startup
 
 # Add CORS middleware
@@ -562,6 +566,21 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                     # Process response for doctor/specialty search
                     assistant.process_initial_response(response)
                     
+                    # Send the status messages to the frontend if available
+                    if hasattr(assistant, 'status_messages') and assistant.status_messages:
+                        for status_msg in assistant.status_messages:
+                            await websocket.send_json({
+                                "type": "message",
+                                "role": "system",
+                                "text": status_msg
+                            })
+                            
+                            tts_client.TTS(
+                                status_msg,
+                                play_locally=True
+                            )
+                        
+                    
                     # Handle available slots
                     if assistant.suit_doc:
                         slots_response = ""
@@ -580,11 +599,21 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                             "type": "message",
                             "text": slots_response
                         })
+                        
+                        tts_client.TTS(
+                            slots_response,
+                            play_locally=True
+                        )
                     else:
                         await websocket.send_json({
                             "type": "message",
                             "text": "No doctors available at this time. Please try again later."
                         })
+                        
+                        tts_client.TTS(
+                            "No doctors available at this time. Please try again later.",
+                            play_locally=True
+                        )
 
                 elif message.get("type") == "message":
                     # Process user message
@@ -592,7 +621,7 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                     logger.debug(f"Processing user input: {user_input[:50]}...")
                     
                     assistant.LLM.add_user_message(text=user_input)
-                    response = assistant.LLM.get_assistant_response()
+                    response = assistant.LLM.get_assistant_response(should_speak=True)
                     
                     await websocket.send_json({
                         "type": "message",

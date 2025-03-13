@@ -40,6 +40,7 @@ class TTSClient:
         
         # Start audio stream
         self.start_audio_stream()
+        
     
     def start_audio_stream(self):
         """Start the audio playback stream"""
@@ -136,6 +137,7 @@ class TTSClient:
         try:
             # Prepare request data
             data = {"text": text}
+            all_audio_chunks = []
             
             # Make request to server
             response = requests.post(
@@ -167,12 +169,17 @@ class TTSClient:
                             
                             # Add to audio queue for playback
                             self.audio_queue.put(audio_bytes)
+                            
+                            all_audio_chunks.append(audio_bytes)
+                            
                     except json.JSONDecodeError:
                         # Incomplete JSON, continue adding to buffer
                         continue
         except Exception:
             pass
         
+        return all_audio_chunks
+    
     def stream_text(self, text_chunk):
         """Add a chunk of text to the processing queue."""
         self.text_queue.put(text_chunk)

@@ -41,7 +41,7 @@ load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
 # Initialize API and TTS clients
 session = Session()
 client = SpeechRecognitionClient()
-speech_client = TTSClient(os.getenv("TTS_SERVER_URL"))
+speech_client = TTSClient(os.getenv("XTTS_SERVER_URL"))
 db_manager = SchedulerManager(3) # Default value of days ahead is 3
 doctors = session.query(Doctor).all()
 patients = session.query(Patient).all()
@@ -183,6 +183,7 @@ class SpeechAssistant:
         self.patient_id = None
         self.SILENCE_TIMEOUT = 3  # seconds
         self.messages: List[Message] = []
+        self.status_messages = []  # Store multiple status messages for frontend display
 
     def _load_prompts(self) -> None:
         """Load system prompts from configuration file."""
@@ -382,15 +383,24 @@ Conversation:
                 break
 
     def process_initial_response(self, response):
+        # Clear previous status messages
+        self.status_messages = []
+        
         if 'search_specialty' in str(response).lower():
             self.handle_specialty_search(response)
         else:
             self.handle_doctor_search(response)
 
+    def add_status_message(self, text):
+        """Add a status message, log it, and send it to TTS."""
+        logger.info(text)
+        #speech_client.TTS(text)
+        self.status_messages.append(text)
+        return text
+
     def handle_specialty_search(self, response):
         text = "Finding a suitable doctor"
-        logger.info(text)
-        speech_client.TTS(text)
+        self.add_status_message(text)
         
         for doc in docs:
             specialty = doc['specialty']
@@ -401,8 +411,8 @@ Conversation:
             self.handle_no_doctors_found("specialty")
 
     def handle_doctor_search(self, response):
-        logger.info('Finding available days for the doctor')
-        speech_client.TTS('Finding available days for the doctor')
+        text = 'Finding available days for the doctor'
+        self.add_status_message(text)
         
         for doc in docs:
             if doc['doctor_name'] in response:
@@ -413,8 +423,8 @@ Conversation:
 
 
     def handle_no_doctors_found(self, search_type):
-        logger.info(f"The required {search_type} is not available in our facility. Please speak to the present doctor about a referral.")
-        speech_client.TTS(f"The required {search_type} is not available in our facility. Please speak to the present doctor about a referral.")
+        text = f"The required {search_type} is not available in our facility. Please speak to the present doctor about a referral."
+        self.add_status_message(text)
 
 
 def main():

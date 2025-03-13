@@ -76,7 +76,7 @@ class ConversationManager:
             logger.error(f"Error in add_user_message: {e}")
             raise
     
-    def get_assistant_response(self, max_tokens=300, temperature=1.0, stream=True):
+    def get_assistant_response(self, max_tokens=300, temperature=1.0, stream=True, should_speak=False):
         """Get response from the assistant and update conversation history."""
         try:
             # Create request parameters
@@ -94,42 +94,54 @@ class ConversationManager:
             
             # Handle streaming vs non-streaming
             if stream:
-                return self._handle_streaming_response(response)
+                return self._handle_streaming_response(response, should_speak)
             
             # Handle non-streaming
             content = response.choices[0].message.content
             self.conversation_history.append({"role": "assistant", "content": content})
+            
+            # Only speak if enabled for non-streaming responses
+            if should_speak:
+                try:
+                    self.tts.stream_text(content)
+                    self.tts.wait_for_completion()
+                    self.tts.stop()
+                except Exception as e:
+                    logger.error(f"Error in TTS for non-streaming response: {e}")
+            
             return content
                 
         except Exception as e:
             logger.error(f"Error in get_assistant_response: {e}")
             raise
     
-    def _handle_streaming_response(self, response):
+    def _handle_streaming_response(self, response, should_speak=False):
         """Process streaming response and collect content."""
         collected_content = ""
-        should_print = os.getenv("ENVIRONMENT") != "production"
         
-        if should_print:
-            print("\nAssistant: ", end="", flush=True)
+        
+        
+        print("\nAssistant: ", end="", flush=True)
         
         for chunk in response:
             if chunk.choices[0].delta.content:
                 content_piece = chunk.choices[0].delta.content
                 collected_content += content_piece
                 
-                if should_print:
-                    print(content_piece, end="", flush=True)
-                try:
-                    self.tts.stream_text(content_piece)
-                except KeyboardInterrupt:
-                    self.tts.stop()
-                    pass
-        if should_print:
-            print("\n")
-            
-        self.tts.wait_for_completion()
-        self.tts.stop()
+                print(content_piece, end="", flush=True)
+                
+                # Only stream to TTS if speaking is enabled
+                if should_speak:
+                    try:
+                        self.tts.stream_text(content_piece)
+                    except KeyboardInterrupt:
+                        self.tts.stop()
+                        pass
+                    finally:
+                        self.tts.wait_for_completion()
+                        self.tts.stop()
+        
+        print("\n")
         
         self.conversation_history.append({"role": "assistant", "content": collected_content})
         return collected_content

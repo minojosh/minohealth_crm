@@ -17,16 +17,6 @@ interface SchedulerConversationProps {
   onComplete: () => void;
 }
 
-// Add new component for status alert
-const StatusAlert = ({ message }: { message: string }) => (
-  <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-    <div className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-xl flex items-center space-x-2">
-      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-      <span className="text-sm font-medium">{message}</span>
-    </div>
-  </div>
-);
-
 export function SchedulerConversation({ initialContext, onComplete, patientId }: SchedulerConversationProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -96,9 +86,11 @@ export function SchedulerConversation({ initialContext, onComplete, patientId }:
 
         switch (data.type) {
           case 'message':
-            // Handle both system and assistant messages
+            // Add all messages (including system messages) to the chat
             addMessage(data.role || 'agent', data.text);
-            setIsProcessing(false);
+            if (data.role !== 'system') {
+              setIsProcessing(false);
+            }
             break;
           case 'summary':
             // Handle appointment summary
