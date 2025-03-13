@@ -38,8 +38,6 @@ from .STT_client import SpeechRecognitionClient
 from fastapi.websockets import WebSocketState
 import os
 from scipy import signal
-from dotenv import load_dotenv
-import tempfile
 
 # Configure logging
 logging.basicConfig(
