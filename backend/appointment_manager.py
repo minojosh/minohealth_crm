@@ -421,7 +421,7 @@ class MedicalAgent:
 
     def _load_prompts(self):
         try:
-            with open('backend/call_prompts.json', 'r', encoding='utf-8') as f:
+            with open('backend/prompts.json', 'r', encoding='utf-8') as f:
                 prompts=json.load(f)
                 self.initial_appointment_message=prompts['initial_appointment_reminder']
                 self.initial_medication_message=prompts['initial_medication_reminder']
@@ -430,7 +430,7 @@ class MedicalAgent:
                 self.extract_prompt=prompts['extract_prompt']
                 self.reschedule_message=prompts.get('reschedule_message', "Let me find available slots for rescheduling.")
         except FileNotFoundError:
-            logger.warning("call_prompts.json not found. Using default empty prompts.")
+            logger.warning("prompts.json not found. Using default empty prompts.")
             self.initial_appointment_message=""
             self.initial_medication_message=""
             self.system_prompt=""

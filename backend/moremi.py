@@ -7,6 +7,7 @@ import json
 import time
 from typing import Dict, List, Optional, Union
 from pathlib import Path
+from XTTS_adapter import TTSClient
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class ConversationManager:
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
             raise
+        self.tts = TTSClient(server_url=os.getenv("XTTS_SERVER_URL"))
             
         self.conversation_history = []
         self.custom_params = {"mode": "inference", "system_prompt": ''}
@@ -114,9 +116,14 @@ class ConversationManager:
                 
                 if should_print:
                     print(content_piece, end="", flush=True)
-        
+                try:
+                    self.tts.stream_text(content_piece)
+                except KeyboardInterrupt:
+                    pass
         if should_print:
             print("\n")
+            self.tts.wait_for_completion()
+            self.tts.stop()
         
         self.conversation_history.append({"role": "assistant", "content": collected_content})
         return collected_content

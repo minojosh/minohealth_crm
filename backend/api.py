@@ -238,6 +238,90 @@ async def transcribe_audio_endpoint(request: Request):
         logger.error(f"Error in transcribe endpoint: {str(e)}")
         return {"error": f"Internal server error: {str(e)}"}
 
+@app.post("/api/extract/audio")
+async def extract_from_audio(request: Request):
+    """Extract structured data directly from audio using the medical Assistant"""
+    try:
+        data = await request.json()
+        audio_base64 = data.get("audio")
+        
+        if not audio_base64:
+            raise HTTPException(status_code=400, detail="No audio data provided")
+        
+        # Decode audio data
+        try:
+            audio_bytes = base64.b64decode(audio_base64)
+        except Exception as e:
+            logger.error(f"Error decoding audio data: {str(e)}")
+            raise HTTPException(status_code=400, detail="Invalid audio data format")
+        
+        # Transcribe audio
+        try:
+            transcript = client.transcribe_audio(audio_bytes)
+            
+            if not transcript or transcript == "No speech detected":
+                raise HTTPException(status_code=400, detail="No speech detected in audio")
+                
+            logger.info(f"Transcription result: {transcript}")
+        except Exception as e:
+            logger.error(f"Error transcribing audio: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error transcribing audio: {str(e)}")
+        
+        # Use the Assistant class from medical_assistant.py
+        from .medical_assistant import Assistant, Message
+        
+        # Create Assistant and add transcript
+        assistant = Assistant()
+        assistant.messages.append(Message(user_input=transcript))
+        
+        # Extract structured YAML using Moremi
+        try:
+            # Get YAML response from Moremi
+            yaml_content = assistant.get_moremi_response(assistant.messages, assistant.system_prompt)
+            timestamp = assistant._get_timestamp()
+            
+            # Save YAML files
+            raw_path, processed_path = assistant._save_yaml(yaml_content, timestamp)
+            
+            # Parse YAML
+            import yaml
+            processed_yaml = yaml.safe_load(yaml_content)
+            
+            # Try to create a patient record if data is valid
+            patient_id = None
+            if processed_yaml and isinstance(processed_yaml, dict):
+                patient_id = assistant._create_patient_from_yaml(processed_yaml)
+            
+            # Return the structured data along with file paths and patient ID
+            return {
+                "status": "success",
+                "transcript": transcript,
+                "data": processed_yaml,
+                "patient_id": patient_id,
+                "files": {
+                    "raw_yaml": str(raw_path),
+                    "processed_yaml": str(processed_path)
+                },
+                "message": "Successfully extracted structured data from audio"
+            }
+        except Exception as e:
+            logger.error(f"Error extracting data: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error extracting data from transcript: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in extract_from_audio endpoint: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Server error during audio data extraction: {str(e)}"
+        )
+
 @app.post("/api/extract/data")
 async def extract_data(request: Request):
     """Extract structured data from transcript using the medical Assistant"""
@@ -257,21 +341,36 @@ async def extract_data(request: Request):
         
         # Extract structured YAML using Moremi
         try:
+            # Get YAML response from Moremi
             yaml_content = assistant.get_moremi_response(assistant.messages, assistant.system_prompt)
             timestamp = assistant._get_timestamp()
-            _, processed_path = assistant._save_yaml(yaml_content, timestamp)
+            
+            # Save YAML files
+            raw_path, processed_path = assistant._save_yaml(yaml_content, timestamp)
             
             # Parse YAML
             import yaml
             processed_yaml = yaml.safe_load(yaml_content)
             
+            # Try to create a patient record if data is valid
+            patient_id = None
+            if processed_yaml and isinstance(processed_yaml, dict):
+                patient_id = assistant._create_patient_from_yaml(processed_yaml)
+            
+            # Return the structured data along with file paths and patient ID
             return {
                 "status": "success",
                 "data": processed_yaml,
+                "patient_id": patient_id,
+                "files": {
+                    "raw_yaml": str(raw_path),
+                    "processed_yaml": str(processed_path)
+                },
                 "message": "Successfully extracted structured data from transcript"
             }
         except Exception as e:
             logger.error(f"Error extracting data: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             raise HTTPException(
                 status_code=500,
                 detail=f"Error extracting data from transcript: {str(e)}"
@@ -281,6 +380,7 @@ async def extract_data(request: Request):
         raise
     except Exception as e:
         logger.error(f"Error in extract_data endpoint: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail=f"Server error during data extraction: {str(e)}"
@@ -1400,6 +1500,71 @@ async def test_moremi_connection():
         raise HTTPException(
             status_code=500,
             detail=f"Failed to connect to Moremi API: {str(e)}"
+        )
+
+@app.get("/api/patient/{patient_id}")
+async def get_patient(patient_id: int):
+    """Get patient details by ID"""
+    try:
+        # Import database manager
+        from .database_utils import PatientDatabaseManager
+        
+        # Create database manager
+        db_manager = PatientDatabaseManager()
+        
+        # Get patient details
+        patient = db_manager.get_patient(patient_id)
+        
+        if not patient:
+            raise HTTPException(status_code=404, detail=f"Patient with ID {patient_id} not found")
+        
+        # Get patient's appointments
+        appointments = db_manager.get_patient_appointments(patient_id)
+        
+        # Get patient's medical conditions
+        medical_conditions = db_manager.get_patient_medical_conditions(patient_id)
+        
+        # Return patient details
+        return {
+            "status": "success",
+            "patient": patient,
+            "appointments": appointments,
+            "medical_conditions": medical_conditions
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting patient details: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Server error getting patient details: {str(e)}"
+        )
+
+@app.get("/api/patients")
+async def get_patients():
+    """Get all patients"""
+    try:
+        # Import database manager
+        from .database_utils import PatientDatabaseManager
+        
+        # Create database manager
+        db_manager = PatientDatabaseManager()
+        
+        # Get all patients
+        patients = db_manager.get_all_patients()
+        
+        # Return patients
+        return {
+            "status": "success",
+            "patients": patients
+        }
+    except Exception as e:
+        logger.error(f"Error getting patients: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Server error getting patients: {str(e)}"
         )
 
 if __name__ == "__main__":

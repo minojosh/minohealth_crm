@@ -7,11 +7,36 @@ import requests
 import json
 import io
 from dotenv import load_dotenv
-from .XTTS_client import TTSClient as XTTSClient
 
 # Configure logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Import the updated client but handle the type error
+try:
+    from .XTTS_client import TTSClient as XTTSClient
+except ImportError as e:
+    if "typint" in str(e):
+        # Try to patch the typing import error
+        import importlib.util
+        import sys
+        
+        file_path = os.path.join(os.path.dirname(__file__), "XTTS_client.py")
+        
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                content = f.read().replace('from typint import', 'from typing import')
+            
+            with open(file_path, 'w') as f:
+                f.write(content)
+            
+            # Now try to import again
+            from .XTTS_client import TTSClient as XTTSClient
+        else:
+            logger.error(f"Cannot find XTTS_client.py to patch: {file_path}")
+            raise
+    else:
+        raise
 
 class TTSClient:
     """
@@ -58,6 +83,14 @@ class TTSClient:
         self.last_sample_rate = self.target_sample_rate
         self.last_base64_audio = None
         self.last_file_path = None
+        
+        # Initialize the new streaming client
+        try:
+            self.streaming_client = XTTSClient(server_url=self.api_url)
+            logger.info("Successfully initialized the streaming TTS client")
+        except Exception as e:
+            logger.error(f"Failed to initialize streaming client: {e}")
+            self.streaming_client = None
 
     def _direct_request_to_server(self, text, language="en"):
         """
@@ -174,7 +207,7 @@ class TTSClient:
         
         Args:
             text (str): Text to convert to speech
-            play_locally (bool): Whether to play the audio locally (ignored in XTTS adapter)
+            play_locally (bool): Whether to play the audio locally (handled by streaming client if enabled)
             return_data (bool): Whether to return the audio data
             save_audio (bool): Whether to save the audio to a file
             file_name (str): Name for the saved audio file
@@ -185,8 +218,20 @@ class TTSClient:
         if not text:
             logger.warning("No text provided for TTS")
             return np.array([]).astype(np.float32), self.target_sample_rate, None, None
-            
-        # Collect audio chunks from server
+        
+        # Try to use streaming client if available
+        if self.streaming_client and play_locally:
+            try:
+                # Queue text for streaming playback
+                logger.info(f"Using streaming client for text: {text[:30]}...")
+                self.streaming_client.stream_text(text)
+                
+                # Since streaming is asynchronous, we still need to get the audio data for return and saving
+                # So we fall back to direct request approach for the data
+            except Exception as e:
+                logger.error(f"Error using streaming client: {e}")
+        
+        # Collect audio chunks from server (this is needed even if streaming, to return the data)
         all_audio_chunks = self._direct_request_to_server(text)
         
         if not all_audio_chunks:
@@ -261,5 +306,47 @@ class TTSClient:
         Returns:
             str: Base64 encoded audio data
         """
-        _, _, base64_audio = self.TTS(text, play_locally=False, return_data=True, save_audio=False)
+        _, _, base64_audio, _ = self.TTS(text, play_locally=False, return_data=True, save_audio=False)
         return base64_audio
+        
+    def stream_text(self, text):
+        """
+        Stream text through the streaming client if available
+        
+        Args:
+            text (str): Text to convert to speech and stream
+        """
+        if self.streaming_client:
+            try:
+                self.streaming_client.stream_text(text)
+                return True
+            except Exception as e:
+                logger.error(f"Error streaming text: {e}")
+                return False
+        else:
+            logger.warning("Streaming client not available, using synchronous TTS instead")
+            self.TTS(text, play_locally=True)
+            return False
+            
+    def wait_for_completion(self, timeout=30):
+        """
+        Wait for streaming audio to complete
+        
+        Args:
+            timeout (int): Maximum time to wait in seconds
+        """
+        if self.streaming_client:
+            try:
+                self.streaming_client.wait_for_completion(timeout)
+            except Exception as e:
+                logger.error(f"Error waiting for streaming completion: {e}")
+                
+    def stop(self):
+        """
+        Stop any ongoing streaming audio
+        """
+        if self.streaming_client:
+            try:
+                self.streaming_client.stop()
+            except Exception as e:
+                logger.error(f"Error stopping streaming client: {e}")

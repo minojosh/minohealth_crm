@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, Date, Time, inspect
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, Date, Time, inspect, Text
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from .config import DATABASE_URL
+from datetime import datetime
 Base = declarative_base()
 
 class Doctor(Base):
@@ -32,6 +33,10 @@ class Patient(Base):
     address = Column(String)
     appointments = relationship("Appointment", back_populates="patient")
     medications = relationship("Medication", back_populates="patient")
+    medical_conditions = relationship("MedicalCondition", back_populates="patient")
+
+    def __repr__(self):
+        return f"<Patient(id={self.patient_id}, name={self.name})>"
 
 class Appointment(Base):
     __tablename__ = 'appointments'
@@ -59,6 +64,37 @@ class Medication(Base):
     end_date = Column(Date)
     patient = relationship("Patient", back_populates="medications")
 
+class MedicalCondition(Base):
+    """Medical condition model."""
+    __tablename__ = 'medical_conditions'
+    
+    id = Column(Integer, primary_key=True)
+    patient_id = Column(Integer, ForeignKey('patients.patient_id'), nullable=False)
+    condition_name = Column(String(255), nullable=False)
+    date_recorded = Column(DateTime, default=datetime.now)
+    notes = Column(Text, nullable=True)
+    
+    # Relationships
+    patient = relationship("Patient", back_populates="medical_conditions")
+    symptoms = relationship("Symptom", back_populates="condition", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<MedicalCondition(id={self.id}, patient_id={self.patient_id}, condition={self.condition_name})>"
+
+class Symptom(Base):
+    """Symptom model."""
+    __tablename__ = 'symptoms'
+    
+    id = Column(Integer, primary_key=True)
+    condition_id = Column(Integer, ForeignKey('medical_conditions.id'), nullable=False)
+    symptom_name = Column(String(255), nullable=False)
+    severity = Column(String(50), nullable=True)
+    
+    # Relationships
+    condition = relationship("MedicalCondition", back_populates="symptoms")
+    
+    def __repr__(self):
+        return f"<Symptom(id={self.id}, condition_id={self.condition_id}, name={self.symptom_name})>"
 
 # Initialize database
 engine = create_engine(DATABASE_URL)

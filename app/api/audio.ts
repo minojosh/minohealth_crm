@@ -8,6 +8,7 @@ class AudioService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private audioBuffer: Float32Array[] = []; // Buffer to store audio chunks
+  private lastAudioData: string | null = null; // Store the last processed audio data
   
   // Authentication token for WebSocket connections
   private authToken = "audio_access_token_2023";
@@ -186,6 +187,9 @@ class AudioService {
         // Convert to base64
         const base64Audio = this.arrayBufferToBase64(int16Data.buffer);
         
+        // Store the last processed audio data
+        this.lastAudioData = base64Audio;
+        
         // Send complete audio to server
         if (this.ws?.readyState === WebSocket.OPEN) {
           console.log(`Sending audio data with sample rate: ${audioContext.sampleRate}Hz`);
@@ -330,12 +334,17 @@ class AudioService {
 
   onStatus(handler: (status: string) => void) {
     this.messageHandlers.set('status', (payload) => {
-      const statusMessage = typeof payload === 'string'
-        ? payload
-        : payload?.message || 'Unknown status';
+      const statusMessage = payload.message || payload.status || 'Status update received';
       handler(statusMessage);
     });
   }
+
+  getLastAudioData(): string | null {
+    return this.lastAudioData;
+  }
+
+  // Static instance for singleton pattern
+  private static instance: AudioService | null = null;
 }
 
 export const audioService = new AudioService();

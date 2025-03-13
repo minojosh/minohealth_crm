@@ -96,6 +96,8 @@ class Assistant:
         log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         log_file = log_dir / f"app_{self._get_timestamp()}.log"
         
+        logger.info(f"Setting up logging to file: {log_file}")
+        
         # Configure root logger
         logging.basicConfig(
             level=logging.INFO,
@@ -108,6 +110,7 @@ class Assistant:
 
     def _setup_directories(self):
         """Create necessary directories if they don't exist."""
+        # Create directories relative to the current file (backend folder)
         data_dir = Path(__file__).parent / 'data'
         dirs = [
             'audio',
@@ -117,9 +120,16 @@ class Assistant:
             'yaml_output/processed',
             'logs'
         ]
+        
+        # Ensure the main data directory exists
+        data_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Ensuring data directory exists at: {data_dir}")
+        
+        # Create all subdirectories
         for dir_name in dirs:
             dir_path = data_dir / dir_name
             dir_path.mkdir(parents=True, exist_ok=True)
+            logger.debug(f"Created directory: {dir_path}")
 
     def _get_timestamp(self) -> str:
         """Generate a formatted timestamp."""
@@ -143,6 +153,9 @@ class Assistant:
             transcript = stt_client.recognize_speech()
             
             if transcript:
+                # Ensure the transcripts directory exists
+                transcript_path.parent.mkdir(parents=True, exist_ok=True)
+                
                 # Save transcript to file
                 transcript_path.write_text(transcript)
                 logger.info(f"Transcript saved to {transcript_path}")
@@ -181,36 +194,18 @@ class Assistant:
             if not current_message:
                 raise ValueError("No message to process")
             
-            # Create example YAML for system understanding
-            example_yaml = """
-name: John Smith
-dob: 1980-01-15
-address: 123 Main Street
-phone: 024-5678-123
-email: john.smith@example.com
-insurance: ABC Insurance
-condition: flu
-symptoms:
-  - cough
-  - fever
-reason_for_visit: Medical consultation
-appointment_details:
-  type: follow-up visit
-  time: "09:30"
-  doctor: Dr. Smith
-  scheduled_date: "2025-01-15"
-"""
-            
-            # Format the query to extract medical information as YAML
+            # Format the query with strict YAML requirements and better extraction guidance
             extraction_prompt = (
-                f"Extract medical information from this transcript and format it STRICTLY as YAML.\n\n"
+                f"Extract ALL medical information from this transcript and format it STRICTLY as YAML.\n\n"
                 f"Transcript: {current_message.user_input}\n\n"
                 f"Rules:\n"
                 f"1. ONLY output valid YAML\n"
                 f"2. DO NOT include any explanatory text or comments\n"
                 f"3. Use null for missing values, not None\n"
                 f"4. If no medical information is found, still output the structure with null values\n"
-                f"5. Format must be exactly:\n\n"
+                f"5. IMPORTANT: Extract ANY information that could be relevant, even if incomplete\n"
+                f"6. For age, convert to a birthdate estimate if exact DOB is not provided\n"
+                f"7. Format must be exactly:\n\n"
                 f"name: [string or null]\n"
                 f"dob: [YYYY-MM-DD or null]\n"
                 f"address: [string or null]\n"
@@ -290,6 +285,20 @@ appointment_details:
                         cleaned_data[field] = value
                     else:
                         cleaned_data[field] = None
+                
+                # Special handling for age to DOB conversion
+                if not cleaned_data.get('dob') and 'age' in str(current_message.user_input).lower():
+                    # Try to extract age and convert to estimated DOB
+                    import re
+                    from datetime import datetime, timedelta
+                    
+                    age_match = re.search(r'age\s+(\d+)', str(current_message.user_input).lower())
+                    if age_match:
+                        age = int(age_match.group(1))
+                        # Calculate approximate birth year
+                        birth_year = datetime.now().year - age
+                        cleaned_data['dob'] = f"{birth_year}-01-01"  # Use January 1st as default
+                        logger.info(f"Converted age {age} to estimated DOB: {cleaned_data['dob']}")
                 
                 # Handle appointment details specifically
                 appt_details = cleaned_data.get('appointment_details', {})
@@ -472,7 +481,12 @@ appointment_details:
 
     def _save_yaml(self, yaml_content: str, timestamp: str) -> Tuple[Path, Path]:
         """Save YAML content to both raw and processed directories."""
-        base_dir = Path(__file__).parent.parent / 'data' / 'yaml_output'
+        # Use the backend/data directory for saving files
+        base_dir = Path(__file__).parent / 'data' / 'yaml_output'
+        
+        # Ensure directories exist
+        (base_dir / 'raw').mkdir(parents=True, exist_ok=True)
+        (base_dir / 'processed').mkdir(parents=True, exist_ok=True)
         
         # Save raw YAML
         raw_path = base_dir / 'raw' / f'extracted_{timestamp}.yaml'
@@ -500,6 +514,16 @@ appointment_details:
                 'address': yaml_data.get('address') if yaml_data.get('address') != 'null' else None,
                 'date_of_birth': yaml_data.get('dob') if yaml_data.get('dob') != 'null' else None
             }
+            
+            # Handle required fields - provide defaults if missing
+            if not patient_data.get('name'):
+                logger.warning("Missing required field: name")
+                return None
+                
+            # Add placeholder for required phone if missing
+            if not patient_data.get('phone'):
+                patient_data['phone'] = "Unknown"
+                logger.warning("Missing phone number, using placeholder")
             
             # Remove None values and empty strings
             patient_data = {k: v for k, v in patient_data.items() if v not in (None, '', 'null')}
@@ -536,7 +560,7 @@ appointment_details:
                 symptoms = yaml_data.get('symptoms', [])
                 if condition not in (None, '', 'null') or (symptoms and any(s not in (None, '', 'null') for s in symptoms)):
                     logger.debug(f"Adding medical condition: {condition} and symptoms: {symptoms}")
-                    # Assuming you have a method to add medical conditions
+                    # Add medical conditions
                     self.db_manager.add_medical_condition(
                         patient_id=patient_id,
                         condition=condition if condition != 'null' else None,
@@ -582,8 +606,16 @@ appointment_details:
             # Parse YAML response
             import yaml
             try:
-                # Clean up the response first
-                cleaned_response = response.strip().strip('```yaml',").strip('```',").strip()
+                # Clean up the response first - fixed the string manipulation
+                cleaned_response = response
+                # Remove any markdown code blocks if present
+                if "```yaml" in cleaned_response:
+                    cleaned_response = cleaned_response.replace("```yaml", "").replace("```", "")
+                
+                # Ensure the response is properly stripped
+                cleaned_response = cleaned_response.strip()
+                
+                logger.debug(f"Cleaned YAML response: {cleaned_response}")
                 extracted_data = yaml.safe_load(cleaned_response)
                 
                 if not isinstance(extracted_data, dict):
@@ -628,7 +660,7 @@ appointment_details:
             print("\nExtracted Information:")
             print(response)
             print(f"\nFiles saved:")
-            print(f"- Transcript: data/transcripts/transcript_{timestamp}.txt")
+            print(f"- Transcript: backend/data/transcripts/transcript_{timestamp}.txt")
             print(f"- Raw YAML: {raw_path}")
             print(f"- Processed YAML: {processed_path}")
             
