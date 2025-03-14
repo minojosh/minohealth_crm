@@ -64,7 +64,7 @@ app = FastAPI(
 
 # Initialize STT client with URL from environment variable
 stt_server_url = os.getenv("STT_SERVER_URL")
-client = SpeechRecognitionClient(server_url=stt_server_url)
+stt_client = SpeechRecognitionClient(server_url=stt_server_url)
 logger.info(f"STT Service URL: {stt_server_url or 'Using default'}")
 
 # Initialize TTS client
@@ -257,7 +257,7 @@ async def transcribe_audio_endpoint(request: Request):
                 
                 # Process using the STT client
                 logger.info("Sending audio to STT service...")
-                transcription = client.transcribe_audio(audio_bytes)
+                transcription = stt_client.transcribe_audio(audio_bytes)
                 
                 logger.info(f"Transcription result: {transcription}")
                 return {"transcription": transcription}
@@ -290,7 +290,7 @@ async def extract_from_audio(request: Request):
         
         # Transcribe audio
         try:
-            transcript = client.transcribe_audio(audio_bytes)
+            transcript =stt_client.transcribe_audio(audio_bytes)
             
             if not transcript or transcript == "No speech detected":
                 raise HTTPException(status_code=400, detail="No speech detected in audio")
@@ -497,7 +497,7 @@ async def audio_websocket(websocket: WebSocket, token: str = Query(None)):
                             continue
                         
                         # Use the client's transcribe_audio method
-                        transcription = client.transcribe_audio(audio_np.tobytes())
+                        transcription = stt_client.transcribe_audio(audio_np.tobytes())
                         logger.info(f"Transcription result: {transcription}")
                         
                         if transcription and not transcription.startswith("Processing error"):
@@ -829,7 +829,7 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                     # Process audio for transcription
                     try:
                         audio_bytes = base64.b64decode(audio_base64)
-                        transcription = client.transcribe_audio(audio_bytes)
+                        transcription = stt_client.transcribe_audio(audio_bytes)
                         
                         # Check if transcription contains an error message
                         if transcription and transcription.startswith("Processing error:"):
@@ -1110,7 +1110,7 @@ async def receive_speech_input(conversation_id: str):
         # Using existing transcribe_audio method which works in the event loop
         # Pass a dummy audio sample to avoid creating a new event loop with asyncio.run()
         audio_bytes = b''  # Empty bytes as placeholder
-        user_input = client.transcribe_audio(audio_bytes)
+        user_input = stt_client.transcribe_audio(audio_bytes)
         
         if not user_input or not user_input.strip():
             raise HTTPException(status_code=400, detail="No speech input detected")

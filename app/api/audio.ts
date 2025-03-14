@@ -111,7 +111,7 @@ class AudioService {
     this.audioBuffer = [];
 
     // Use a fixed sample rate for speech recognition
-    const targetSampleRate = 24000; // 16kHz is optimal for speech recognition
+    const targetSampleRate = 16000; // 16kHz is optimal for speech recognition
     
     // Create an AudioContext with the target sample rate
     const audioContext = new AudioContext({
@@ -194,16 +194,49 @@ class AudioService {
         if (this.ws?.readyState === WebSocket.OPEN) {
           console.log(`Sending audio data with sample rate: ${audioContext.sampleRate}Hz`);
           
+          // Update message format to match what the server expects
+          // Use 'transcription' type instead of 'audio_input' to match the server's handler
           this.ws.send(JSON.stringify({
-            type: 'audio_input',
-            audio: base64Audio,
-            sampleRate: audioContext.sampleRate,
-            encoding: 'PCM_24',
+            type: 'transcription',
+            payload: {
+              audioData: base64Audio,
+              format: 'raw',
+              codec: 'pcm',
+              sampleRate: audioContext.sampleRate
+            },
             timestamp: Date.now(),
-            message_id: `audio_input_${Date.now()}`
+            message_id: `transcription_${Date.now()}`
           }));
+          
+          console.log('Audio data sent with transcription message type');
         } else {
           console.error('WebSocket not open, cannot send audio for processing');
+          
+          // Fallback to HTTP API if WebSocket is not available
+          console.log('Attempting fallback to HTTP API...');
+          try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const response = await fetch(`${API_URL}/transcribe`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ audio: base64Audio })
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              console.log('Fallback transcription successful:', result);
+              
+              // Manually trigger the transcription handler with the result
+              const handler = this.messageHandlers.get('transcription');
+              if (handler) {
+                handler({ text: result.transcription, confidence: 1.0 });
+              }
+            } else {
+              console.error('Fallback transcription failed:', response.status);
+            }
+          } catch (err) {
+            console.error('Error in fallback transcription:', err);
+          }
         }
         
         // Clear buffer after sending
