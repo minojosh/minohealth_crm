@@ -551,6 +551,12 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
             "type": "message",
             "text": greeting
         })
+        
+        tts_client.TTS(
+            greeting,
+            play_locally=True
+        ) 
+        tts_client.wait_for_completion()
 
         while True:
             try:
@@ -569,16 +575,18 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                     # Send the status messages to the frontend if available
                     if hasattr(assistant, 'status_messages') and assistant.status_messages:
                         for status_msg in assistant.status_messages:
-                            await websocket.send_json({
-                                "type": "message",
-                                "role": "system",
-                                "text": status_msg
-                            })
-                            
-                            tts_client.TTS(
-                                status_msg,
-                                play_locally=True
-                            )
+                            if status_msg:
+                                await websocket.send_json({
+                                    "type": "message",
+                                    "role": "system",
+                                    "text": status_msg
+                                })
+                                
+                                tts_client.TTS(
+                                    status_msg,
+                                    play_locally=True
+                                ) 
+                                tts_client.wait_for_completion()
                         
                     
                     # Handle available slots
@@ -604,6 +612,8 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                             slots_response,
                             play_locally=True
                         )
+                        
+                        tts_client.wait_for_completion()
                     else:
                         await websocket.send_json({
                             "type": "message",
@@ -614,6 +624,7 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                             "No doctors available at this time. Please try again later.",
                             play_locally=True
                         )
+                        tts_client.wait_for_completion()
 
                 elif message.get("type") == "message":
                     # Process user message
@@ -678,6 +689,7 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
             })
     finally:
         logger.info(f"Cleaning up schedule_session for patient {patient_id}")
+        tts_client.stop()
         if assistant:
             # Clean up any resources
             pass
