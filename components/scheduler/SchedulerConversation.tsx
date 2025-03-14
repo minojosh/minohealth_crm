@@ -342,9 +342,14 @@ export function SchedulerConversation({ initialContext, onComplete, patientId }:
           base64Data = btoa(base64Data);
           console.log("Base64 conversion complete. Length:", base64Data.length);
           
+          // Strip trailing slashes and construct URL
+          const baseUrl = process.env.NEXT_PUBLIC_STT_SERVER_URL?.replace(/\/+$/, '');
+          const transcribeUrl = `${baseUrl}/transcribe`;
+          console.log("Transcription URL:", transcribeUrl);
+
           try {
             // Send to STT service
-            const response = await fetch(`${process.env.NEXT_PUBLIC_STT_SERVER_URL || 'http://localhost:8000'}/transcribe`, {
+            const response = await fetch(transcribeUrl, {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
               body: JSON.stringify({ audio: base64Data })

@@ -225,8 +225,9 @@ class TTSClient:
             try:
                 # Queue text for streaming playback
                 logger.info(f"Using streaming client for text: {text[:30]}...")
-                all_audio_chunks = self.streaming_client.stream_text(text)
-                
+                self.streaming_client.stream_text(text)
+                self.streaming_client.wait_for_completion()
+                all_audio_chunks = self.streaming_client.all_audio_chunks
                 
                 # Since streaming is asynchronous, we still need to get the audio data for return and saving
                 # So we fall back to direct request approach for the data

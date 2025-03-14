@@ -399,7 +399,7 @@ Conversation:
         return text
 
     def handle_specialty_search(self, response):
-        text = "Finding a suitable doctor"
+        text = "Finding a suitable doctor. Please wait..."
         self.add_status_message(text)
         
         for doc in docs:
@@ -411,7 +411,7 @@ Conversation:
             self.handle_no_doctors_found("specialty")
 
     def handle_doctor_search(self, response):
-        text = 'Finding available days for the doctor'
+        text = 'Finding available days for the doctor. Please wait...'
         self.add_status_message(text)
         
         for doc in docs:
