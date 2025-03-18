@@ -558,3 +558,35 @@ class SpeechRecognitionClient:
         except Exception as e:
             logger.error(f"Error processing audio for transcription: {e}", exc_info=True)
             return f"Processing error: {str(e)}"
+    
+    # def transcribe_with_context(self, audio_bytes, context=""):
+    #     """
+    #     Transcribe audio data with context from previous transcriptions
+        
+    #     Args:
+    #         audio_bytes (bytes): Raw audio bytes to transcribe
+    #         context (str): Previous transcription context
+            
+    #     Returns:
+    #         str: Transcription result
+    #     """
+    #     try:
+    #         logging.info(f"Received {len(audio_bytes)} bytes of audio data for transcription with context")
+            
+    #         # Store the context temporarily
+    #         original_context = self.context_prompt
+    #         if context:
+    #             self.context_prompt = context
+    #             logging.info(f"Using provided context: {context[:30]}{'...' if len(context) > 30 else ''}")
+            
+    #         # Use the existing transcribe_audio method
+    #         result = self.transcribe_audio(audio_bytes)
+            
+    #         # Restore original context if needed
+    #         self.context_prompt = original_context
+            
+    #         return result
+            
+    #     except Exception as e:
+    #         logging.error(f"Error in transcribe_with_context: {str(e)}", exc_info=True)
+    #         return f"Error during transcription: {str(e)}"

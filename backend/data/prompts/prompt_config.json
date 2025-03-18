@@ -47,5 +47,38 @@
       },
       "actions_required": ["list of required actions"]
     }
+  },
+  "soap_template_prompt": "Use the medical dialogue as context to write a medical note. Listen to the conversation and write the SOAP medical note in a JSON format, using the structure provided in the SOAP_TEMPLATE. Ensure the output is accurate, concise, and formatted correctly. Make sure you are not transcribing the conversation but writing a medical note based on your understanding of the patient's condition. Use your extensive medical knowledge to complete the task.",
+  "soap_template": {
+      "SOAP": {
+          "Subjective": {
+              "ChiefComplaint": "Primary concern or symptom reported by the patient, typically in their own words.",
+              "HistoryOfPresentIllness": {
+                  "Onset": "When the current complaint or symptoms began.",
+                  "Location": "Specific area or body part affected.",
+                  "Duration": "Length of time the symptoms have been present.",
+                  "Characteristics": "Qualities or nature of the symptoms (e.g., sharp, dull, throbbing).",
+                  "AggravatingFactors": "Any activities, conditions, or situations that worsen the symptoms.",
+                  "RelievingFactors": "Factors that alleviate or reduce the symptoms.",
+                  "Timing": "Pattern or timing of symptoms (e.g., intermittent, constant).",
+                  "Severity": "Patient's description of intensity or degree of the symptoms (e.g., mild, severe)."
+              },
+              "PastMedicalHistory": "Summary of past medical conditions, surgeries, and treatments relevant to the patient.",
+              "FamilyHistory": "Health history of immediate family members, focusing on any genetic or hereditary conditions.",
+              "SocialHistory": "Information about the patient's lifestyle, including occupation, habits, and substance use.",
+              "ReviewOfSystems": "Checklist of symptoms organized by body system, as reported by the patient."
+          },
+          "Assessment": {
+              "PrimaryDiagnosis": "Main diagnosis determined based on the evaluation of the medical dialogue.",
+              "DifferentialDiagnosis": "Possible alternative diagnoses to consider based on the evaluation of the medical dialogue.",
+              "ProblemList": "List of ongoing health issues or concerns."
+          },
+          "Plan": {
+              "TreatmentAndMedications": "Which medications would you prescribe, or which treatment would you recommend for the patient.",
+              "FurtherTestingOrImaging": "Which additional tests or imaging studies would you recommend to aid diagnosis or treatment. If the information in the dialogue is insufficient recommend further testing and/or imaging needed to accurately diagnose and treat the patient",
+              "PatientEducation": "What information and instructions would you provide to the patient for understanding and managing their condition.",
+              "FollowUp": "What are your recommendations for follow-up visits or further care. Think through the conversation and output what follow up you recommend"
+          }
+      }
   }
 }

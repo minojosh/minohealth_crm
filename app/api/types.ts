@@ -6,6 +6,9 @@ export interface AudioTranscriptionRequest {
   language?: string; // Optional language code
   processComplete?: boolean; // Flag to indicate this is a complete recording (not a streaming chunk)
   sampleRate?: number; // Sample rate of the audio in Hz
+  sessionId?: string; // Unique identifier for the transcription session
+  maintainContext?: boolean; // Whether to maintain context between requests
+  alternativeMethod?: boolean; // Flag to use alternative transcription method when default fails
 }
 
 export interface AudioTranscriptionResponse {
@@ -15,6 +18,8 @@ export interface AudioTranscriptionResponse {
   segments?: TranscriptionSegment[];
   error?: string;
   isComplete?: boolean; // Flag to indicate if this is the final transcription
+  sessionId?: string; // Session ID returned from the backend
+  alternativeUsed?: boolean; // Whether an alternative transcription method was used
 }
 
 export interface TranscriptionSegment {

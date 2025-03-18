@@ -39,6 +39,7 @@ import os
 import tempfile
 from dotenv import load_dotenv
 from scipy import signal
+import uuid
 
 # Configure logging
 logging.basicConfig(
@@ -226,10 +227,22 @@ async def transcribe_audio_endpoint(request: Request):
     try:
         data = await request.json()
         
+        # Track transcription sessions
+        session_id = data.get("session_id", str(uuid.uuid4()))
+        maintain_context = data.get("maintain_context", False)
+        
+        # Initialize transcription contexts if needed
+        if not hasattr(app.state, "transcription_contexts"):
+            app.state.transcription_contexts = {}
+            
         # Check if this is a finish command or audio data
         if 'command' in data and data['command'] == 'finish':
-            logger.info("Finish command received, proxying to STT service")
-            return {"transcription": "", "status": "finished"}
+            logger.info(f"Finish command received for session {session_id}, proxying to STT service")
+            # Clear the context when finished
+            if maintain_context and session_id in app.state.transcription_contexts:
+                logger.info(f"Clearing context for session {session_id}")
+                del app.state.transcription_contexts[session_id]
+            return {"transcription": "", "status": "finished", "session_id": session_id}
         
         if 'audio' in data:
             # Process audio data
@@ -241,6 +254,12 @@ async def transcribe_audio_endpoint(request: Request):
                 # Convert from base64 to bytes
                 audio_bytes = base64.b64decode(audio_data)
                 logger.info(f"Decoded audio bytes length: {len(audio_bytes)}")
+                
+                # Get existing context for this session if maintain_context is True
+                initial_context = ""
+                if maintain_context:
+                    initial_context = app.state.transcription_contexts.get(session_id, "")
+                    logger.info(f"Using existing context for session {session_id}: {initial_context[:30]}{'...' if len(initial_context) > 30 else ''}")
                 
                 # Convert to numpy array for analysis
                 audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
@@ -255,17 +274,33 @@ async def transcribe_audio_endpoint(request: Request):
                 }
                 logger.info(f"Audio statistics: {audio_stats}")
                 
-                # Process using the STT client
+                # Process using the STT client with context
                 logger.info("Sending audio to STT service...")
-                transcription = stt_client.transcribe_audio(audio_bytes)
+                # Pass initial context to the transcription function if implemented
+                if hasattr(stt_client, 'transcribe_with_context'):
+                    transcription = stt_client.transcribe_with_context(audio_bytes, initial_context)
+                else:
+                    # Default to standard transcription
+                    transcription = stt_client.transcribe_audio(audio_bytes)
+                
+                # Update context for future requests if transcription is successful
+                if maintain_context and transcription and transcription not in ("No speech detected", ""):
+                    # Add space between context and new transcription
+                    updated_context = f"{initial_context} {transcription}".strip()
+                    app.state.transcription_contexts[session_id] = updated_context
+                    logger.info(f"Updated context for session {session_id}, new length: {len(updated_context)}")
                 
                 logger.info(f"Transcription result: {transcription}")
-                return {"transcription": transcription}
+                return {
+                    "transcription": transcription,
+                    "session_id": session_id,
+                    "has_context": maintain_context and bool(initial_context)
+                }
             except Exception as e:
                 logger.error(f"Error processing audio data: {str(e)}", exc_info=True)
-                return {"error": f"Failed to process audio: {str(e)}"}
+                return {"error": f"Failed to process audio: {str(e)}", "session_id": session_id}
         
-        return {"error": "Invalid request format"}
+        return {"error": "Invalid request format", "session_id": session_id}
     
     except Exception as e:
         logger.error(f"Error in transcribe endpoint: {str(e)}", exc_info=True)
@@ -277,6 +312,7 @@ async def extract_from_audio(request: Request):
     try:
         data = await request.json()
         audio_base64 = data.get("audio")
+        session_id = data.get("session_id")
         
         if not audio_base64:
             raise HTTPException(status_code=400, detail="No audio data provided")
@@ -288,9 +324,17 @@ async def extract_from_audio(request: Request):
             logger.error(f"Error decoding audio data: {str(e)}")
             raise HTTPException(status_code=400, detail="Invalid audio data format")
         
-        # Transcribe audio
+        # Transcribe audio - use the session context if available
         try:
-            transcript =stt_client.transcribe_audio(audio_bytes)
+            if session_id and hasattr(app.state, "transcription_contexts") and session_id in app.state.transcription_contexts:
+                # Use the accumulated context from the session
+                context = app.state.transcription_contexts.get(session_id, "")
+                logger.info(f"Using existing transcription context for session {session_id}")
+                # We already have a transcription from previous processing
+                transcript = context
+            else:
+                # No session context, transcribe from scratch
+                transcript = stt_client.transcribe_audio(audio_bytes)
             
             if not transcript or transcript == "No speech detected":
                 raise HTTPException(status_code=400, detail="No speech detected in audio")
@@ -385,20 +429,58 @@ async def extract_data(request: Request):
             import yaml
             processed_yaml = yaml.safe_load(yaml_content)
             
+            # Generate SOAP note using the get_soap_note method
+            soap_note = None
+            soap_path = None
+            try:
+                # Generate SOAP note - returns JSON string
+                soap_content = assistant.get_soap_note(assistant.messages)
+                
+                # Parse the JSON content
+                import json
+                soap_note = json.loads(soap_content)
+                
+                # Save SOAP note to file (already in JSON format)
+                soap_dir = os.path.join(os.path.dirname(__file__), 'data', 'soap')
+                os.makedirs(soap_dir, exist_ok=True)
+                soap_path = os.path.join(soap_dir, f'soap_note_{timestamp}.json')
+                
+                with open(soap_path, 'w', encoding='utf-8') as f:
+                    f.write(soap_content)
+                
+                logger.info(f"SOAP note saved to: {soap_path}")
+            except Exception as e:
+                logger.error(f"Error handling SOAP note: {str(e)}")
+                logger.error(f"Traceback: {traceback.format_exc()}")
+                # Create an error SOAP note
+                soap_note = {
+                    "SOAP": {
+                        "error": f"Error processing SOAP note: {str(e)}",
+                        "Subjective": {"ChiefComplaint": "Error occurred during processing"},
+                        "Assessment": {"PrimaryDiagnosis": ""},
+                        "Plan": {"TreatmentAndMedications": ""}
+                    }
+                }
+                # Don't set soap_path in this case
+            
             # Try to create a patient record if data is valid
             patient_id = None
             if processed_yaml and isinstance(processed_yaml, dict):
                 patient_id = assistant._create_patient_from_yaml(processed_yaml)
             
-            # Return the structured data along with file paths and patient ID
+            # Return the structured data along with file paths and ID
             return {
                 "status": "success",
                 "data": processed_yaml,
                 "patient_id": patient_id,
+                "raw_yaml": yaml_content,  # Include the raw YAML content
+                "processed_yaml": yaml.dump(processed_yaml, default_flow_style=False),  # Include formatted YAML
                 "files": {
                     "raw_yaml": str(raw_path),
-                    "processed_yaml": str(processed_path)
+                    "processed_yaml": str(processed_path),
+                    "soap_note": soap_path
                 },
+                "soap_note": soap_note,  # Include the SOAP note in the response
                 "message": "Successfully extracted structured data from transcript"
             }
         except Exception as e:

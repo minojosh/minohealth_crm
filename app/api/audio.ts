@@ -9,6 +9,7 @@ class AudioService {
   private maxReconnectAttempts = 5;
   private audioBuffer: Float32Array[] = []; // Buffer to store audio chunks
   private lastAudioData: string | null = null; // Store the last processed audio data
+  private currentSessionId: string | null = null; // Track the current session ID
   
   // Authentication token for WebSocket connections
   private authToken = "audio_access_token_2023";
@@ -103,12 +104,17 @@ class AudioService {
       
       if (!connected) {
         console.error('Could not establish WebSocket connection');
-        throw new Error('WebSocket connection failed');
+        // Instead of failing, we'll continue as we'll use HTTP fallback later
+        console.warn('Will use HTTP transcription as fallback');
       }
     }
 
     // Clear any previous audio buffer
     this.audioBuffer = [];
+    
+    // Generate new session ID for this transcription
+    this.currentSessionId = crypto.randomUUID();
+    console.log(`Starting new transcription session: ${this.currentSessionId}`);
 
     // Use a fixed sample rate for speech recognition
     const targetSampleRate = 16000; // 16kHz is optimal for speech recognition
@@ -175,67 +181,130 @@ class AudioService {
           offset += chunk.length;
         }
         
-        // Convert float32 to int16 for better compatibility with backend
-        const int16Data = new Int16Array(concatenated.length);
-        for (let i = 0; i < concatenated.length; i++) {
-          // Apply some light compression to improve speech clarity
-          const compressed = Math.sign(concatenated[i]) * Math.pow(Math.abs(concatenated[i]), 0.8);
-          // Convert float32 [-1.0, 1.0] to int16 [-32768, 32767]
-          int16Data[i] = Math.max(-32768, Math.min(32767, compressed * 32767));
-        }
+        // Process audio for transcription with better audio quality
+        const processedAudio = this.processAudioForDirectTranscription(concatenated);
         
         // Convert to base64
-        const base64Audio = this.arrayBufferToBase64(int16Data.buffer);
+        const base64Audio = this.arrayBufferToBase64(processedAudio.buffer);
         
         // Store the last processed audio data
         this.lastAudioData = base64Audio;
         
-        // Send complete audio to server
-        if (this.ws?.readyState === WebSocket.OPEN) {
-          console.log(`Sending audio data with sample rate: ${audioContext.sampleRate}Hz`);
+        // We'll skip the WebSocket approach and use direct HTTP API
+        // since we've seen better results with that in our application
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_SPEECH_SERVICE_URL || 'http://localhost:8000';
+          const response = await fetch(`${API_URL}/transcribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              audio: base64Audio,
+              sessionId: this.currentSessionId,
+              maintain_context: false // Set to false to avoid context_prompt error
+            })
+          });
           
-          // Update message format to match what the server expects
-          // Use 'transcription' type instead of 'audio_input' to match the server's handler
-          this.ws.send(JSON.stringify({
-            type: 'transcription',
-            payload: {
-              audioData: base64Audio,
-              format: 'raw',
-              codec: 'pcm',
-              sampleRate: audioContext.sampleRate
-            },
-            timestamp: Date.now(),
-            message_id: `transcription_${Date.now()}`
-          }));
-          
-          console.log('Audio data sent with transcription message type');
-        } else {
-          console.error('WebSocket not open, cannot send audio for processing');
-          
-          // Fallback to HTTP API if WebSocket is not available
-          console.log('Attempting fallback to HTTP API...');
-          try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            const response = await fetch(`${API_URL}/transcribe`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ audio: base64Audio })
-            });
+          if (response.ok) {
+            const result = await response.json();
+            console.log('Transcription successful:', result);
             
-            if (response.ok) {
-              const result = await response.json();
-              console.log('Fallback transcription successful:', result);
+            // Check for error message in result
+            if (result.error) {
+              console.error("Transcription error from server:", result.error);
               
-              // Manually trigger the transcription handler with the result
-              const handler = this.messageHandlers.get('transcription');
-              if (handler) {
-                handler({ text: result.transcription, confidence: 1.0 });
+              // Detect the context_prompt error specifically
+              if (result.error.includes("context_prompt")) {
+                console.warn("Detected context_prompt error, using fallback method");
+                // Retry with WebSocket as fallback
+                if (this.ws?.readyState === WebSocket.OPEN) {
+                  this.ws.send(JSON.stringify({
+                    type: 'transcription',
+                    payload: {
+                      audioData: base64Audio,
+                      format: 'raw',
+                      codec: 'pcm',
+                      sampleRate: audioContext.sampleRate,
+                      sessionId: this.currentSessionId,
+                      maintainContext: false,
+                      processComplete: true
+                    },
+                    timestamp: Date.now(),
+                    message_id: `transcription_${Date.now()}`
+                  }));
+                  return;
+                }
               }
-            } else {
-              console.error('Fallback transcription failed:', response.status);
+              
+              // Let the error handler deal with it
+              const errorHandler = this.messageHandlers.get('error');
+              if (errorHandler) {
+                errorHandler(result.error);
+              }
+              return;
             }
-          } catch (err) {
-            console.error('Error in fallback transcription:', err);
+            
+            // Manually trigger the transcription handler with the result
+            const handler = this.messageHandlers.get('transcription');
+            if (handler) {
+              handler({ 
+                text: result.transcription || '', 
+                confidence: 1.0,
+                sessionId: result.session_id || this.currentSessionId 
+              });
+            }
+          } else {
+            console.error('Direct transcription failed:', response.status);
+            
+            // Fallback to WebSocket if it's available
+            if (this.ws?.readyState === WebSocket.OPEN) {
+              console.log('Falling back to WebSocket transcription');
+              this.ws.send(JSON.stringify({
+                type: 'transcription',
+                payload: {
+                  audioData: base64Audio,
+                  format: 'raw',
+                  codec: 'pcm',
+                  sampleRate: audioContext.sampleRate,
+                  sessionId: this.currentSessionId,
+                  maintainContext: false, // Set to false to avoid context_prompt error
+                  processComplete: true
+                },
+                timestamp: Date.now(),
+                message_id: `transcription_${Date.now()}`
+              }));
+            } else {
+              // If both methods failed, tell the error handler
+              const errorHandler = this.messageHandlers.get('error');
+              if (errorHandler) {
+                errorHandler('Failed to transcribe audio via all available methods');
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error in direct transcription:', err);
+          
+          // Attempt WebSocket as a last resort
+          if (this.ws?.readyState === WebSocket.OPEN) {
+            console.log('Attempting WebSocket transcription as fallback');
+            this.ws.send(JSON.stringify({
+              type: 'transcription',
+              payload: {
+                audioData: base64Audio,
+                format: 'raw',
+                codec: 'pcm',
+                sampleRate: audioContext.sampleRate,
+                sessionId: this.currentSessionId,
+                maintainContext: false, // Set to false to avoid context_prompt error
+                processComplete: true
+              },
+              timestamp: Date.now(),
+              message_id: `transcription_${Date.now()}`
+            }));
+          } else {
+            const errorHandler = this.messageHandlers.get('error');
+            if (errorHandler) {
+              errorHandler('Failed to transcribe audio: ' + (err instanceof Error ? err.message : String(err)));
+            }
           }
         }
         
@@ -261,8 +330,101 @@ class AudioService {
     return mediaRecorder;
   }
 
+  // Enhanced audio processing for transcription
+  private processAudioForDirectTranscription(audioData: Float32Array): Int16Array {
+    // Calculate statistics for logging
+    let min = 0, max = 0, sum = 0;
+    for (let i = 0; i < audioData.length; i++) {
+      min = Math.min(min, audioData[i]);
+      max = Math.max(max, audioData[i]);
+      sum += audioData[i];
+    }
+    
+    console.log("Pre-processing audio stats:", {
+      min, max, mean: sum / audioData.length
+    });
+    
+    // Apply noise gate (filter out very low amplitudes)
+    for (let i = 0; i < audioData.length; i++) {
+      if (Math.abs(audioData[i]) < 0.005) {
+        audioData[i] = 0;
+      }
+    }
+    
+    // Find maximum absolute value for effective normalization
+    let maxAbs = 0;
+    for (let i = 0; i < audioData.length; i++) {
+      maxAbs = Math.max(maxAbs, Math.abs(audioData[i]));
+    }
+    
+    // If audio is too quiet (likely a silent recording), apply minimum threshold
+    if (maxAbs < 0.01) {
+      console.warn("Audio is too quiet, applying minimum threshold");
+      maxAbs = 0.01; // Prevent division by zero or extreme amplification
+    }
+    
+    // Calculate average level to ensure it meets server threshold
+    let sumAbs = 0;
+    for (let i = 0; i < audioData.length; i++) {
+      sumAbs += Math.abs(audioData[i]);
+    }
+    const avgLevel = sumAbs / audioData.length;
+    console.log("Audio average level:", avgLevel);
+    
+    // Server requires level >= 0.001, ensure we exceed this
+    let boostFactor = 1.0;
+    if (avgLevel < 0.001) {
+      console.warn("Audio level too low for server processing, applying boost");
+      boostFactor = 0.002 / avgLevel; // Boost to double the minimum requirement
+    }
+    
+    // Normalize and convert to Int16Array with proper amplification
+    const int16Data = new Int16Array(audioData.length);
+    
+    // Apply dynamic range compression for better audio
+    const threshold = 0.3;
+    const ratio = 0.6;
+    
+    for (let i = 0; i < audioData.length; i++) {
+      // First normalize to [-1, 1] range
+      let normalized = audioData[i] / maxAbs;
+      
+      // Apply simple dynamic range compression
+      if (Math.abs(normalized) > threshold) {
+        const overThreshold = Math.abs(normalized) - threshold;
+        const compressed = overThreshold * ratio;
+        normalized = (normalized > 0) ? 
+          threshold + compressed : 
+          -threshold - compressed;
+      }
+      
+      // Apply any necessary boost
+      normalized *= boostFactor;
+      
+      // Apply stronger amplification - increased from 0.95 to 0.98
+      const amplified = normalized * 0.98;
+      
+      // Convert to 16-bit PCM range (-32768 to 32767)
+      int16Data[i] = Math.max(-32768, Math.min(32767, amplified * 32767));
+    }
+    
+    // Calculate post-processing stats for debugging
+    let postMin = int16Data[0], postMax = int16Data[0], postSum = 0;
+    for (let i = 0; i < int16Data.length; i++) {
+      postMin = Math.min(postMin, int16Data[i]);
+      postMax = Math.max(postMax, int16Data[i]);
+      postSum += int16Data[i];
+    }
+    
+    console.log("Post-processing audio stats:", {
+      min: postMin, max: postMax, mean: postSum / int16Data.length
+    });
+    
+    return int16Data;
+  }
+
   // Helper method that safely converts ArrayBuffer to base64 without stack overflow
-  private arrayBufferToBase64(buffer: ArrayBuffer): string {
+  private arrayBufferToBase64(buffer: ArrayBufferLike): string {
     const bytes = new Uint8Array(buffer);
     const len = bytes.length;
     let base64 = '';
@@ -374,6 +536,11 @@ class AudioService {
 
   getLastAudioData(): string | null {
     return this.lastAudioData;
+  }
+
+  // Get the current session ID
+  getCurrentSessionId(): string | null {
+    return this.currentSessionId;
   }
 
   // Static instance for singleton pattern

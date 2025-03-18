@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Divider } from "@heroui/divider";
@@ -8,8 +8,6 @@ import { Tabs, Tab } from "@heroui/tabs";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/modal";
 import { useDisclosure } from "@heroui/react";
-import CombinedVoiceRecorder from "../../components/voice/VoiceRecorder";
-import { TranscriptionStatus } from "../api/types";
 import { 
   extractData, 
   extractFromAudio, 
@@ -21,7 +19,10 @@ import {
 } from "./api";
 import { audioService } from "../api/audio";
 
+
 export default function DataExtractor() {
+  // Use useRef to track previous transcription state
+  const prevTranscriptionRef = useRef("");
   const [transcription, setTranscription] = useState("");
   const [recordingStatus, setRecordingStatus] = useState<TranscriptionStatus>({
     isRecording: false,
@@ -38,6 +39,19 @@ export default function DataExtractor() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [audioData, setAudioData] = useState<string | null>(null);
   const [isExtractingFromAudio, setIsExtractingFromAudio] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isProcessingUpload, setIsProcessingUpload] = useState(false);
+
+  // Add a ref to track the MediaRecorder instance
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Add a ref to keep audio chunks
+  const audioChunksRef = useRef<BlobPart[]>([]);
+
+  // Add state for recording
+  const [isRecording, setIsRecording] = useState(false);
 
   // Load patients on component mount
   useEffect(() => {
@@ -58,17 +72,66 @@ export default function DataExtractor() {
     }
   };
 
-  const handleTranscriptionUpdate = (text: string) => {
-    setTranscription(text);
+  // Modified to correctly accumulate transcription chunks like in medical_assistant.py
+  const handleTranscriptionUpdate = (text: string, sessionId?: string) => {
+    if (!text) return; // Ignore empty updates
+    
+    // Track the session ID when provided
+    if (sessionId && !currentSessionId) {
+      setCurrentSessionId(sessionId);
+      console.log(`Setting transcription session ID: ${sessionId}`);
+    }
+    
+    setTranscription(prevText => {
+      // If we already have a transcription and we're actively recording
+      // then append the new text instead of replacing it
+      if (prevText && recordingStatus.status === "recording") {
+        // Store the previous text for comparison
+        prevTranscriptionRef.current = prevText;
+        
+        // Check if the new chunk might be a duplicate or overlap
+        if (!prevText.toLowerCase().includes(text.toLowerCase())) {
+          return `${prevText} ${text}`;
+        }
+        return prevText;
+      } else {
+        // First chunk or not recording - just use the new text
+        return text;
+      }
+    });
   };
 
   const handleStatusChange = (status: TranscriptionStatus) => {
     setRecordingStatus(status);
     
+    // Reset transcription when starting a new recording
+    if (status.status === "recording" && status.isRecording && !recordingStatus.isRecording) {
+      setTranscription("");
+      prevTranscriptionRef.current = "";
+      
+      // Clear previous session
+      setCurrentSessionId(null);
+    }
+    
     // If recording has stopped and we have audio data, store it
     if (status.status === "done" && audioService.getLastAudioData()) {
       setAudioData(audioService.getLastAudioData());
+      
+      // Capture the session ID if available
+      if (!currentSessionId) {
+        const sessionId = audioService.getCurrentSessionId();
+        if (sessionId) {
+          setCurrentSessionId(sessionId);
+          console.log(`Captured session ID after recording: ${sessionId}`);
+        }
+      }
     }
+  };
+
+  // Add clear transcription function
+  const clearTranscription = () => {
+    setTranscription("");
+    prevTranscriptionRef.current = "";
   };
 
   const handleExtractData = async () => {
@@ -81,6 +144,7 @@ export default function DataExtractor() {
     setError(null);
 
     try {
+      // Use the extractData function from the API module
       const data = await extractData(transcription);
       setExtractedData(data);
       
@@ -95,621 +159,990 @@ export default function DataExtractor() {
     }
   };
 
+  // Modified handleExtractFromAudio function using SchedulerConversation approach
   const handleExtractFromAudio = async () => {
-    if (!audioData) {
-      setError("No audio data available to extract from");
+    if (isRecording) {
+      // If already recording, stop recording
+      stopRecording();
       return;
     }
-
-    setIsExtractingFromAudio(true);
+    
+    setIsRecording(true);
     setError(null);
-
+    setTranscription("");
+    
     try {
-      const data = await extractFromAudio(audioData);
-      setExtractedData(data);
+      console.log("Requesting microphone access");
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 16000,
+          channelCount: 1
+        }
+      });
       
-      // If a patient was created, refresh the patients list
-      if (data.patient_id) {
-        loadPatients();
+      console.log("Microphone access granted");
+      streamRef.current = stream;
+      
+      // Create an AudioContext to process the audio
+      const audioContext = new AudioContext({ sampleRate: 16000 });
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      
+      // Connect the audio nodes
+      source.connect(processor);
+      processor.connect(audioContext.destination);
+      
+      // Buffer to store raw audio data
+      const audioBuffer: Float32Array[] = [];
+      
+      // Process audio data
+      processor.onaudioprocess = (e) => {
+        const inputData = e.inputBuffer.getChannelData(0);
+        audioBuffer.push(new Float32Array(inputData));
+      };
+      
+      // Create MediaRecorder for backup WebM recording
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 16000
+      });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        console.log("Data available:", event.data.size);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        console.log("MediaRecorder stopped, processing audio...");
+        setIsProcessing(true);
+        
+        try {
+          // Log initial audio buffer state
+          console.log("Audio buffer chunks:", audioBuffer.length);
+          
+          // Concatenate all audio chunks
+          const totalLength = audioBuffer.reduce((acc, chunk) => acc + chunk.length, 0);
+          console.log(`Total audio length: ${totalLength} samples (${totalLength/16000} seconds)`);
+          
+          if (totalLength === 0) {
+            console.warn('No audio data to process');
+            setError('No audio data captured');
+            setIsProcessing(false);
+            setIsRecording(false);
+            return;
+          }
+          
+          const concatenated = new Float32Array(totalLength);
+          let offset = 0;
+          
+          for (const chunk of audioBuffer) {
+            concatenated.set(chunk, offset);
+            offset += chunk.length;
+          }
+
+          // Find maximum absolute value for normalization
+          let maxAbs = 0;
+          for (let i = 0; i < concatenated.length; i++) {
+            maxAbs = Math.max(maxAbs, Math.abs(concatenated[i]));
+          }
+          console.log("Maximum absolute value:", maxAbs);
+          
+          if (maxAbs > 0) {  // Avoid division by zero
+            for (let i = 0; i < concatenated.length; i++) {
+              concatenated[i] = concatenated[i] / maxAbs;
+            }
+          } else {
+            console.warn('Audio data contains all zeros');
+            setError('No audio signal detected');
+            setIsProcessing(false);
+            setIsRecording(false);
+            return;
+          }
+
+          // Check audio level after normalization
+          let sumAbs = 0;
+          for (let i = 0; i < concatenated.length; i++) {
+            sumAbs += Math.abs(concatenated[i]);
+          }
+          const level = sumAbs / concatenated.length;
+          console.log(`Audio level after normalization: ${level}`);
+
+          if (level < 0.001) {
+            console.warn('Audio level too low after normalization:', level);
+            setError('Audio level too low, please speak louder');
+            setIsProcessing(false);
+            setIsRecording(false);
+            return;
+          }
+          
+          // Convert to base64
+          const uint8Array = new Uint8Array(concatenated.buffer);
+          let base64Data = '';
+          
+          console.log("Converting to base64...");
+          
+          for (let i = 0; i < uint8Array.length; i++) {
+            base64Data += String.fromCharCode(uint8Array[i]);
+          }
+          
+          base64Data = btoa(base64Data);
+          console.log("Base64 conversion complete. Length:", base64Data.length);
+          
+          // Strip trailing slashes and construct URL
+          const baseUrl = process.env.NEXT_PUBLIC_SPEECH_SERVICE_URL?.replace(/\/+$/, '') || 'http://localhost:8000';
+          const transcribeUrl = `${baseUrl}/transcribe`;
+          console.log("Transcription URL:", transcribeUrl);
+
+          // Send to STT service
+          const response = await fetch(transcribeUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ audio: base64Data })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          if (result.transcription) {
+            // Check for the common "Thank you" error response
+            if (result.transcription.trim() === "Thank you." || result.transcription.trim() === "Thank you") {
+              console.error("Received 'Thank you' error response from STT server");
+              setError("Speech recognition error: The STT server returned an error response. Please try again.");
+              return;
+            }
+            
+            // Update transcription display
+            setTranscription(result.transcription);
+            
+            // Process the transcription to extract data
+            try {
+              const extractedData = await extractData(result.transcription);
+              setExtractedData(extractedData);
+            } catch (err) {
+              setError(`Failed to extract data: ${err instanceof Error ? err.message : "Unknown error"}`);
+            }
+          } else {
+            setError('No speech detected');
+          }
+        } catch (error) {
+          console.error("Error processing recording:", error);
+          setError('Failed to process your recording');
+        } finally {
+          setIsProcessing(false);
+          setIsRecording(false);
+          
+          // Clean up
+          processor.disconnect();
+          source.disconnect();
+          audioContext.close();
+        }
+      };
+      
+      mediaRecorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event);
+        setError('Recording error occurred');
+        setIsRecording(false);
+      };
+      
+      console.log("Starting MediaRecorder");
+      mediaRecorder.start(1000);
+      console.log("MediaRecorder started");
+      
+      // Auto-stop after 20 seconds
+      setTimeout(() => {
+        if (isRecording && mediaRecorderRef.current?.state === 'recording') {
+          console.log('Auto-stopping recording after 20 seconds');
+          stopRecording();
+        }
+      }, 20000);
+    } catch (error: any) {
+      console.error("Error starting recording:", error);
+      let errorMessage = 'Could not access microphone';
+      
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'No microphone found. Please connect a microphone and try again.';
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to extract data from audio");
-    } finally {
-      setIsExtractingFromAudio(false);
+      
+      setError(errorMessage);
+      setIsRecording(false);
     }
+  };
+
+  // Simple stopRecording function
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    
+    // Stop and release the stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    
+    setIsRecording(false);
   };
 
   const handleViewPatient = async (patientId: number) => {
     try {
+      setIsLoadingPatients(true);
       const patientDetails = await getPatientDetails(patientId);
       setSelectedPatient(patientDetails);
       onOpen();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load patient details");
+    } catch (error) {
+      setError("Failed to load patient details");
+      console.error(error);
+    } finally {
+      setIsLoadingPatients(false);
     }
   };
 
   const renderExtractedData = (data: ExtractedDataResponse) => {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-gray-800 border-none shadow-lg overflow-hidden">
-          <CardBody className="p-0">
-            <div className="bg-blue-600 px-4 py-3">
-              <h3 className="font-semibold text-white">Patient Information</h3>
-            </div>
-            <div className="p-4 space-y-2">
-              {data.name && (
-                <div className="flex items-center">
-                  <span className="w-1/3 text-gray-400 text-sm">Name</span>
-                  <span className="w-2/3 text-white font-medium">{data.name}</span>
-                </div>
-              )}
-              {data.dob && (
-                <div className="flex items-center">
-                  <span className="w-1/3 text-gray-400 text-sm">Date of Birth</span>
-                  <span className="w-2/3 text-white font-medium">{data.dob}</span>
-                </div>
-              )}
-              {data.address && (
-                <div className="flex items-center">
-                  <span className="w-1/3 text-gray-400 text-sm">Address</span>
-                  <span className="w-2/3 text-white font-medium">{data.address}</span>
-                </div>
-              )}
-              {data.phone && (
-                <div className="flex items-center">
-                  <span className="w-1/3 text-gray-400 text-sm">Phone</span>
-                  <span className="w-2/3 text-white font-medium">{data.phone}</span>
-                </div>
-              )}
-              {data.email && (
-                <div className="flex items-center">
-                  <span className="w-1/3 text-gray-400 text-sm">Email</span>
-                  <span className="w-2/3 text-white font-medium">{data.email}</span>
-                </div>
-              )}
-              {data.insurance && (
-                <div className="flex items-center">
-                  <span className="w-1/3 text-gray-400 text-sm">Insurance</span>
-                  <span className="w-2/3 text-white font-medium">{data.insurance}</span>
-                </div>
-              )}
-              {data.patient_id && (
-                <div className="flex items-center">
-                  <span className="w-1/3 text-gray-400 text-sm">Patient ID</span>
-                  <span className="w-2/3 text-white font-medium">{data.patient_id}</span>
-                </div>
-              )}
-              {!data.name && !data.dob && !data.address && !data.phone && !data.insurance && (
-                <div className="text-gray-400 text-center py-4">No patient information extracted</div>
-              )}
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-gray-800 border-none shadow-lg overflow-hidden">
-          <CardBody className="p-0">
-            <div className="bg-purple-600 px-4 py-3">
-              <h3 className="font-semibold text-white">Medical Information</h3>
-            </div>
-            <div className="p-4 space-y-2">
-              {data.condition && (
-                <div className="flex items-center">
-                  <span className="w-1/3 text-gray-400 text-sm">Condition</span>
-                  <span className="w-2/3 text-white font-medium">{data.condition}</span>
-                </div>
-              )}
-              {data.symptoms && data.symptoms.length > 0 && (
-                <div className="flex">
-                  <span className="w-1/3 text-gray-400 text-sm">Symptoms</span>
-                  <div className="w-2/3">
-                    <div className="flex flex-wrap gap-2">
-                      {data.symptoms.map((symptom, index) => (
-                        <span key={index} className="bg-purple-900/50 text-purple-200 text-xs px-2 py-1 rounded-full">
-                          {symptom}
-                        </span>
-                      ))}
+      <div className="space-y-6">
+        {/* SOAP Note - Show first and prominently when available */}
+        {data.soap_note && (
+          <Card className="bg-gray-800 border-none shadow-lg overflow-hidden">
+            <CardBody className="p-0">
+              <div className="bg-indigo-600 px-4 py-3 flex justify-between items-center">
+                <h3 className="font-semibold text-white text-lg">SOAP Note</h3>
+                <span className="bg-indigo-900 text-white text-xs px-2 py-1 rounded">AI Generated</span>
+              </div>
+              <div className="p-4 space-y-5 max-h-[70vh] overflow-y-auto">
+                {/* Subjective Section */}
+                <div>
+                  <h4 className="text-lg font-semibold text-indigo-400 mb-2 border-b border-indigo-400 pb-1">Subjective</h4>
+                  <div className="space-y-3">
+                    <div className="bg-gray-700 p-3 rounded">
+                      <div className="text-gray-300 text-sm mb-1 font-semibold">Chief Complaint</div>
+                      <div className="text-white">{data.soap_note.SOAP.Subjective.ChiefComplaint}</div>
                     </div>
+                    
+                    <div className="bg-gray-700 p-3 rounded">
+                      <div className="text-gray-300 text-sm mb-2 font-semibold">History of Present Illness</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-white">
+                        <div>
+                          <span className="text-gray-400 font-medium">Onset: </span>
+                          {data.soap_note.SOAP.Subjective.HistoryOfPresentIllness.Onset}
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-medium">Location: </span>
+                          {data.soap_note.SOAP.Subjective.HistoryOfPresentIllness.Location}
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-medium">Duration: </span>
+                          {data.soap_note.SOAP.Subjective.HistoryOfPresentIllness.Duration}
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-medium">Characteristics: </span>
+                          {data.soap_note.SOAP.Subjective.HistoryOfPresentIllness.Characteristics}
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-medium">Aggravating Factors: </span>
+                          {data.soap_note.SOAP.Subjective.HistoryOfPresentIllness.AggravatingFactors}
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-medium">Relieving Factors: </span>
+                          {data.soap_note.SOAP.Subjective.HistoryOfPresentIllness.RelievingFactors}
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-medium">Timing: </span>
+                          {data.soap_note.SOAP.Subjective.HistoryOfPresentIllness.Timing}
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-medium">Severity: </span>
+                          {data.soap_note.SOAP.Subjective.HistoryOfPresentIllness.Severity}
+                        </div>
+                      </div>
+                    </div>
+
+                    {data.soap_note.SOAP.Subjective.PastMedicalHistory && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Past Medical History</div>
+                        <div className="text-white">{data.soap_note.SOAP.Subjective.PastMedicalHistory}</div>
+                      </div>
+                    )}
+
+                    {data.soap_note.SOAP.Subjective.FamilyHistory && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Family History</div>
+                        <div className="text-white">{data.soap_note.SOAP.Subjective.FamilyHistory}</div>
+                      </div>
+                    )}
+
+                    {data.soap_note.SOAP.Subjective.SocialHistory && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Social History</div>
+                        <div className="text-white">{data.soap_note.SOAP.Subjective.SocialHistory}</div>
+                      </div>
+                    )}
+
+                    {data.soap_note.SOAP.Subjective.ReviewOfSystems && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Review of Systems</div>
+                        <div className="text-white">{data.soap_note.SOAP.Subjective.ReviewOfSystems}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-              {data.reason_for_visit && (
-                <div className="flex items-start">
-                  <span className="w-1/3 text-gray-400 text-sm">Reason for Visit</span>
-                  <span className="w-2/3 text-white font-medium">{data.reason_for_visit}</span>
-                </div>
-              )}
-              {!data.condition && (!data.symptoms || data.symptoms.length === 0) && !data.reason_for_visit && (
-                <div className="text-gray-400 text-center py-4">No medical information extracted</div>
-              )}
-            </div>
-          </CardBody>
-        </Card>
 
-        <Card className="bg-gray-800 border-none shadow-lg overflow-hidden">
-          <CardBody className="p-0">
-            <div className="bg-green-600 px-4 py-3">
-              <h3 className="font-semibold text-white">Appointment Details</h3>
-            </div>
-            <div className="p-4 space-y-2">
-              {data.appointment_details ? (
-                <>
-                  {data.appointment_details.type && (
-                    <div className="flex items-center">
-                      <span className="w-1/3 text-gray-400 text-sm">Type</span>
-                      <span className="w-2/3 text-white font-medium">{data.appointment_details.type}</span>
-                    </div>
-                  )}
-                  {data.appointment_details.doctor && (
-                    <div className="flex items-center">
-                      <span className="w-1/3 text-gray-400 text-sm">Doctor</span>
-                      <span className="w-2/3 text-white font-medium">{data.appointment_details.doctor}</span>
-                    </div>
-                  )}
-                  {data.appointment_details.scheduled_date && (
-                    <div className="flex items-center">
-                      <span className="w-1/3 text-gray-400 text-sm">Date</span>
-                      <span className="w-2/3 text-white font-medium">{data.appointment_details.scheduled_date}</span>
-                    </div>
-                  )}
-                  {data.appointment_details.time && (
-                    <div className="flex items-center">
-                      <span className="w-1/3 text-gray-400 text-sm">Time</span>
-                      <span className="w-2/3 text-white font-medium">{data.appointment_details.time}</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-gray-400 text-center py-4">No appointment details extracted</div>
-              )}
-              {data.metadata && (
-                <div className="mt-6 pt-4 border-t border-gray-700 text-xs text-gray-500">
-                  <div className="flex justify-between">
-                    <span>Processed: {data.metadata.processed_at}</span>
-                    <span>Version: {data.metadata.version}</span>
+                {/* Assessment Section */}
+                <div>
+                  <h4 className="text-lg font-semibold text-indigo-400 mb-2 border-b border-indigo-400 pb-1">Assessment</h4>
+                  <div className="space-y-3">
+                    {data.soap_note.SOAP.Assessment.PrimaryDiagnosis && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Primary Diagnosis</div>
+                        <div className="text-white">{data.soap_note.SOAP.Assessment.PrimaryDiagnosis}</div>
+                      </div>
+                    )}
+
+                    {data.soap_note.SOAP.Assessment.DifferentialDiagnosis && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Differential Diagnosis</div>
+                        <div className="text-white">{data.soap_note.SOAP.Assessment.DifferentialDiagnosis}</div>
+                      </div>
+                    )}
+
+                    {data.soap_note.SOAP.Assessment.ProblemList && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Problem List</div>
+                        <div className="text-white">{data.soap_note.SOAP.Assessment.ProblemList}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-          </CardBody>
-        </Card>
+
+                {/* Plan Section */}
+                <div>
+                  <h4 className="text-lg font-semibold text-indigo-400 mb-2 border-b border-indigo-400 pb-1">Plan</h4>
+                  <div className="space-y-3">
+                    {data.soap_note.SOAP.Plan.TreatmentAndMedications && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Treatment and Medications</div>
+                        <div className="text-white">{data.soap_note.SOAP.Plan.TreatmentAndMedications}</div>
+                      </div>
+                    )}
+
+                    {data.soap_note.SOAP.Plan.FurtherTestingOrImaging && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Further Testing or Imaging</div>
+                        <div className="text-white">{data.soap_note.SOAP.Plan.FurtherTestingOrImaging}</div>
+                      </div>
+                    )}
+
+                    {data.soap_note.SOAP.Plan.PatientEducation && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Patient Education</div>
+                        <div className="text-white">{data.soap_note.SOAP.Plan.PatientEducation}</div>
+                      </div>
+                    )}
+
+                    {data.soap_note.SOAP.Plan.FollowUp && (
+                      <div className="bg-gray-700 p-3 rounded">
+                        <div className="text-gray-300 text-sm mb-1 font-semibold">Follow Up</div>
+                        <div className="text-white">{data.soap_note.SOAP.Plan.FollowUp}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Extracted data cards in a grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="bg-blue-700 border-none shadow-lg overflow-hidden">
+            <CardBody className="p-0">
+              <div className="bg-blue-600 px-4 py-3">
+                <h3 className="font-semibold text-white">Patient Information</h3>
+              </div>
+              <div className="p-4 text-white">
+                {data.name ? (
+                  <dl className="space-y-2">
+                    <div>
+                      <dt className="text-gray-300 text-sm">Name</dt>
+                      <dd>{data.name}</dd>
+                    </div>
+                    {data.dob && (
+                      <div>
+                        <dt className="text-gray-300 text-sm">Date of Birth</dt>
+                        <dd>{data.dob}</dd>
+                      </div>
+                    )}
+                    {data.address && (
+                      <div>
+                        <dt className="text-gray-300 text-sm">Address</dt>
+                        <dd>{data.address}</dd>
+                      </div>
+                    )}
+                    {data.phone && (
+                      <div>
+                        <dt className="text-gray-300 text-sm">Phone</dt>
+                        <dd>{data.phone}</dd>
+                      </div>
+                    )}
+                    {data.email && (
+                      <div>
+                        <dt className="text-gray-300 text-sm">Email</dt>
+                        <dd>{data.email}</dd>
+                      </div>
+                    )}
+                    {data.insurance && (
+                      <div>
+                        <dt className="text-gray-300 text-sm">Insurance</dt>
+                        <dd>{data.insurance}</dd>
+                      </div>
+                    )}
+                  </dl>
+                ) : (
+                  <div className="text-gray-300">No patient information extracted</div>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card className="bg-purple-800 border-none shadow-lg overflow-hidden">
+            <CardBody className="p-0">
+              <div className="bg-purple-700 px-4 py-3">
+                <h3 className="font-semibold text-white">Medical Information</h3>
+              </div>
+              <div className="p-4 text-white">
+                {(data.condition || data.symptoms?.length) ? (
+                  <dl className="space-y-2">
+                    {data.condition && (
+                      <div>
+                        <dt className="text-gray-300 text-sm">Condition</dt>
+                        <dd>{data.condition}</dd>
+                      </div>
+                    )}
+                    {data.symptoms && data.symptoms.length > 0 && (
+                      <div>
+                        <dt className="text-gray-300 text-sm">Symptoms</dt>
+                        <dd>
+                          <ul className="list-disc pl-5 space-y-1">
+                            {data.symptoms.map((symptom, index) => (
+                              <li key={index}>{symptom}</li>
+                            ))}
+                          </ul>
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                ) : (
+                  <div className="text-gray-300">No medical information extracted</div>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card className="bg-green-700 border-none shadow-lg overflow-hidden">
+            <CardBody className="p-0">
+              <div className="bg-green-600 px-4 py-3">
+                <h3 className="font-semibold text-white">Visit Information</h3>
+              </div>
+              <div className="p-4 text-white">
+                {(data.reason_for_visit || data.appointment_details) ? (
+                  <dl className="space-y-2">
+                    {data.reason_for_visit && (
+                      <div>
+                        <dt className="text-gray-300 text-sm">Reason for Visit</dt>
+                        <dd>{data.reason_for_visit}</dd>
+                      </div>
+                    )}
+                    {data.appointment_details && (
+                      <>
+                        {data.appointment_details.type && (
+                          <div>
+                            <dt className="text-gray-300 text-sm">Type</dt>
+                            <dd>{data.appointment_details.type}</dd>
+                          </div>
+                        )}
+                        {data.appointment_details.time && (
+                          <div>
+                            <dt className="text-gray-300 text-sm">Time</dt>
+                            <dd>{data.appointment_details.time}</dd>
+                          </div>
+                        )}
+                        {data.appointment_details.doctor && (
+                          <div>
+                            <dt className="text-gray-300 text-sm">Doctor</dt>
+                            <dd>{data.appointment_details.doctor}</dd>
+                          </div>
+                        )}
+                        {data.appointment_details.scheduled_date && (
+                          <div>
+                            <dt className="text-gray-300 text-sm">Date</dt>
+                            <dd>{data.appointment_details.scheduled_date}</dd>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </dl>
+                ) : (
+                  <div className="text-gray-300">No visit information extracted</div>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* File Information */}
+        {data.files && (
+          <Card className="bg-gray-800 border-none shadow-lg overflow-hidden">
+            <CardBody className="p-0">
+              <div className="bg-yellow-600 px-4 py-3">
+                <h3 className="font-semibold text-white">Saved Files</h3>
+              </div>
+              <div className="p-4 text-white">
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Raw YAML: {data.files.raw_yaml}</li>
+                  <li>Processed YAML: {data.files.processed_yaml}</li>
+                  {data.files.soap_note && (
+                    <li>SOAP Note: {data.files.soap_note}</li>
+                  )}
+                </ul>
+              </div>
+            </CardBody>
+          </Card>
+        )}
       </div>
     );
   };
 
   const renderPatientsList = () => {
-    if (isLoadingPatients) {
-      return (
-        <div className="flex justify-center items-center py-8">
-          <div className="w-10 h-10 border-4 border-t-primary border-r-transparent border-b-primary border-l-transparent rounded-full animate-spin"></div>
-          <span className="ml-3 text-gray-400">Loading patients...</span>
-        </div>
-      );
-    }
-
-    if (patients.length === 0) {
-      return (
-        <div className="text-center py-8 text-gray-400">
-          <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <p className="text-lg">No patients found</p>
-          <p className="text-sm mt-2">Extract data from voice or text to create patient records</p>
-        </div>
-      );
-    }
-
     return (
-      <Table aria-label="Patients list" className="mt-4">
-        <TableHeader>
-          <TableColumn>ID</TableColumn>
-          <TableColumn>Name</TableColumn>
-          <TableColumn>Phone</TableColumn>
-          <TableColumn>Email</TableColumn>
-          <TableColumn>Date of Birth</TableColumn>
-          <TableColumn>Actions</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {patients.map((patient) => (
-            <TableRow key={patient.patient_id}>
-              <TableCell>
-                <span className="font-medium text-white bg-gray-700 px-2 py-1 rounded-md">{patient.patient_id}</span>
-              </TableCell>
-              <TableCell>{patient.name}</TableCell>
-              <TableCell>{patient.phone}</TableCell>
-              <TableCell>{patient.email || '-'}</TableCell>
-              <TableCell>{patient.date_of_birth || '-'}</TableCell>
-              <TableCell>
-                <Button 
-                  size="sm" 
-                  color="primary" 
-                  onClick={() => handleViewPatient(patient.patient_id)}
-                  className="rounded-full"
-                >
-                  View Details
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <Card className="bg-gray-800 border-none shadow-lg overflow-hidden">
+        <CardBody className="p-0">
+          <div className="bg-blue-600 px-4 py-3">
+            <h3 className="font-semibold text-white">Patients</h3>
+          </div>
+          <div className="p-4">
+            {isLoadingPatients ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="border-t-4 border-blue-500 border-solid rounded-full w-10 h-10 animate-spin"></div>
+                <span className="ml-3 text-white">Loading patients...</span>
+              </div>
+            ) : patients.length > 0 ? (
+              <Table aria-label="Patients Table">
+                <TableHeader>
+                  <TableColumn>ID</TableColumn>
+                  <TableColumn>Name</TableColumn>
+                  <TableColumn>Date of Birth</TableColumn>
+                  <TableColumn>Phone</TableColumn>
+                  <TableColumn>Actions</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {patients.map((patient) => (
+                    <TableRow key={patient.patient_id}>
+                      <TableCell>{patient.patient_id}</TableCell>
+                      <TableCell>{patient.name}</TableCell>
+                      <TableCell>{patient.date_of_birth || patient.dob}</TableCell>
+                      <TableCell>{patient.phone}</TableCell>
+                      <TableCell>
+                        <Button 
+                          size="sm"
+                          onClick={() => handleViewPatient(patient.patient_id)}
+                          color="primary"
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                No patients found
+              </div>
+            )}
+          </div>
+        </CardBody>
+      </Card>
     );
   };
 
   const renderPatientDetails = () => {
     if (!selectedPatient) return null;
 
+    // Get patient info either from direct properties or nested patient object
+    const patientInfo = selectedPatient.patient || selectedPatient;
+    const appointments = selectedPatient.appointments || selectedPatient.visits || [];
+    const medicalConditions = selectedPatient.medical_conditions || [];
+    
     return (
-      <div className="space-y-6">
-        <div className="bg-gray-800 rounded-xl p-5 shadow-lg">
-          <h3 className="text-lg font-semibold mb-4 text-white flex items-center">
-            <svg className="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-            </svg>
-            Patient Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-700/50 p-3 rounded-lg">
-              <span className="text-gray-400 text-sm">Name</span>
-              <p className="text-white font-medium">{selectedPatient.patient.name}</p>
-            </div>
-            <div className="bg-gray-700/50 p-3 rounded-lg">
-              <span className="text-gray-400 text-sm">Phone</span>
-              <p className="text-white font-medium">{selectedPatient.patient.phone}</p>
-            </div>
-            <div className="bg-gray-700/50 p-3 rounded-lg">
-              <span className="text-gray-400 text-sm">Email</span>
-              <p className="text-white font-medium">{selectedPatient.patient.email || '-'}</p>
-            </div>
-            <div className="bg-gray-700/50 p-3 rounded-lg">
-              <span className="text-gray-400 text-sm">Address</span>
-              <p className="text-white font-medium">{selectedPatient.patient.address || '-'}</p>
-            </div>
-            <div className="bg-gray-700/50 p-3 rounded-lg">
-              <span className="text-gray-400 text-sm">Date of Birth</span>
-              <p className="text-white font-medium">{selectedPatient.patient.date_of_birth || '-'}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gray-800 rounded-xl p-5 shadow-lg">
-          <h3 className="text-lg font-semibold mb-4 text-white flex items-center">
-            <svg className="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            Appointments
-          </h3>
-          {selectedPatient.appointments.length > 0 ? (
-            <div className="overflow-hidden rounded-lg border border-gray-700">
-              <Table aria-label="Appointments" className="min-w-full">
-                <TableHeader>
-                  <TableColumn>Date/Time</TableColumn>
-                  <TableColumn>Type</TableColumn>
-                  <TableColumn>Doctor</TableColumn>
-                  <TableColumn>Status</TableColumn>
-                </TableHeader>
-                <TableBody>
-                  {selectedPatient.appointments.map((appointment) => (
-                    <TableRow key={appointment.appointment_id}>
-                      <TableCell>{appointment.datetime || '-'}</TableCell>
-                      <TableCell>{appointment.appointment_type || '-'}</TableCell>
-                      <TableCell>{appointment.doctor_name || '-'}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          appointment.status === 'scheduled' ? 'bg-blue-900/50 text-blue-200' :
-                          appointment.status === 'completed' ? 'bg-green-900/50 text-green-200' :
-                          appointment.status === 'cancelled' ? 'bg-red-900/50 text-red-200' :
-                          'bg-gray-900/50 text-gray-200'
-                        }`}>
-                          {appointment.status}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-6 bg-gray-700/30 rounded-lg">
-              <svg className="w-10 h-10 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-              <p className="text-gray-400">No appointments found</p>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-gray-800 rounded-xl p-5 shadow-lg">
-          <h3 className="text-lg font-semibold mb-4 text-white flex items-center">
-            <svg className="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Medical Conditions
-          </h3>
-          {selectedPatient.medical_conditions.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {selectedPatient.medical_conditions.map((condition) => (
-                <div key={condition.condition_id} className="bg-gray-700/40 p-4 rounded-lg">
-                  <div className="font-medium text-white mb-2">{condition.name}</div>
-                  <div className="text-sm text-gray-400">Recorded: {condition.date_recorded || 'Unknown'}</div>
-                  {condition.notes && <div className="text-sm text-gray-300 mt-2">{condition.notes}</div>}
-                  
-                  {condition.symptoms.length > 0 && (
-                    <div className="mt-3">
-                      <div className="font-medium text-sm text-gray-300 mb-2">Symptoms:</div>
-                      <div className="flex flex-wrap gap-2">
-                        {condition.symptoms.map((symptom) => (
-                          <span key={symptom.symptom_id} className="bg-purple-900/40 text-purple-200 text-xs px-2 py-1 rounded-full">
-                            {symptom.name} {symptom.severity ? `(${symptom.severity})` : ''}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+        <ModalContent className="bg-gray-800 text-white">
+          <ModalHeader className="border-b border-gray-700">
+            <h3 className="text-xl font-semibold">{patientInfo.name}</h3>
+          </ModalHeader>
+          <ModalBody>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-lg font-semibold text-blue-400">Patient Information</h4>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div className="text-gray-400">Date of Birth</div>
+                  <div>{patientInfo.date_of_birth || patientInfo.dob}</div>
+                  <div className="text-gray-400">Address</div>
+                  <div>{patientInfo.address || "Not provided"}</div>
+                  <div className="text-gray-400">Phone</div>
+                  <div>{patientInfo.phone}</div>
+                  <div className="text-gray-400">Email</div>
+                  <div>{patientInfo.email || "Not provided"}</div>
+                  <div className="text-gray-400">Insurance</div>
+                  <div>{patientInfo.insurance || "Not provided"}</div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6 bg-gray-700/30 rounded-lg">
-              <svg className="w-10 h-10 mx-auto mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <p className="text-gray-400">No medical conditions found</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="flex flex-col gap-6 pb-8">
-      <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-xl p-6 shadow-lg">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Medical Data Management</h1>
-            <p className="text-blue-200 mt-1">Extract and manage patient information from voice or text</p>
-          </div>
-          <div className="flex gap-3">
-            {activeTab === "extract" && (
-              <>
-                <Button 
-                  color="primary" 
-                  onClick={handleExtractData} 
-                  isDisabled={!transcription || recordingStatus.isRecording || isProcessing}
-                  isLoading={isProcessing}
-                  className="bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20"
-                  startContent={
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                  }
-                >
-                  {isProcessing ? "Extracting Data..." : "Extract from Text"}
-                </Button>
-                <Button 
-                  color="secondary" 
-                  onClick={handleExtractFromAudio} 
-                  isDisabled={!audioData || isExtractingFromAudio}
-                  isLoading={isExtractingFromAudio}
-                  className="bg-purple-500/20 backdrop-blur-sm border border-purple-500/30 hover:bg-purple-500/30"
-                  startContent={
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
-                    </svg>
-                  }
-                >
-                  {isExtractingFromAudio ? "Extracting..." : "Extract from Audio"}
-                </Button>
-              </>
-            )}
-            {activeTab === "patients" && (
-              <Button 
-                color="primary" 
-                onClick={loadPatients}
-                isLoading={isLoadingPatients}
-                className="bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20"
-                startContent={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                  </svg>
-                }
-              >
-                Refresh Patients
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      <Tabs 
-        selectedKey={activeTab} 
-        onSelectionChange={(key) => setActiveTab(key as string)}
-        className="bg-gray-900 p-2 rounded-xl"
-        variant="underlined"
-        color="primary"
-      >
-        <Tab 
-          key="extract" 
-          title={
-            <div className="flex items-center gap-2 px-1">
-              <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-              </svg>
-              Data Extraction
-            </div>
-          } 
-        >
-          <div className="mt-6">
-            <Card className="bg-gray-800 border-none shadow-lg overflow-hidden">
-              <CardBody>
-                <div className="flex flex-col gap-4">
-                  <h2 className="text-xl font-semibold text-white flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
-                    </svg>
-                    Voice Input & Transcription
-                  </h2>
-                  <div className="grid grid-cols-1 gap-4">
-                    <CombinedVoiceRecorder 
-                      onTranscriptionUpdate={handleTranscriptionUpdate}
-                      onRecordingStatusChange={handleStatusChange}
-                    />
-                    <div className="bg-gray-900 rounded-xl p-4 min-h-[160px] shadow-inner relative">
-                      {transcription ? (
-                        <p className="text-gray-300 whitespace-pre-wrap">{transcription}</p>
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                          <p>Transcribed text will appear here...</p>
-                        </div>
-                      )}
-                    </div>
+              </div>
+              
+              <div>
+                <h4 className="text-lg font-semibold text-purple-400">Medical Information</h4>
+                {selectedPatient.medical_history ? (
+                  <div className="mt-2">
+                    <div className="text-gray-400 mb-1">Medical History</div>
+                    <div className="bg-gray-700 p-3 rounded">{selectedPatient.medical_history}</div>
                   </div>
-                </div>
-              </CardBody>
-            </Card>
-          </div>
-
-          <Card className="mt-6 bg-gray-800 border-none shadow-lg overflow-hidden">
-            <CardBody>
-              <div className="flex flex-col gap-4">
-                <h2 className="text-xl font-semibold text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                  </svg>
-                  Extracted Data
-                </h2>
-                {error && (
-                  <div className="bg-red-900/30 border border-red-500 text-red-300 text-sm p-4 rounded-lg flex items-start">
-                    <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>{error}</span>
+                ) : medicalConditions.length > 0 ? (
+                  <div className="space-y-3 mt-2">
+                    {medicalConditions.map((condition, idx) => (
+                      <div key={idx} className="bg-gray-700 p-3 rounded">
+                        <div className="font-semibold text-purple-400">{condition.name}</div>
+                        {condition.symptoms.length > 0 && (
+                          <div className="mt-2">
+                            <div className="text-gray-400 mb-1">Symptoms</div>
+                            <ul className="list-disc ml-5">
+                              {condition.symptoms.map((symptom, i) => (
+                                <li key={i} className="text-white">
+                                  {symptom.name}
+                                  {symptom.severity && <span className="text-yellow-400 ml-2">({symptom.severity})</span>}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-500 mt-2">No medical information available</div>
+                )}
+                
+                {selectedPatient.medications && selectedPatient.medications.length > 0 && (
+                  <div className="mt-3">
+                    <div className="text-gray-400 mb-1">Medications</div>
+                    <div className="space-y-2">
+                      {selectedPatient.medications.map((med: any, i: number) => (
+                        <div key={i} className="bg-gray-700 p-2 rounded">
+                          <div className="text-purple-400">{med.name}</div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {med.dosage && (
+                              <>
+                                <div className="text-gray-400">Dosage</div>
+                                <div>{med.dosage}</div>
+                              </>
+                            )}
+                            {med.frequency && (
+                              <>
+                                <div className="text-gray-400">Frequency</div>
+                                <div>{med.frequency}</div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
-                {extractedData ? (
-                  renderExtractedData(extractedData)
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="bg-gray-700/30 border-none shadow-lg overflow-hidden">
-                      <CardBody className="p-0">
-                        <div className="bg-blue-600/50 px-4 py-3">
-                          <h3 className="font-semibold text-white">Patient Information</h3>
-                        </div>
-                        <div className="p-6 flex items-center justify-center">
-                          <div className="text-gray-400 text-center">
-                            <svg className="w-10 h-10 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                            <p>No data extracted yet</p>
-                          </div>
-                        </div>
-                      </CardBody>
-                    </Card>
-                    <Card className="bg-gray-700/30 border-none shadow-lg overflow-hidden">
-                      <CardBody className="p-0">
-                        <div className="bg-purple-600/50 px-4 py-3">
-                          <h3 className="font-semibold text-white">Medical Information</h3>
-                        </div>
-                        <div className="p-6 flex items-center justify-center">
-                          <div className="text-gray-400 text-center">
-                            <svg className="w-10 h-10 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            <p>No data extracted yet</p>
-                          </div>
-                        </div>
-                      </CardBody>
-                    </Card>
-                    <Card className="bg-gray-700/30 border-none shadow-lg overflow-hidden">
-                      <CardBody className="p-0">
-                        <div className="bg-green-600/50 px-4 py-3">
-                          <h3 className="font-semibold text-white">Appointment Details</h3>
-                        </div>
-                        <div className="p-6 flex items-center justify-center">
-                          <div className="text-gray-400 text-center">
-                            <svg className="w-10 h-10 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <p>No data extracted yet</p>
-                          </div>
-                        </div>
-                      </CardBody>
-                    </Card>
+                
+                {selectedPatient.allergies && selectedPatient.allergies.length > 0 && (
+                  <div className="mt-3">
+                    <div className="text-gray-400 mb-1">Allergies</div>
+                    <div className="bg-gray-700 p-2 rounded">
+                      <ul className="list-disc ml-4">
+                        {selectedPatient.allergies.map((allergy: string, i: number) => (
+                          <li key={i}>{allergy}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 )}
               </div>
-            </CardBody>
-          </Card>
-        </Tab>
-        
-        <Tab 
-          key="patients" 
-          title={
-            <div className="flex items-center gap-2 px-1">
-              <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-              </svg>
-              Patient Records
-            </div>
-          }
-        >
-          <div className="mt-6">
-            <Card className="bg-gray-800 border-none shadow-lg overflow-hidden">
-              <CardBody>
-                <div className="flex flex-col gap-4">
-                  <h2 className="text-xl font-semibold text-white flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
-                    Patient Records
-                  </h2>
-                  {error && (
-                    <div className="bg-red-900/30 border border-red-500 text-red-300 text-sm p-4 rounded-lg flex items-start">
-                      <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                      <span>{error}</span>
-                    </div>
-                  )}
-                  {renderPatientsList()}
+              
+              {(appointments.length > 0) && (
+                <div>
+                  <h4 className="text-lg font-semibold text-green-400">Appointments</h4>
+                  <div className="space-y-3 mt-2">
+                    {appointments.map((appointment, i) => (
+                      <div key={i} className="bg-gray-700 p-3 rounded">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-green-400">{appointment.datetime || appointment.date}</span>
+                          <span className="bg-blue-500 px-2 py-1 rounded text-xs">
+                            {appointment.status || "Scheduled"}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="text-gray-400">Type</div>
+                          <div>{appointment.appointment_type || "Regular"}</div>
+                          <div className="text-gray-400">Doctor</div>
+                          <div>{appointment.doctor_name || appointment.doctor || "Not assigned"}</div>
+                          {appointment.notes && (
+                            <>
+                              <div className="text-gray-400">Notes</div>
+                              <div>{appointment.notes}</div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </CardBody>
-            </Card>
-          </div>
-        </Tab>
-      </Tabs>
-      
-      <Modal 
-        isOpen={isOpen} 
-        onClose={onClose} 
-        size="3xl"
-        classNames={{
-          base: "bg-gray-900 text-white border border-gray-700 shadow-xl",
-          header: "border-b border-gray-700",
-          body: "p-6",
-          footer: "border-t border-gray-700"
-        }}
-      >
-        <ModalContent>
-          <ModalHeader>
-            <h2 className="text-xl font-bold flex items-center">
-              <svg className="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-              </svg>
-              {selectedPatient ? selectedPatient.patient.name : 'Patient Details'}
-            </h2>
-          </ModalHeader>
-          <ModalBody>
-            {selectedPatient && renderPatientDetails()}
+              )}
+            </div>
           </ModalBody>
           <ModalFooter>
-            <Button color="danger" variant="light" onClick={onClose}>
+            <Button onClick={onClose} color="primary">
               Close
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
+    );
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'audio/wav') {
+      setSelectedFile(file);
+      setError(null);
+    } else {
+      setSelectedFile(null);
+      setError('Please select a valid WAV file');
+    }
+  };
+
+  const processUploadedFile = async () => {
+    if (!selectedFile) {
+      setError('No file selected');
+      return;
+    }
+
+    setIsProcessingUpload(true);
+    setError(null);
+
+    try {
+      // Convert file to base64
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(selectedFile);
+        reader.onload = () => {
+          if (!reader.result) {
+            reject(new Error('Failed to read file'));
+            return;
+          }
+          
+          // Convert ArrayBuffer to base64
+          const bytes = new Uint8Array(reader.result as ArrayBuffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64 = btoa(binary);
+          resolve(base64);
+        };
+        reader.onerror = () => reject(reader.error);
+      });
+
+      // Use the extractFromAudio function directly
+      try {
+        const extractedData = await extractFromAudio(base64Data);
+        setTranscription(extractedData.transcription || "");
+        setExtractedData(extractedData);
+        
+        // If a patient was created, refresh the patients list
+        if (extractedData.patient_id) {
+          loadPatients();
+        }
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('transcription')) {
+          // This is a transcription-specific error
+          setError(`Transcription error: ${err.message}`);
+        } else {
+          setError(`Failed to process audio: ${err instanceof Error ? err.message : "Unknown error"}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error processing uploaded file:', error);
+      setError(`Failed to process the audio file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsProcessingUpload(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h1 className="text-3xl font-bold text-white">Data Extractor</h1>
+          <Tabs 
+            selectedKey={activeTab} 
+            onSelectionChange={key => setActiveTab(key as string)}
+            color="primary"
+            variant="underlined"
+            classNames={{
+              tabList: "bg-gray-800 rounded-lg p-1",
+              cursor: "bg-blue-600",
+              tab: "text-white",
+            }}
+          >
+            <Tab key="extract" title="Extract Data" />
+            <Tab key="patients" title="View Patients" />
+          </Tabs>
+        </div>
+
+        {error && (
+          <div className="bg-red-900/50 border border-red-500 text-red-100 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
+        {activeTab === "extract" ? (
+          <>
+            <Card className="bg-gray-800 border-none shadow-lg overflow-hidden">
+              <CardBody>
+                <h2 className="text-xl font-semibold text-white mb-4">Voice Input</h2>
+                
+                <div className="mb-4">
+                  <button
+                    onClick={handleExtractFromAudio}
+                    className={`rounded-lg px-6 py-3 flex items-center gap-2 ${
+                      isRecording 
+                        ? 'bg-red-600 hover:bg-red-700' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    } text-white disabled:opacity-50 disabled:cursor-not-allowed`}
+                    disabled={isProcessing}
+                  >
+                    {isRecording ? (
+                      <>
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                        </svg>
+                        Stop Recording
+                      </>
+                    ) : (
+                      <>
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                        Start Recording
+                      </>
+                    )}
+                  </button>
+                </div>
+                
+                {isProcessing && (
+                  <div className="flex items-center justify-center my-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    <span className="ml-3 text-white">Processing audio...</span>
+                  </div>
+                )}
+                
+                <h2 className="text-xl font-semibold text-white mb-2 mt-6">Transcription</h2>
+                <div className="mb-2 flex justify-between items-center">
+                  <div className="text-gray-400 text-sm">
+                    {transcription ? `${transcription.length} characters` : "No transcription yet"}
+                  </div>
+                  {transcription && (
+                    <Button
+                      size="sm"
+                      color="danger"
+                      variant="flat"
+                      onClick={() => setTranscription("")}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                <Textarea
+                  value={transcription}
+                  onChange={(e) => setTranscription(e.target.value)}
+                  placeholder="Your transcription will appear here..."
+                  className="w-full"
+                  rows={8}
+                />
+                
+                <div className="flex flex-col md:flex-row gap-3 mt-4">
+                  <Button
+                    onClick={handleExtractData}
+                    color="primary"
+                    isLoading={isProcessing}
+                    isDisabled={!transcription.trim() || isProcessing}
+                  >
+                    Extract Data from Text
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+            
+            <div className="mb-6">
+              <h3 className="font-medium text-white mb-2">Or upload a WAV file:</h3>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="file"
+                  accept="audio/wav"
+                  onChange={handleFileUpload}
+                  className="bg-gray-700 rounded-lg p-2 text-white"
+                />
+                <Button
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={processUploadedFile}
+                  disabled={!selectedFile || isProcessingUpload}
+                >
+                  {isProcessingUpload ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                      Processing...
+                    </>
+                  ) : (
+                    'Process WAV File'
+                  )}
+                </Button>
+              </div>
+              {selectedFile && (
+                <p className="text-sm text-gray-300 mt-2">
+                  Selected file: {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
+                </p>
+              )}
+            </div>
+            
+            {extractedData && (
+              <Card className="bg-gray-800 border-none shadow-lg">
+                <CardBody>
+                  <h2 className="text-xl font-semibold text-white mb-6">Extracted Data</h2>
+                  {renderExtractedData(extractedData)}
+                </CardBody>
+              </Card>
+            )}
+          </>
+        ) : (
+          renderPatientsList()
+        )}
+      </div>
+      
+      {renderPatientDetails()}
     </div>
   );
 }
