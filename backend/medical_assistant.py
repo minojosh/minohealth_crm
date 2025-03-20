@@ -8,6 +8,7 @@ import os
 import json
 import time
 import logging
+import traceback
 from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass, asdict
 from pathlib import Path
@@ -366,16 +367,42 @@ class Assistant:
     def _load_prompts(self) -> None:
         """Load system prompts from configuration."""
         try:
-            prompt_path = Path(__file__).parent / 'data' / 'prompts' / 'prompt_config.json'
-            if not prompt_path.exists():
-                raise FileNotFoundError("Prompt configuration file not found")
+            # First try the prompt.json file directly in the backend directory
+            prompt_path = Path(__file__).parent / 'prompt.json'
             
-            with open(prompt_path, 'r') as f:
-                prompts = json.load(f)
+            # If not found, try other possible locations
+            if not prompt_path.exists():
+                prompt_path = Path(__file__).parent / 'data' / 'prompts' / 'prompt_config.json'
+                if not prompt_path.exists():
+                    raise FileNotFoundError(f"Prompt configuration file not found at {prompt_path}")
+            
+            logger.info(f"Loading prompts from: {prompt_path}")
+            try:
+                # Try with utf-8 encoding first
+                with open(prompt_path, 'r', encoding='utf-8') as f:
+                    prompts = json.load(f)
+            except UnicodeDecodeError:
+                # Fall back to latin-1 which rarely fails
+                logger.warning(f"UTF-8 decoding failed, trying with latin-1 encoding")
+                with open(prompt_path, 'r', encoding='latin-1') as f:
+                    prompts = json.load(f)
             
             self.system_prompt = prompts.get('systemprompt', '')
             if not self.system_prompt:
                 raise ValueError("System prompt not found in configuration")
+            
+            # Load SOAP template prompt and template
+            self.soap_template_prompt = prompts.get('soap_template_prompt', '')
+            if not self.soap_template_prompt:
+                logger.warning("SOAP template prompt not found in configuration, using default")
+                self.soap_template_prompt = "Generate a SOAP note based on the medical dialogue."
+                
+            self.soap_template = prompts.get('soap_template', {})
+            if not self.soap_template:
+                logger.warning("SOAP template not found in configuration, using default")
+                
+            logger.info(f"Loaded SOAP template prompt: {self.soap_template_prompt[:50]}...")
+            logger.info(f"Loaded SOAP template structure with keys: {list(self.soap_template.keys() if self.soap_template else [])}")
             
             # Add default extraction guidelines if not present
             if 'extraction_guidelines' not in prompts:
@@ -389,7 +416,153 @@ class Assistant:
             logger.info("Prompts loaded successfully")
         except Exception as e:
             logger.error(f"Error loading prompts: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            # Set defaults if loading fails
+            self.soap_template_prompt = "Generate a SOAP note based on the medical dialogue."
+            self.soap_template = {}
             raise
+
+    def get_soap_note(self, messages: List[Message]) -> str:
+        """Generate a SOAP note from the transcript using Moremi."""
+        if not self.api:
+            raise ValueError("Moremi API URL not configured")
+            
+        if not self.soap_template_prompt:
+            raise ValueError("SOAP template prompt not configured")
+            
+        try:
+            # Initialize the ConversationManager with the API URL
+            conversation_manager = ConversationManager(base_url=self.api)
+            
+            # Set the system prompt for SOAP note generation
+            conversation_manager.custom_params["system_prompt"] = self.soap_template_prompt
+            
+            # Get the current message to process
+            current_message = messages[-1] if messages else None
+            if not current_message:
+                raise ValueError("No message to process")
+                
+            # Prepare the prompt with the transcript and template
+            soap_prompt = f"Generate a SOAP note based on this medical dialogue:\n\n{current_message.user_input}\n\n"
+            
+            # Add template information if available
+            if self.soap_template:
+                # Convert template to string
+                import json
+                template_str = json.dumps(self.soap_template, indent=2)
+                soap_prompt += f"Use this template structure:\n\n{template_str}"
+            
+            logger.info(f"Sending request for SOAP note generation: {current_message.user_input[:100]}...")
+            
+            # Add the user message with SOAP prompt
+            conversation_manager.add_user_message(text=soap_prompt)
+            
+            # Get the response
+            response = conversation_manager.get_assistant_response(
+                stream=False,
+                max_tokens=1500,  # SOAP notes might need more tokens
+                temperature=0.2   # Keep it factual
+            )
+            
+            # Try to extract JSON from the response
+            import json
+            import re
+            
+            # First try to identify JSON blocks in the response
+            json_block_pattern = r'```(?:json)?\s*({.*?})```'
+            json_matches = re.findall(json_block_pattern, response, re.DOTALL)
+            
+            if json_matches:
+                # Use the first complete JSON block found
+                try:
+                    soap_data = json.loads(json_matches[0])
+                    return json.dumps(soap_data, indent=2)
+                except json.JSONDecodeError:
+                    logger.warning(f"Found JSON-like block but couldn't parse it: {json_matches[0][:100]}...")
+            
+            # If no code blocks or parsing failed, look for JSON anywhere in the text
+            json_pattern = r'{[\s\S]*}'
+            json_matches = re.findall(json_pattern, response)
+            
+            for potential_json in json_matches:
+                try:
+                    soap_data = json.loads(potential_json)
+                    if isinstance(soap_data, dict) and "SOAP" in soap_data:
+                        # Found a valid SOAP JSON structure
+                        return json.dumps(soap_data, indent=2)
+                except json.JSONDecodeError:
+                    continue
+            
+            # If all parsing attempts fail, return a structured error response
+            logger.warning("Could not find valid JSON SOAP note in response, returning text")
+            
+            # Create a simple structured response with the text
+            fallback_response = {
+                "SOAP": {
+                    "Subjective": {
+                        "ChiefComplaint": "Error parsing SOAP note",
+                        "HistoryOfPresentIllness": {
+                            "Onset": "",
+                            "Location": "",
+                            "Duration": "",
+                            "Characteristics": "",
+                            "AggravatingFactors": "",
+                            "RelievingFactors": "",
+                            "Timing": "",
+                            "Severity": ""
+                        },
+                        "PastMedicalHistory": "",
+                        "FamilyHistory": "",
+                        "SocialHistory": "",
+                        "ReviewOfSystems": ""
+                    },
+                    "Assessment": {
+                        "PrimaryDiagnosis": "",
+                        "DifferentialDiagnosis": "",
+                        "ProblemList": ""
+                    },
+                    "Plan": {
+                        "TreatmentAndMedications": "",
+                        "FurtherTestingOrImaging": "",
+                        "PatientEducation": "",
+                        "FollowUp": ""
+                    },
+                    "RawResponse": response[:1000]  # Include first 1000 chars of response
+                }
+            }
+            
+            return json.dumps(fallback_response, indent=2)
+                
+        except Exception as e:
+            logger.error(f"Error generating SOAP note: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            
+            # Return a structured error response instead of raising an exception
+            import json
+            error_response = {
+                "SOAP": {
+                    "error": f"Failed to generate SOAP note: {str(e)}",
+                    "Subjective": {"ChiefComplaint": "Error occurred during processing"},
+                    "Assessment": {"PrimaryDiagnosis": ""},
+                    "Plan": {"TreatmentAndMedications": ""}
+                }
+            }
+            return json.dumps(error_response, indent=2)
+
+    def _save_soap_note(self, soap_content: str, timestamp: str) -> str:
+        """Save SOAP note content to the data/soap directory."""
+        # Use the backend/data directory for saving files
+        soap_dir = Path(__file__).parent / 'data' / 'soap'
+        
+        # Ensure directory exists
+        soap_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save SOAP note
+        soap_path = soap_dir / f'soap_note_{timestamp}.yaml'
+        soap_path.write_text(soap_content)
+        logger.info(f"SOAP note saved to {soap_path}")
+        
+        return str(soap_path)
 
     def _process_yaml(self, raw_yaml: str, timestamp: str) -> str:
         """Process and clean up YAML content."""

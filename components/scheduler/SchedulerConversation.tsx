@@ -5,6 +5,7 @@ import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { MicrophoneIcon, StopIcon } from '@heroicons/react/24/solid';
 
+
 interface Message {
   role: 'user' | 'system' | 'agent';
   content: string;
@@ -383,6 +384,7 @@ export function SchedulerConversation({ initialContext, onComplete, patientId }:
           
           // Strip trailing slashes and construct URL
           const baseUrl = process.env.NEXT_PUBLIC_STT_SERVER_URL?.replace(/\/+$/, '');
+
           const transcribeUrl = `${baseUrl}/transcribe`;
           console.log("Transcription URL:", transcribeUrl);
 

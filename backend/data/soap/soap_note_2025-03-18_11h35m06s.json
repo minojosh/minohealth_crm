@@ -1,0 +1,32 @@
+{
+  "SOAP": {
+    "Subjective": {
+      "ChiefComplaint": "Feeling more tired than usual",
+      "HistoryOfPresentIllness": {
+        "Onset": "Recent",
+        "Location": "General",
+        "Duration": "Not specified",
+        "Characteristics": "Mild fatigue",
+        "AggravatingFactors": "Not specified",
+        "RelievingFactors": "Not specified",
+        "Timing": "Constant",
+        "Severity": "Mild"
+      },
+      "PastMedicalHistory": "Annual check-up",
+      "FamilyHistory": "Not discussed",
+      "SocialHistory": "Not discussed",
+      "ReviewOfSystems": "Not performed"
+    },
+    "Assessment": {
+      "PrimaryDiagnosis": "Fatigue",
+      "DifferentialDiagnosis": "Not specified",
+      "ProblemList": "Fatigue"
+    },
+    "Plan": {
+      "TreatmentAndMedications": "Not specified",
+      "FurtherTestingOrImaging": "Basic tests to be performed",
+      "PatientEducation": "Educate patient on possible causes of fatigue and the importance of further evaluation",
+      "FollowUp": "Follow-up appointment after basic tests are completed"
+    }
+  }
+}
