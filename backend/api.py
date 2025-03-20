@@ -587,22 +587,36 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                                     play_locally=True
                                 ) 
                                 tts_client.wait_for_completion()
+                                
+                                assistant.LLM.conversation_history[-1]['content'] += f"\n{status_msg}"
                         
                     
                     # Handle available slots
                     if assistant.suit_doc:
+                        assistant.LLM.conversation_history[-1]['content'] += " \nA suitable doctor has been found."
+                        
                         slots_response = ""
                         for doc in assistant.suit_doc:
-                            slots = db_manager._get_new_date(doc['doctor_id'])
-                            if slots:
-                                slots_response += f'\n{db_manager.format_available_slots(slots, doc["doctor_name"])}\n'
-                                break
-                            elif db_manager.days_ahead == 90:
-                                slots_response += f'\n{db_manager.format_available_slots(slots, doc["doctor_name"])}\n'
-                                break
-                            else:
-                                db_manager.days_ahead += 5
-                        
+                            while True:
+                                slots = db_manager._get_new_date(doc['doctor_id'])
+                                if slots:
+                                    logger.info("Slots found")
+                                    slots_response += f'\n{db_manager.format_available_slots(slots, doc["doctor_name"])}\n'
+                                    break
+                                elif db_manager.days_ahead == 90:
+                                    slots_response += f'\n{db_manager.format_available_slots(slots, doc["doctor_name"])}\n'
+                                    break
+                                else:
+                                    db_manager.days_ahead += 5
+                                    logger.info(f"No slots found, increasing search to check for {db_manager.days_ahead} ahead")
+                                    
+                        # Update LLM conversation
+                        assistant.LLM.add_user_message(text="What are the available slots.")
+                        assistant.LLM.conversation_history.append({
+                            "role": "assistant",
+                            "content": slots_response
+                        })
+                                        
                         await websocket.send_json({
                             "type": "message",
                             "text": slots_response
@@ -614,6 +628,7 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                         )
                         
                         tts_client.wait_for_completion()
+                        
                     else:
                         await websocket.send_json({
                             "type": "message",
@@ -689,10 +704,16 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
             })
     finally:
         logger.info(f"Cleaning up schedule_session for patient {patient_id}")
+        # Stop TTS client
         tts_client.stop()
+        
+        # Clean up assistant resources
         if assistant:
-            # Clean up any resources
-            pass
+            # Clear conversation history
+            assistant.LLM.conversation_history = []
+            # Reset any other state
+            assistant.status_messages = []
+            assistant.suit_doc = []
 
 @app.websocket("/ws/conversation")
 async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(...), type: str = Query(...), token: str = Query(None)):

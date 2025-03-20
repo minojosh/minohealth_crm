@@ -44,6 +44,14 @@ class TTSClient:
         # Initialize audio chunks list
         self.all_audio_chunks = []
         
+        # Initialize abbreviations
+        self.abbreviations = {
+            'Mr.', 'Mrs.', 'Ms.', 'Dr.', 'Prof.', 'Sr.', 'Jr.', 'Ph.D.', 'M.D.', 'B.A.', 'M.A.',
+            'B.S.', 'M.S.', 'B.Sc.', 'M.Sc.', 'LL.B.', 'LL.M.', 'J.D.', 'Esq.', 'Inc.', 'Ltd.',
+            'Co.', 'Corp.', 'Ave.', 'St.', 'Rd.', 'Blvd.', 'Dr.', 'Apt.', 'Ste.', 'No.', 'vs.',
+            'etc.', 'i.e.', 'e.g.', 'a.m.', 'p.m.', 'U.S.', 'U.K.', 'N.Y.', 'L.A.', 'D.C.'
+        }
+        
     
     def start_audio_stream(self):
         """Start the audio playback stream"""
@@ -102,7 +110,7 @@ class TTSClient:
     def _is_phrase_complete(self, text):
         """Check if a phrase is complete based on punctuation."""
         text = text.strip()
-        phrase_endings = ['.', '!', '?', ':', ';']
+        phrase_endings = ['.', '?']
         return any(text.endswith(end) for end in phrase_endings)
     
     def _process_text_queue(self):
@@ -115,8 +123,12 @@ class TTSClient:
                 with self.buffer_lock:
                     self.current_phrase += text_chunk
                     
+                    #Check for abbreviations
+                    if text_chunk.strip() in self.abbreviations:
+                        continue
+                    
                     # Check if phrase is complete
-                    if self._is_phrase_complete(self.current_phrase):
+                    elif self._is_phrase_complete(self.current_phrase):
                         phrase_to_speak = self.current_phrase.strip()
                         self.current_phrase = ""
                         
@@ -184,7 +196,12 @@ class TTSClient:
     
     def stream_text(self, text_chunk):
         """Add a chunk of text to the processing queue."""
-        self.text_queue.put(text_chunk)
+        words = text_chunk.strip().split()
+        if len(words) > 1:
+            for word in words:
+                self.text_queue.put(word + " ")
+        else:
+            self.text_queue.put(text_chunk)
     
     def wait_for_completion(self, timeout=30):
         """Wait for all audio to finish playing."""

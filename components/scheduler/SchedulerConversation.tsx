@@ -41,10 +41,49 @@ export function SchedulerConversation({ initialContext, onComplete, patientId }:
     }]);
   };
 
-  // Add end conversation handler
+  // Add force close handler for Back to Scheduler
+  const forceClose = () => {
+    console.log("Force closing conversation...");
+    
+    // Stop any ongoing recording
+    if (isRecording) {
+      stopRecording();
+    }
+
+    // Force close WebSocket connection
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    // Clean up audio resources
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    // Reset state
+    setIsProcessing(false);
+    setError(null);
+    setWsConnected(false);
+    reconnectAttemptsRef.current = 0;
+    
+    // Clear messages
+    setMessages([]);
+    
+    // Call onComplete to return to scheduler
+    onComplete();
+  };
+
+  // Modify end conversation handler for Save Appointment
   const endConversation = () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log("Ending conversation...");
+      console.log("Ending conversation and saving appointment...");
       wsRef.current.send(JSON.stringify({
         type: 'end_conversation'
       }));
@@ -463,7 +502,7 @@ export function SchedulerConversation({ initialContext, onComplete, patientId }:
         <div className="flex items-center justify-between">
           {/* Back button */}
           <Button
-            onClick={onComplete}
+            onClick={forceClose}
             className="bg-gray-600 hover:bg-gray-700 text-white"
           >
             ← Back to Scheduler

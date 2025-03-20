@@ -11,6 +11,7 @@ export interface ConversationResponse {
 }
 
 export interface ReminderResponse {
+  id: string;
   patient_name: string;
   message_type: string;
   details: Record<string, any>;

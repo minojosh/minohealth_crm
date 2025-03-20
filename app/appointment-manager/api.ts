@@ -30,10 +30,19 @@ export const appointmentManagerApi = {
   /**
    * Start a conversation for a specific reminder
    */
-  startConversation: async (reminderId: string) => {
+  startConversation: async (reminder: ReminderResponse) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/start-conversation/${reminderId}`, {
+      const response = await fetch(`${API_BASE_URL}/start-conversation`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          patient_name: reminder.patient_name,
+          patient_id: reminder.details.patient_id,
+          reminder_type: reminder.message_type,
+          details: reminder.details
+        }),
       });
 
       if (!response.ok) {

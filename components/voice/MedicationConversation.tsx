@@ -1,603 +1,503 @@
-"use client";
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@heroui/button';
 import { Card, CardBody } from '@heroui/card';
 import { ReminderResponse } from '../../app/appointment-manager/types';
-import { MicrophoneIcon, StopIcon, SpeakerWaveIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
-import { appointmentManagerApi } from '../../app/appointment-manager/api';
-import { playAudioFromBase64 } from '../../app/api/audio';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MicrophoneIcon, StopIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 
 interface Message {
   role: 'user' | 'system' | 'agent';
   content: string;
   timestamp: Date;
-  audio?: string; // Base64 audio data for playback
-  sampleRate?: number;
 }
 
-interface MedicationConversationProps {
+interface ConversationResult {
+  status: string;
+  [key: string]: any;
+}
+
+interface ConversationPanelProps {
   reminder?: ReminderResponse;
-  onComplete?: (result: any) => void;
+  onComplete?: (result: ConversationResult) => void;
   className?: string;
+}
+
+interface MedicationConversationProps extends ConversationPanelProps {
 }
 
 export function MedicationConversation({ reminder, onComplete, className = "" }: MedicationConversationProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
   const [error, setError] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [audioData, setAudioData] = useState<string | null>(null);
-  
+  const [wsConnected, setWsConnected] = useState(false);
+  const [textInput, setTextInput] = useState<string>('');
+
+  // WebSocket and Audio refs
   const wsRef = useRef<WebSocket | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectAttemptsRef = useRef<number>(0);
-  const latestAudioRef = useRef<string | null>(null);
-  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const reconnectAttemptsRef = useRef<number>(0);
+  const MAX_RETRIES = 3;
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Connect to the conversation when a reminder is selected
+  // Message handling
+  const addMessage = (role: 'user' | 'agent', content: string) => {
+    setMessages(prev => [...prev, {
+      role,
+      content,
+      timestamp: new Date()
+    }]);
+  };
+
+  // WebSocket setup
   useEffect(() => {
-    if (reminder) {
-      // Create a unique ID for this conversation based on reminder details
-      const id = `${reminder.message_type}_${reminder.details.patient_id || 'unknown'}_${Date.now()}`;
-      setConversationId(id);
-      connectWebSocket(reminder.details.patient_id?.toString() || '1');
+    let isComponentMounted = true;
+
+    const connectWebSocket = () => {
+      if (!isComponentMounted || reconnectAttemptsRef.current >= MAX_RETRIES) {
+        setError('Connection failed. Please refresh the page.');
+        return;
+      }
+
+      // Use a consistent ID format for the WebSocket connection
+      // If reminder is undefined, use 'default' as the ID
+      const reminderId = reminder?.details?.id || 'default';
+      const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000'}/ws/${reminderId}`;
       
-      // Fetch initial greeting from API instead of using hardcoded text
-      fetchInitialGreeting(reminder);
-    }
-    
+      console.log(`Connecting to WebSocket at: ${wsUrl}`);
+      wsRef.current = new WebSocket(wsUrl);
+
+      wsRef.current.onopen = () => {
+        if (isComponentMounted) {
+          setWsConnected(true);
+          reconnectAttemptsRef.current = 0;
+          setError(null);
+          if (reminder) {
+            console.log('Sending reminder context:', reminder);
+            wsRef.current?.send(JSON.stringify({
+              type: 'context',
+              context: JSON.stringify(reminder)
+            }));
+          }
+        }
+      };
+
+      wsRef.current.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Received WebSocket message:', data);
+
+        switch (data.type) {
+          case 'message':
+            addMessage(data.role || 'agent', data.text);
+            if (data.role !== 'system') {
+              setIsProcessing(false);
+            }
+            break;
+          case 'summary':
+            if (data.text === "null") {
+              addMessage('agent', "No medication update was recorded.");
+            } else {
+              try {
+                const summary = JSON.parse(data.text);
+                addMessage('agent', `Medication status updated: ${summary.status}`);
+              } catch (e) {
+                console.error('Error parsing summary:', e);
+              }
+            }
+            if (onComplete) {
+              onComplete({
+                status: 'completed',
+                type: 'medication',
+                patient_name: reminder?.patient_name,
+                messages: messages
+              });
+            }
+            break;
+          case 'error':
+            setError(data.message);
+            setIsProcessing(false);
+            break;
+          default:
+            console.log('Unhandled message type:', data.type);
+            break;
+        }
+      };
+
+      wsRef.current.onclose = () => {
+        if (isComponentMounted && wsConnected) {
+          setWsConnected(false);
+          reconnectAttemptsRef.current += 1;
+          setTimeout(connectWebSocket, 2000);
+        }
+      };
+
+      wsRef.current.onerror = () => {
+        if (isComponentMounted) {
+          setError('Connection error occurred.');
+          setWsConnected(false);
+        }
+      };
+    };
+
+    connectWebSocket();
     return () => {
+      isComponentMounted = false;
       if (wsRef.current) {
         wsRef.current.close();
       }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      stopMediaTracks();
     };
   }, [reminder]);
 
-  // Stop media tracks when component unmounts or when recording stops
-  const stopMediaTracks = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-  };
-
-  // Keep track of the latest audio data in a ref
-  useEffect(() => {
-    latestAudioRef.current = audioData;
-  }, [audioData]);
-
-  // Auto-scroll to the latest message
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
-  // Fetch initial greeting from the API
-  const fetchInitialGreeting = async (reminderData: ReminderResponse) => {
-    try {
-      setIsProcessing(true);
-      // Fetch the initial greeting from the API
-      const response = await fetch(`/api/audio-data/initial-greeting?type=${reminderData.message_type}&patientId=${reminderData.details.patient_id || '1'}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.greeting) {
-          // Add the greeting message
-          const welcomeMessage = {
-            role: 'system' as const,
-            content: data.greeting,
-            timestamp: new Date(),
-            audio: data.audioData || null
-          };
-          
-          setMessages([welcomeMessage]);
-          
-          // Play the audio if available
-          if (data.audioData) {
-            setAudioData(data.audioData);
-            playGreetingAudio(data.audioData);
-          }
-        } else {
-          // Fallback to default greeting if API doesn't return one
-          const defaultGreeting = reminderData.details.medication_name 
-            ? `Hello ${reminderData.patient_name}! I'm your medication assistant. This is a reminder about your medication: ${reminderData.details.medication_name}, dosage: ${reminderData.details.dosage || 'prescribed dosage'}, frequency: ${reminderData.details.frequency || 'as prescribed'}.`
-            : `Hello ${reminderData.patient_name}! I'm your medication assistant. This is a reminder about your medication.`;
-          
-          setMessages([{
-            role: 'system',
-            content: defaultGreeting,
-            timestamp: new Date()
-          }]);
-        }
-      } else {
-        throw new Error('Failed to fetch greeting');
-      }
-    } catch (error) {
-      console.error("Error fetching initial greeting:", error);
-      // Fallback to default greeting
-      if (reminderData) {
-        const defaultGreeting = `Hello ${reminderData.patient_name}! I'm your medication assistant. This is a reminder about your medication.`;
-        
-        setMessages([{
-          role: 'system',
-          content: defaultGreeting,
-          timestamp: new Date()
-        }]);
-      }
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Play greeting audio with visual feedback
-  const playGreetingAudio = async (audioBase64: string) => {
-    try {
-      setIsSpeaking(true);
-      await playAudioFromBase64(audioBase64, undefined, (utterance) => {
-        speechSynthesisRef.current = utterance;
-      });
-    } catch (error) {
-      console.error("Error playing audio:", error);
-    } finally {
-      setIsSpeaking(false);
-      speechSynthesisRef.current = null;
-    }
-  };
-
-  const connectWebSocket = (patientId: string) => {
-    // WebSocket connection logic similar to AppointmentConversation
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
-    // Add auth token to prevent 403 Forbidden errors
-    const wsEndpoint = `${wsUrl}/ws/conversation?patient_id=${patientId}&type=medication&token=audio_access_token_2023`;
-    
-    try {
-      wsRef.current = new WebSocket(wsEndpoint);
-      
-      wsRef.current.onopen = () => {
-        console.log("WebSocket connection established");
-        setConnectionStatus('connected');
-        reconnectAttemptsRef.current = 0;
-        setError(null);
-      };
-      
-      wsRef.current.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log("WebSocket message received:", data);
-          
-          if (data.type === 'audio' && data.audio) {
-            // Handle audio response
-            setAudioData(data.audio);
-            handleAudioResponse(data.audio, data.text || 'Audio response', data.sample_rate);
-          } else if (data.type === 'message' && data.text) {
-            // Handle text message
-            addAgentMessage(data.text, data.audio);
-          } else if (data.type === 'transcription' && data.text) {
-            // Handle transcription of user's speech
-            addUserMessage(data.text);
-          } else if (data.type === 'error') {
-            setError(data.message || 'An error occurred');
-          }
-        } catch (err) {
-          console.error("Error parsing WebSocket message:", err);
-        }
-      };
-      
-      wsRef.current.onclose = (event) => {
-        console.log("WebSocket connection closed", event);
-        setConnectionStatus('disconnected');
-        // Implement reconnection logic
-        if (reconnectAttemptsRef.current < 5) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            reconnectAttemptsRef.current += 1;
-            connectWebSocket(patientId);
-          }, 2000 * Math.pow(2, reconnectAttemptsRef.current));
-        }
-      };
-      
-      wsRef.current.onerror = (event) => {
-        console.error("WebSocket error:", event);
-        setConnectionStatus('error');
-        setError('WebSocket connection error');
-      };
-      
-    } catch (err) {
-      console.error("Error connecting to WebSocket:", err);
-      setConnectionStatus('error');
-      setError('Failed to connect to conversation service');
-    }
-  };
-
-  const handleAudioResponse = async (audioBase64: string, text: string, sampleRate?: number) => {
-    try {
-      // Add the message first
-      addAgentMessage(text, audioBase64, sampleRate);
-      
-      // Play the audio
-      setIsSpeaking(true);
-      await playAudioFromBase64(audioBase64, sampleRate, (utterance) => {
-        speechSynthesisRef.current = utterance;
-      });
-    } catch (error) {
-      console.error("Error handling audio response:", error);
-    } finally {
-      setIsSpeaking(false);
-      speechSynthesisRef.current = null;
-    }
-  };
-
-  const addAgentMessage = (content: string, audio?: string, sampleRate?: number) => {
-    const newMessage: Message = {
-      role: 'agent',
-      content,
-      timestamp: new Date(),
-      audio,
-      sampleRate
-    };
-    
-    setMessages(prev => [...prev, newMessage]);
-  };
-
-  const addUserMessage = (content: string) => {
-    const newMessage: Message = {
-      role: 'user',
-      content,
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, newMessage]);
-  };
-
   const startRecording = async () => {
-    if (isRecording) {
-      stopRecording();
-      return;
-    }
-
-    if (isSpeaking) {
-      // Cancel current speaking if user wants to start speaking
-      stopSpeaking();
-    }
-    
     try {
+      // First make sure any existing recording is stopped
+      if (isRecording) {
+        stopRecording();
+      }
+      
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        setError('Connection not established');
+        return;
+      }
+
       setIsRecording(true);
       setError(null);
-      audioChunksRef.current = [];
+
+      // Request microphone access with optimized settings
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 16000,
+          channelCount: 1
+        }
+      });
       
-      console.log("Requesting microphone access...");
-      // Get user media for recording
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       
-      console.log("Creating media recorder...");
-      // Create media recorder
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
+      // Create an AudioContext to process the audio
+      const audioContext = new AudioContext({ sampleRate: 16000 });
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
       
+      // Connect the audio nodes
+      source.connect(processor);
+      processor.connect(audioContext.destination);
+      
+      // Buffer to store raw audio data
+      const audioBuffer: Float32Array[] = [];
+      
+      // Process audio data
+      processor.onaudioprocess = (e) => {
+        const inputData = e.inputBuffer.getChannelData(0);
+        audioBuffer.push(new Float32Array(inputData));
+      };
+      
+      // Create MediaRecorder for backup WebM recording
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 16000
+      });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
-      
+
       mediaRecorder.onstop = async () => {
-        console.log("Media recorder stopped, processing audio...");
-        setIsRecording(false);
-        setIsProcessing(true);
-        
         try {
-          if (audioChunksRef.current.length === 0) {
-            console.log("No audio data recorded");
+          setIsProcessing(true);
+          
+          // Concatenate all audio chunks
+          const totalLength = audioBuffer.reduce((acc, chunk) => acc + chunk.length, 0);
+          
+          if (totalLength === 0) {
+            setError('No audio data captured');
+            setIsProcessing(false);
+            return;
+          }
+          
+          const concatenated = new Float32Array(totalLength);
+          let offset = 0;
+          
+          for (const chunk of audioBuffer) {
+            concatenated.set(chunk, offset);
+            offset += chunk.length;
+          }
+
+          // Find maximum absolute value for normalization
+          let maxAbs = 0;
+          for (let i = 0; i < concatenated.length; i++) {
+            maxAbs = Math.max(maxAbs, Math.abs(concatenated[i]));
+          }
+          
+          if (maxAbs > 0) {  // Avoid division by zero
+            for (let i = 0; i < concatenated.length; i++) {
+              concatenated[i] = concatenated[i] / maxAbs;
+            }
+          } else {
+            setError('No audio signal detected');
             setIsProcessing(false);
             return;
           }
 
-          // Create audio blob and convert to base64
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-          const reader = new FileReader();
+          // Check audio level after normalization
+          let sumAbs = 0;
+          for (let i = 0; i < concatenated.length; i++) {
+            sumAbs += Math.abs(concatenated[i]);
+          }
+          const level = sumAbs / concatenated.length;
+
+          if (level < 0.001) {
+            setError('Audio level too low, please speak louder');
+            setIsProcessing(false);
+            return;
+          }
           
-          reader.onloadend = async () => {
-            const base64Audio = reader.result as string;
-            const base64Data = base64Audio.split(',')[1]; // Remove data URL prefix
-            
-            console.log("Audio converted to base64, sending to server...");
-            // Send audio to server for processing
-            if (wsRef.current?.readyState === WebSocket.OPEN) {
-              wsRef.current.send(JSON.stringify({
-                type: 'audio_input',
-                audio: base64Data,
-                conversation_id: conversationId
-              }));
-            } else {
-              console.warn("WebSocket not connected, using REST API fallback");
-              // Fallback to REST API if WebSocket is not available
-              const response = await fetch('/api/transcribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ audio: base64Data })
-              });
-              
-              if (response.ok) {
-                const data = await response.json();
-                if (data.transcription) {
-                  addUserMessage(data.transcription);
-                } else {
-                  console.warn("No transcription received from API");
-                  setError("No speech detected");
-                }
-              } else {
-                throw new Error('Transcription failed');
-              }
+          // Convert to base64
+          const uint8Array = new Uint8Array(concatenated.buffer);
+          let base64Data = '';
+          
+          for (let i = 0; i < uint8Array.length; i++) {
+            base64Data += String.fromCharCode(uint8Array[i]);
+          }
+          
+          base64Data = btoa(base64Data);
+          
+          // Strip trailing slashes and construct URL
+          const baseUrl = process.env.NEXT_PUBLIC_STT_SERVER_URL?.replace(/\/+$/, '');
+          const transcribeUrl = `${baseUrl}/transcribe`;
+
+          try {
+            // Send to STT service
+            const response = await fetch(transcribeUrl, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ audio: base64Data })
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
             }
-          };
+
+            const result = await response.json();
+
+            if (result.transcription) {
+              // Send transcription to WebSocket
+              if (wsRef.current?.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({
+                  type: 'message',
+                  text: result.transcription
+                }));
+                
+                // Add message locally for immediate feedback
+                addMessage('user', result.transcription);
+              } else {
+                setError('Connection lost. Please refresh the page.');
+              }
+            } else {
+              setError('No speech detected');
+            }
+          } catch (error) {
+            console.error("STT service error:", error);
+            setError('Failed to process your recording');
+          } finally {
+            setIsProcessing(false);
+            
+            // Clean up audio processing
+            processor.disconnect();
+            source.disconnect();
+            audioContext.close();
+          }
           
-          reader.readAsDataURL(audioBlob);
         } catch (error) {
           console.error("Error processing recording:", error);
           setError('Failed to process your recording');
-        } finally {
           setIsProcessing(false);
-          stopMediaTracks();
         }
       };
       
-      // Start recording with small timeslice to get data frequently
       mediaRecorder.start(1000);
       
-      // Safety timeout to stop recording after max duration
-      setTimeout(() => {
-        if (mediaRecorderRef.current?.state === 'recording') {
-          stopRecording();
-        }
-      }, 15000); // Maximum 15 seconds recording
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error starting recording:", error);
+      let errorMessage = 'Could not access microphone';
+      
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'No microphone found. Please connect a microphone and try again.';
+      }
+      
+      setError(errorMessage);
       setIsRecording(false);
-      setError('Could not access microphone. Please ensure microphone permissions are granted.');
     }
   };
 
   const stopRecording = () => {
-    console.log("Stopping recording manually");
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
+    // Set recording state to false immediately
     setIsRecording(false);
-  };
-
-  const stopSpeaking = () => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-    if (speechSynthesisRef.current) {
-      speechSynthesisRef.current = null;
-    }
-    setIsSpeaking(false);
-  };
-
-  const finishConversation = async () => {
+    
     try {
-      if (isRecording) {
-        stopRecording();
+      // Stop the media recorder if it exists
+      if (mediaRecorderRef.current) {
+        if (mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
       }
-      
-      if (isSpeaking) {
-        stopSpeaking();
-      }
-      
-      // Send finish command to server
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: 'command',
-          command: 'finish'
-        }));
-      }
-      
-      // Call onComplete with results
-      if (onComplete) {
-        onComplete({
-          status: 'completed',
-          type: 'medication',
-          patient_name: reminder?.patient_name,
-          messages: messages,
-          audioData: latestAudioRef.current
+    } catch (error) {
+      console.error("Error stopping media recorder:", error);
+    }
+    
+    try {
+      // Stop all tracks in the stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
         });
       }
-    } catch (err) {
-      console.error("Error finishing conversation:", err);
-      setError('Error completing conversation');
+    } catch (error) {
+      console.error("Error stopping media tracks:", error);
+    }
+    
+    // Clear references
+    mediaRecorderRef.current = null;
+    streamRef.current = null;
+    audioChunksRef.current = [];
+  };
+
+  const finishConversation = () => {
+    if (isRecording) {
+      stopRecording();
+    }
+    
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'end_conversation'
+      }));
+      setIsProcessing(true);
+    } else {
+      setError('Connection lost. Please refresh the page.');
     }
   };
 
-  // Determine if user input should be disabled
-  const isInputDisabled = isProcessing || connectionStatus === 'error';
+  const sendTextMessage = () => {
+    if (!textInput.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    
+    // Add user message to the UI
+    addMessage('user', textInput);
+    
+    // Send message to the WebSocket
+    wsRef.current.send(JSON.stringify({
+      type: 'message',
+      text: textInput
+    }));
+    
+    // Clear input and set processing state
+    setTextInput('');
+    setIsProcessing(true);
+  };
 
   return (
     <Card className={`w-full ${className}`}>
       <CardBody className="p-4">
         <div className="flex flex-col h-[500px]">
-          {/* Status indicators with Framer Motion */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <motion.div 
-                initial={{ scale: 0.8 }}
-                animate={{ 
-                  scale: connectionStatus === 'connected' ? [1, 1.2, 1] : 1,
-                  opacity: connectionStatus === 'connected' ? 1 : 0.5
-                }}
-                transition={{ 
-                  repeat: connectionStatus === 'connecting' ? Infinity : 0,
-                  duration: 1.5 
-                }}
-                className={`w-3 h-3 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' : 
-                  connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`}
-              />
-              <span className="text-sm">
-                {connectionStatus === 'connected' ? 'Connected' : 
-                 connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
-              </span>
-            </div>
-            
-            {/* Audio playback indicator with stop button */}
-            <AnimatePresence>
-              {isSpeaking && (
-                <motion.div 
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="flex items-center gap-2 text-primary"
+          {/* Messages container */}
+          <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[80%] p-3 rounded-lg ${
+                    message.role === 'user'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 dark:bg-gray-800'
+                  }`}
                 >
-                  <SpeakerWaveIcon className="w-5 h-5" />
-                  <motion.span 
-                    initial={{ width: 0 }}
-                    animate={{ width: 'auto' }}
-                    className="text-sm whitespace-nowrap"
-                  >
-                    Speaking...
-                  </motion.span>
-                  <Button 
-                    size="sm" 
-                    color="danger" 
-                    variant="flat" 
-                    isIconOnly
-                    onClick={stopSpeaking}
-                    className="ml-2"
-                  >
-                    <StopIcon className="w-4 h-4" />
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          
-          {/* Messages area */}
-          <div className="flex-grow overflow-y-auto mb-4 space-y-4 p-2">
-            <AnimatePresence>
-              {messages.map((message, index) => (
-                <motion.div
-                  key={`${message.role}-${index}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div 
-                    className={`max-w-[80%] rounded-lg p-3 ${message.role === 'user' 
-                      ? 'bg-primary text-white' 
-                      : message.role === 'system' 
-                        ? 'bg-default-100' 
-                        : 'bg-default-200'}`}
-                  >
-                    <p>{message.content}</p>
-                    {message.audio && (
-                      <Button 
-                        size="sm" 
-                        variant="flat" 
-                        className="mt-2 gap-1"
-                        onClick={() => playAudioFromBase64(message.audio || '', message.sampleRate)}
-                        isDisabled={isSpeaking}
-                      >
-                        <SpeakerWaveIcon className="w-4 h-4" />
-                        <span>Play</span>
-                      </Button>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                  {message.content}
+                </div>
+              </div>
+            ))}
             <div ref={messagesEndRef} />
           </div>
-          
-          {/* Error message */}
-          <AnimatePresence>
-            {error && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="bg-danger-100 text-danger p-2 rounded-lg mb-4"
+
+          {/* Controls */}
+          <div className="flex flex-col space-y-4 mt-4">
+            {/* Text input for testing */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && sendTextMessage()}
+                placeholder="Type a message..."
+                className="flex-1 p-2 border rounded-md"
+                disabled={isProcessing || !wsConnected}
+              />
+              <Button
+                color="primary"
+                onClick={sendTextMessage}
+                disabled={isProcessing || !wsConnected || !textInput.trim()}
               >
-                {error}
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Recording indicator while processing */}
-          <AnimatePresence>
-            {isProcessing && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex justify-center items-center gap-2 text-primary mb-4"
-              >
-                <div className="flex gap-1">
-                  <motion.div 
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 1 }}
-                    className="w-2 h-2 rounded-full bg-primary"
-                  />
-                  <motion.div 
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
-                    className="w-2 h-2 rounded-full bg-primary"
-                  />
-                  <motion.div 
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
-                    className="w-2 h-2 rounded-full bg-primary"
-                  />
-                </div>
-                <span className="text-sm">Processing...</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Recording controls */}
-          <div className="flex justify-center gap-4 mt-auto">
-            <Button
-              color={isRecording ? "danger" : "primary"}
-              variant={isRecording ? "solid" : "solid"}
-              startContent={isRecording ? <StopIcon className="w-5 h-5" /> : <MicrophoneIcon className="w-5 h-5" />}
-              isLoading={isProcessing}
-              isDisabled={isInputDisabled}
-              onClick={startRecording}
-              className="relative"
-            >
-              {isRecording ? "Stop Recording" : "Start Speaking"}
-              {isRecording && (
-                <motion.div
-                  className="absolute inset-0 rounded-lg border-2 border-danger"
-                  initial={{ opacity: 0.5, scale: 1 }}
-                  animate={{ opacity: 0, scale: 1.2 }}
-                  transition={{ repeat: Infinity, duration: 1.5 }}
-                />
-              )}
-            </Button>
+                Send
+              </Button>
+            </div>
             
-            <Button
-              color="secondary"
-              onClick={finishConversation}
-              isDisabled={isRecording || isProcessing}
-              startContent={<CheckCircleIcon className="w-5 h-5" />}
-            >
-              Complete
-            </Button>
+            <div className="flex items-center justify-between">
+              <Button
+                color={isRecording ? 'danger' : 'primary'}
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isProcessing || !wsConnected}
+                className="flex items-center gap-2"
+              >
+                {isRecording ? (
+                  <>
+                    <StopIcon className="w-5 h-5" />
+                    Stop Recording
+                  </>
+                ) : (
+                  <>
+                    <MicrophoneIcon className="w-5 h-5" />
+                    Start Recording
+                  </>
+                )}
+              </Button>
+
+              <Button
+                color="success"
+                onClick={finishConversation}
+                disabled={isRecording || isProcessing}
+                className="flex items-center gap-2"
+              >
+                <CheckCircleIcon className="w-5 h-5" />
+                Complete
+              </Button>
+            </div>
           </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="text-danger text-sm mt-2">{error}</div>
+          )}
+
+          {/* Processing indicator */}
+          {isProcessing && (
+            <div className="text-primary text-sm mt-2">Processing...</div>
+          )}
+
+          {/* Connection status */}
+          {!wsConnected && (
+            <div className="text-warning text-sm mt-2">Connecting...</div>
+          )}
         </div>
       </CardBody>
     </Card>

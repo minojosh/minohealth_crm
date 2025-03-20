@@ -237,7 +237,8 @@ class TTSClient:
         else:
             # Collect audio chunks from server (this is needed even if streaming, to return the data)
             all_audio_chunks = self._direct_request_to_server(text)
-            
+        
+        """    
         if not all_audio_chunks:
             logger.warning("No audio chunks received from server")
             return np.array([]).astype(np.float32), self.target_sample_rate, None, None
@@ -263,7 +264,8 @@ class TTSClient:
         self.last_file_path = file_path
         
         return audio_data, self.target_sample_rate, base64_audio, file_path
-
+        """
+        
     def get_audio_for_frontend(self, text, speaker="default", save_audio=True, file_name=None):
         """
         Generate audio formatted for frontend consumption
@@ -331,6 +333,8 @@ class TTSClient:
             logger.warning("Streaming client not available, using synchronous TTS instead")
             self.TTS(text, play_locally=True)
             return False
+        
+    
             
     def wait_for_completion(self, timeout=30):
         """

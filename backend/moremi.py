@@ -137,9 +137,8 @@ class ConversationManager:
                     except KeyboardInterrupt:
                         self.tts.stop()
                         pass
-                    finally:
-                        self.tts.wait_for_completion()
-                        self.tts.stop()
+                    
+        self.tts.wait_for_completion()
         
         print("\n")
         
