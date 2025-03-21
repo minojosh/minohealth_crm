@@ -6,6 +6,7 @@ import time
 import requests
 import json
 import io
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Configure logger
@@ -43,7 +44,7 @@ class TTSClient:
     Adapter class to provide backward compatibility with the old TTSClient API
     while using the new XTTS implementation under the hood.
     """
-    def __init__(self, api_url=None, timeout=15, audio_dir=None):
+    def __init__(self, api_url=None, audio_dir=None):
         """
         Initialize the TTS client adapter
         
@@ -53,8 +54,9 @@ class TTSClient:
             audio_dir (str): Directory to save audio files
         """
         # Load environment variables from .env file
-        dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+        dotenv_path = Path(__file__).parent.parent / '.env'
         load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
+
 
         # Initialize server URL - prioritize provided URL, then env var, then default
         if api_url is not None:
@@ -76,8 +78,7 @@ class TTSClient:
         # Set default target sample rate
         self.target_sample_rate = 24000
         
-        # Initialize the request timeout
-        self.timeout = timeout
+
         
         # These are used to store the latest generated audio
         self.last_audio_data = None
@@ -336,7 +337,7 @@ class TTSClient:
         
     
             
-    def wait_for_completion(self, timeout=30):
+    def wait_for_completion(self, timeout=1):
         """
         Wait for streaming audio to complete
         

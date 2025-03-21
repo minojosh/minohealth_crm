@@ -23,6 +23,7 @@ import os
 import base64
 import uuid
 import asyncio
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -48,7 +49,7 @@ app.add_middleware(
 
 # Initialize clients
 speech_client = SpeechRecognitionClient()
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+dotenv_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
 tts_client = TTSClient(api_url=os.getenv("XTTS_URL") or os.getenv("SPEECH_SERVICE_URL"))
 
