@@ -17,8 +17,8 @@ export const siteConfig = {
       href: "/data-extractor",
     },
     {
-      label: "Reports",
-      href: "/reports",
+      label: "Differential Diagnosis",
+      href: "/differential-diagnosis",
     },
     {
       label: "Appointment Scheduler",

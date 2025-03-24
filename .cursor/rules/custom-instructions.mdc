@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+1. we are using a unified speech service for both transcription and text to speech via a .env file with key `SPEECH_SERVICE_URL`
+2. we use an sqlite database [healthcare.db](mdc:backend/healthcare.db)
+3. Don't make any test files 
+4. Avoid redundancy and emphasize less is more approach to coding with Don't repeat yourself (DRY) principle and leveraging list/dictionary comprehension where appropriate.
+
+

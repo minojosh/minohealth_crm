@@ -1,45 +1,62 @@
+"""
+FastAPI application for minoHealth AI services.
+
+This module provides the following endpoints:
+
+Active Endpoints:
+1. /tts - Text-to-speech conversion (base64 audio)
+2. /tts-stream - Streaming text-to-speech (chunked audio)
+3. /transcribe - Speech-to-text transcription
+4. /ws/audio - WebSocket for real-time audio streaming
+5. /ws/schedule/{patient_id} - WebSocket for appointment scheduling
+6. /ws/conversation - WebSocket for medication and appointment conversations
+7. /api/medical/extract - Extract structured medical data from transcripts
+8. /api/medical/soap - Generate SOAP notes from conversations
+9. /health - Health check endpoint
+
+Deprecated Endpoints (to be removed):
+1. /api/extract/data - Use /api/medical/extract instead
+2. /api/medical/soap - Use /api/medical/soap instead
+3. /api/medical/extract - Use /api/medical/extract instead
+4. /api/medical/soap - Use /api/medical/soap instead
+"""
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Query, Depends, HTTPException, status, BackgroundTasks
-from fastapi.websockets import WebSocketState
-import uvicorn
+import fastapi
 from fastapi.middleware.cors import CORSMiddleware
-from .scheduler import (
-    SpeechAssistant, Message, docs, db_manager,
-    speech_client, schedule_appointment
-)
-from .medical_assistant import Assistant
-# Import appointment manager components
-from .appointment_manager import (
-    SchedulerManager, 
-    MedicalAgent, 
-    ReminderMessage
-)
+from fastapi.websockets import WebSocketState
+from fastapi.responses import StreamingResponse
+import uvicorn
 from datetime import datetime
-import fastapi  # Import the fastapi module itself
 from typing import Optional, List
 from pydantic import BaseModel
-# from .TTS_client import TTSClient
-from .XTTS_adapter import TTSClient
-# from .XTTS_client import TTSClient
 import time
 import logging
 import os
 import json
 import asyncio
-import fastapi
 import yaml
 import re
 import traceback
 import base64
 import numpy as np
-from typing import Optional, List
-from pydantic import BaseModel
-from .STT_client import SpeechRecognitionClient
-from fastapi.websockets import WebSocketState
-import os
 import tempfile
+import uuid
+import io
 from dotenv import load_dotenv
 from scipy import signal
-import uuid
+
+from .XTTS_adapter import TTSClient
+from .STT_client import SpeechRecognitionClient
+from .unified_ai_service import (
+    AIService,
+    SchedulerService,
+    DifferentialDiagnosisService,
+    MedicationReminderService,
+    MedicalAssistantService,
+    ConfigManager,
+    SpeechAssistant
+)
+
 
 # Configure logging
 logging.basicConfig(
@@ -52,9 +69,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
 
 app = FastAPI(
     title="Moremi AI Scheduler API",
@@ -63,14 +77,30 @@ app = FastAPI(
 )
 
 
-# Initialize STT client with URL from environment variable
-stt_server_url = os.getenv("STT_SERVER_URL")
-stt_client = SpeechRecognitionClient(server_url=stt_server_url)
-logger.info(f"STT Service URL: {stt_server_url or 'Using default'}")
+# Initialize speech server environment variable
+load_dotenv()
+speech_server_url = os.getenv("SPEECH_SERVER_URL")
+stt_client = SpeechRecognitionClient(server_url=speech_server_url)
+tts_client = TTSClient(api_url=speech_server_url)
+logger.info(f"TTS Service URL: {speech_server_url or 'Using default'}")
 
-# Initialize TTS client
-tts_client = TTSClient(api_url=os.getenv("XTTS_SERVER_URL"))
-logger.info(f"TTS Service URL: {os.getenv('XTTS_SERVER_URL') or 'Using default'}")
+
+# Initialize the unified services
+config_manager = ConfigManager()
+ai_service = AIService(config_manager)
+scheduler_service = SchedulerService(config_manager)
+diagnosis_service = DifferentialDiagnosisService(config_manager) 
+medication_service = MedicationReminderService(config_manager)
+medical_assistant_service = MedicalAssistantService(config_manager)
+
+# Class to handle medical data extraction requests
+class MedicalExtractionRequest(BaseModel):
+    transcript: str
+    include_patient_lookup: bool = False
+
+# Class to handle SOAP note generation requests
+class SOAPNoteRequest(BaseModel):
+    conversation: str
 
 print(f"FastAPI version: {fastapi.__version__}") # Print version at startup
 
@@ -114,33 +144,10 @@ async def log_requests(request: Request, call_next):
     
     return response
 
-# Appointment Manager API models
-class SchedulerRequest(BaseModel):
-    hours_ahead: int
-    days_ahead: int
-    type: str  # 'appointment' or 'medication'
-
-class ConversationResponse(BaseModel):
-    status: str
-    message: str
-    conversation_id: Optional[str]
-
-class ReminderResponse(BaseModel):
-    patient_name: str
-    message_type: str
-    details: dict
-    timestamp: datetime
-
 # TTS request model
 class TTSRequest(BaseModel):
     text: str
     speaker: Optional[str] = None
-
-# Store active conversations
-active_conversations = {}
-# Store last audio data for each conversation
-conversation_audio_cache = {}
-
 
 def convert_audio_to_base64(audio_data):
     """Convert numpy array audio data to base64 string."""
@@ -193,30 +200,92 @@ async def root():
     """Test endpoint to verify API documentation."""
     return {"message": "Welcome to Moremi AI Scheduler API"}
 
-@app.post("/tts")
-async def text_to_speech(request: TTSRequest):
+# @app.post("/tts")
+# async def text_to_speech(request: TTSRequest):
+#     """
+#     Convert text to speech using TTS service
+#     Returns base64 encoded audio
+#     """
+#     try:
+#         # Log the incoming request
+#         logger.info(f"TTS request received for text: {request.text[:50]}...")
+        
+#         # Get audio
+#         audio_info = tts_client.get_audio_for_frontend(request.text, speaker=request.speaker)
+        
+#         if audio_info and 'audio' in audio_info:
+#             # Success - return the audio data
+#             logger.info("TTS request processed successfully")
+#             return {
+#                 "success": True,
+#                 "audio": audio_info['audio'],
+#                 "sample_rate": audio_info.get('sample_rate', 24000)
+#             }
+#         else:
+#             # Error - audio generation failed
+#             logger.error("TTS client returned no audio data")
+#             return {
+#                 "success": False,
+#                 "error": "Failed to generate audio"
+#             }
+            
+#     except Exception as e:
+#         # Log the error
+#         logger.error(f"Error in TTS endpoint: {str(e)}")
+#         traceback.print_exc()
+#         return {
+#             "success": False,
+#             "error": str(e)
+#         }
+
+@app.post("/tts-stream")
+async def text_to_speech_stream(request: TTSRequest):
     """
-    Generate speech from text using the TTS client.
-    Returns base64-encoded audio data.
+    Stream text to speech using TTS service with XTTS streaming capability
+    Returns a streaming response with audio chunks
     """
+    
     try:
-        logger.info(f"TTS request received for text: {request.text[:30]}...")
+        # Log the incoming request
+        logger.info(f"TTS streaming request received for text: {request.text[:50]}...")
         
-        # Use the TTS client to generate audio - correctly unpack all 4 return values
-        audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
-            request.text,
-            play_locally=False,  # Don't play on server
-            return_data=True     # Get the data back
+        # Check if streaming client is available
+        if not hasattr(tts_client, 'streaming_client') or tts_client.streaming_client is None:
+            logger.error("Streaming TTS client not available")
+            return {"success": False, "error": "Streaming TTS service not available"}
+        
+        async def generate_chunks():
+            """Generate audio chunks for streaming"""
+            for chunk in tts_client.streaming_client.stream_text(request.text):
+                # Yield audio chunks as they become available
+                if chunk and 'audio' in chunk:
+                    # Convert numpy array to bytes
+                    audio_bytes = io.BytesIO()
+                    np.save(audio_bytes, chunk['audio'])
+                    audio_bytes.seek(0)
+                    yield audio_bytes.read()
+                    
+                    # Add small delay to avoid overwhelming the client
+                    await asyncio.sleep(0.01)
+            
+        # Return streaming response
+        return StreamingResponse(
+            generate_chunks(),
+            media_type="application/octet-stream",
+            headers={
+                "X-Sample-Rate": str(24000),  # Default sample rate for XTTS
+                "Content-Disposition": "attachment; filename=audio_stream.bin"
+            }
         )
-        
-        return {
-            "audio": base64_audio,
-            "sample_rate": sample_rate,
-            "text": request.text
-        }
+            
     except Exception as e:
-        logger.error(f"Error in TTS endpoint: {str(e)}")
-        return {"error": str(e)}
+        # Log the error
+        logger.error(f"Error in TTS streaming endpoint: {str(e)}")
+        traceback.print_exc()
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 @app.post("/transcribe")
 async def transcribe_audio_endpoint(request: Request):
@@ -262,17 +331,27 @@ async def transcribe_audio_endpoint(request: Request):
                     logger.info(f"Using existing context for session {session_id}: {initial_context[:30]}{'...' if len(initial_context) > 30 else ''}")
                 
                 # Convert to numpy array for analysis
-                audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
-                audio_stats = {
-                    "length": len(audio_np),
-                    "duration": len(audio_np) / 16000,  # Assuming 16kHz sample rate
-                    "min": float(np.min(audio_np)),
-                    "max": float(np.max(audio_np)),
-                    "mean": float(np.mean(audio_np)),
-                    "std": float(np.std(audio_np)),
-                    "non_zero": int(np.count_nonzero(audio_np))
-                }
-                logger.info(f"Audio statistics: {audio_stats}")
+                try:
+                    # First try float32 format
+                    if len(audio_bytes) % 4 == 0:  # Must be multiple of 4 bytes for float32
+                        audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
+                    else:
+                        # If not divisible by 4, try int16 format
+                        audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+                    
+                    audio_stats = {
+                        "length": len(audio_np),
+                        "duration": len(audio_np) / 16000,  # Assuming 16kHz sample rate
+                        "min": float(np.min(audio_np)),
+                        "max": float(np.max(audio_np)),
+                        "mean": float(np.mean(audio_np)),
+                        "std": float(np.std(audio_np)),
+                        "non_zero": int(np.count_nonzero(audio_np))
+                    }
+                    logger.info(f"Audio statistics: {audio_stats}")
+                except ValueError as e:
+                    # Handle error but continue processing
+                    logger.warning(f"Could not analyze audio statistics: {e}")
                 
                 # Process using the STT client with context
                 logger.info("Sending audio to STT service...")
@@ -306,102 +385,209 @@ async def transcribe_audio_endpoint(request: Request):
         logger.error(f"Error in transcribe endpoint: {str(e)}", exc_info=True)
         return {"error": f"Internal server error: {str(e)}"}
 
-@app.post("/api/extract/audio")
-async def extract_from_audio(request: Request):
-    """Extract structured data directly from audio using the medical Assistant"""
+@app.post("/api/medical/extract")
+async def extract_medical_data(request: MedicalExtractionRequest):
+    """
+    Extract structured medical data from a transcript.
+    Returns data in YAML format with optional patient database integration.
+    """
     try:
-        data = await request.json()
-        audio_base64 = data.get("audio")
-        session_id = data.get("session_id")
+        # Log the request
+        logger.info(f"Medical data extraction request received: {request.transcript[:50]}...")
         
-        if not audio_base64:
-            raise HTTPException(status_code=400, detail="No audio data provided")
+        # Extract data using the medical assistant service
+        extracted_data = medical_assistant_service.extract_data(request.transcript)
         
-        # Decode audio data
-        try:
-            audio_bytes = base64.b64decode(audio_base64)
-        except Exception as e:
-            logger.error(f"Error decoding audio data: {str(e)}")
-            raise HTTPException(status_code=400, detail="Invalid audio data format")
+        # Create or update patient if requested
+        patient_id = None
+        if request.include_patient_lookup and extracted_data:
+            patient_id = medical_assistant_service.create_or_update_patient(extracted_data)
         
-        # Transcribe audio - use the session context if available
-        try:
-            if session_id and hasattr(app.state, "transcription_contexts") and session_id in app.state.transcription_contexts:
-                # Use the accumulated context from the session
-                context = app.state.transcription_contexts.get(session_id, "")
-                logger.info(f"Using existing transcription context for session {session_id}")
-                # We already have a transcription from previous processing
-                transcript = context
-            else:
-                # No session context, transcribe from scratch
-                transcript = stt_client.transcribe_audio(audio_bytes)
-            
-            if not transcript or transcript == "No speech detected":
-                raise HTTPException(status_code=400, detail="No speech detected in audio")
-                
-            logger.info(f"Transcription result: {transcript}")
-        except Exception as e:
-            logger.error(f"Error transcribing audio: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Error transcribing audio: {str(e)}")
+        # Format the return value to include both new and old format for compatibility
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        yaml_content = yaml.dump(extracted_data, default_flow_style=False)
         
-        # Use the Assistant class from medical_assistant.py
-        from .medical_assistant import Assistant, Message
+        # Generate SOAP note
+        soap_note = None
+        if request.transcript:
+            try:
+                soap_sections = medical_assistant_service.generate_soap_note(request.transcript)
+                # Try to convert the SOAP sections to match expected format
+                soap_note = {
+                    "SOAP": {
+                        "Subjective": {
+                            "ChiefComplaint": extracted_data.get("reason_for_visit", ""),
+                            "HistoryOfPresentIllness": {
+                                "Onset": "",
+                                "Location": "",
+                                "Duration": "",
+                                "Characteristics": "",
+                                "AggravatingFactors": "",
+                                "RelievingFactors": "",
+                                "Timing": "",
+                                "Severity": ""
+                            },
+                            "PastMedicalHistory": "",
+                            "FamilyHistory": "",
+                            "SocialHistory": "",
+                            "ReviewOfSystems": soap_sections.get("subjective", "")
+                        },
+                        "Assessment": {
+                            "PrimaryDiagnosis": extracted_data.get("condition", ""),
+                            "DifferentialDiagnosis": "",
+                            "ProblemList": ""
+                        },
+                        "Plan": {
+                            "TreatmentAndMedications": "",
+                            "FurtherTestingOrImaging": "",
+                            "PatientEducation": "",
+                            "FollowUp": soap_sections.get("plan", "")
+                        }
+                    }
+                }
+            except Exception as e:
+                logger.error(f"Error generating SOAP note: {e}")
+                soap_note = None
+            
+        # Create file paths
+        data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        yaml_dir = os.path.join(data_dir, 'yaml_output')
+        raw_dir = os.path.join(yaml_dir, 'raw')
+        processed_dir = os.path.join(yaml_dir, 'processed')
+        soap_dir = os.path.join(data_dir, 'soap')
         
-        # Create Assistant and add transcript
-        assistant = Assistant()
-        assistant.messages.append(Message(user_input=transcript))
+        # Create directories if needed
+        for dir_path in [data_dir, yaml_dir, raw_dir, processed_dir, soap_dir]:
+            os.makedirs(dir_path, exist_ok=True)
         
-        # Extract structured YAML using Moremi
-        try:
-            # Get YAML response from Moremi
-            yaml_content = assistant.get_moremi_response(assistant.messages, assistant.system_prompt)
-            timestamp = assistant._get_timestamp()
+        raw_path = os.path.join(raw_dir, f'raw_yaml_{timestamp}.yaml')
+        processed_path = os.path.join(processed_dir, f'processed_yaml_{timestamp}.yaml')
+        soap_path = os.path.join(soap_dir, f'soap_note_{timestamp}.json')
+        
+        # Save files
+        with open(raw_path, 'w', encoding='utf-8') as f:
+            f.write(yaml_content)
+        
+        with open(processed_path, 'w', encoding='utf-8') as f:
+            f.write(yaml_content)
+        
+        if soap_note:
+            with open(soap_path, 'w', encoding='utf-8') as f:
+                json.dump(soap_note, f, indent=4)
             
-            # Save YAML files
-            raw_path, processed_path = assistant._save_yaml(yaml_content, timestamp)
-            
-            # Parse YAML
-            import yaml
-            processed_yaml = yaml.safe_load(yaml_content)
-            
-            # Try to create a patient record if data is valid
-            patient_id = None
-            if processed_yaml and isinstance(processed_yaml, dict):
-                patient_id = assistant._create_patient_from_yaml(processed_yaml)
-            
-            # Return the structured data along with file paths and patient ID
-            return {
-                "status": "success",
-                "transcript": transcript,
-                "data": processed_yaml,
-                "patient_id": patient_id,
-                "files": {
-                    "raw_yaml": str(raw_path),
-                    "processed_yaml": str(processed_path)
-                },
-                "message": "Successfully extracted structured data from audio"
-            }
-        except Exception as e:
-            logger.error(f"Error extracting data: {str(e)}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error extracting data from transcript: {str(e)}"
-            )
-            
-    except HTTPException:
-        raise
+        # Return both new and old formats for compatibility
+        return {
+            "success": True,
+            "status": "success",  # Old format
+            "data": extracted_data,
+            "patient_id": patient_id,
+            "raw_yaml": yaml_content,
+            "processed_yaml": yaml_content,
+            "files": {
+                "raw_yaml": str(raw_path),
+                "processed_yaml": str(processed_path),
+                "soap_note": str(soap_path) if soap_note else None
+            },
+            "soap_note": soap_note,
+            "message": "Successfully extracted structured data from transcript"
+        }
+        
     except Exception as e:
-        logger.error(f"Error in extract_from_audio endpoint: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Server error during audio data extraction: {str(e)}"
-        )
+        # Log the error
+        logger.error(f"Error in medical data extraction: {str(e)}")
+        traceback.print_exc()
+        return {
+            "success": False,
+            "status": "error",  # Old format
+            "error": str(e)
+        }
 
-@app.post("/api/extract/data")
+@app.post("/api/medical/soap")
+async def generate_soap_note(request: SOAPNoteRequest):
+    """
+    Generate a SOAP note from conversation text.
+    Returns structured SOAP note with sections.
+    """
+    try:
+        # Log the request
+        logger.info(f"SOAP note generation request received: {request.conversation[:50]}...")
+        
+        # Generate SOAP note using the medical assistant service
+        soap_sections = medical_assistant_service.generate_soap_note(request.conversation)
+        
+        # Extract data from conversation to populate SOAP note format
+        extracted_data = medical_assistant_service.extract_data(request.conversation)
+        
+        # Format in the structure expected by the frontend
+        soap_note = {
+            "SOAP": {
+                "Subjective": {
+                    "ChiefComplaint": extracted_data.get("reason_for_visit", ""),
+                    "HistoryOfPresentIllness": {
+                        "Onset": "",
+                        "Location": "",
+                        "Duration": "",
+                        "Characteristics": "",
+                        "AggravatingFactors": "",
+                        "RelievingFactors": "",
+                        "Timing": "",
+                        "Severity": ""
+                    },
+                    "PastMedicalHistory": "",
+                    "FamilyHistory": "",
+                    "SocialHistory": "",
+                    "ReviewOfSystems": soap_sections.get("subjective", "")
+                },
+                "Assessment": {
+                    "PrimaryDiagnosis": extracted_data.get("condition", ""),
+                    "DifferentialDiagnosis": "",
+                    "ProblemList": ""
+                },
+                "Plan": {
+                    "TreatmentAndMedications": "",
+                    "FurtherTestingOrImaging": "",
+                    "PatientEducation": "",
+                    "FollowUp": soap_sections.get("plan", "")
+                }
+            }
+        }
+        
+        # Save the SOAP note to a file
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        soap_dir = os.path.join(os.path.dirname(__file__), 'data', 'soap')
+        os.makedirs(soap_dir, exist_ok=True)
+        soap_path = os.path.join(soap_dir, f'soap_note_{timestamp}.json')
+
+        with open(soap_path, 'w', encoding='utf-8') as f:
+            json.dump(soap_note, f, indent=4)
+            
+        # Return both new and old style responses
+        return {
+            "success": True,
+            "status": "success",  # Old format
+            "soap_note": soap_note,
+            "raw_sections": soap_sections,  # New format - raw sections
+            "file_path": str(soap_path),
+            "message": "SOAP note generated successfully"
+        }
+
+    except Exception as e:
+        # Log the error
+        logger.error(f"Error in SOAP note generation: {str(e)}")
+        traceback.print_exc()
+        return {
+            "success": False,
+            "status": "error",  # Old format
+            "error": str(e)
+        }
+
+# Mark deprecated endpoints
+@app.post("/api/extract/data", deprecated=True)
 async def extract_data(request: Request):
-    """Extract structured data from transcript using the medical Assistant"""
+    """
+    DEPRECATED: Use /api/medical/extract instead
+    Extract structured data from transcript using the medical Assistant
+    """
     try:
         data = await request.json()
         transcript = data.get("transcript")
@@ -409,90 +595,103 @@ async def extract_data(request: Request):
         if not transcript:
             raise HTTPException(status_code=400, detail="No transcript provided")
         
-        # Use the Assistant class from medical_assistant.py
-        from .medical_assistant import Assistant, Message
+        # Use the medical assistant service instead
+        extracted_data = medical_assistant_service.extract_data(transcript)
         
-        # Create Assistant and add transcript
-        assistant = Assistant()
-        assistant.messages.append(Message(user_input=transcript))
+        # Create or update patient if data is valid
+        patient_id = None
+        if extracted_data:
+            patient_id = medical_assistant_service.create_or_update_patient(extracted_data)
+            
+        # Format the return value to match what the frontend expects
+        # This ensures compatibility with the existing frontend code
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        yaml_content = yaml.dump(extracted_data, default_flow_style=False)
         
-        # Extract structured YAML using Moremi
-        try:
-            # Get YAML response from Moremi
-            yaml_content = assistant.get_moremi_response(assistant.messages, assistant.system_prompt)
-            timestamp = assistant._get_timestamp()
-            
-            # Save YAML files
-            raw_path, processed_path = assistant._save_yaml(yaml_content, timestamp)
-            
-            # Parse YAML
-            import yaml
-            processed_yaml = yaml.safe_load(yaml_content)
-            
-            # Generate SOAP note using the get_soap_note method
-            soap_note = None
-            soap_path = None
+        # Generate SOAP note
+        soap_note = None
+        if transcript:
             try:
-                # Generate SOAP note - returns JSON string
-                soap_content = assistant.get_soap_note(assistant.messages)
-                
-                # Parse the JSON content
-                import json
-                soap_note = json.loads(soap_content)
-                
-                # Save SOAP note to file (already in JSON format)
-                soap_dir = os.path.join(os.path.dirname(__file__), 'data', 'soap')
-                os.makedirs(soap_dir, exist_ok=True)
-                soap_path = os.path.join(soap_dir, f'soap_note_{timestamp}.json')
-                
-                with open(soap_path, 'w', encoding='utf-8') as f:
-                    f.write(soap_content)
-                
-                logger.info(f"SOAP note saved to: {soap_path}")
-            except Exception as e:
-                logger.error(f"Error handling SOAP note: {str(e)}")
-                logger.error(f"Traceback: {traceback.format_exc()}")
-                # Create an error SOAP note
+                soap_sections = medical_assistant_service.generate_soap_note(transcript)
+                # Try to convert the SOAP sections to match expected format
                 soap_note = {
                     "SOAP": {
-                        "error": f"Error processing SOAP note: {str(e)}",
-                        "Subjective": {"ChiefComplaint": "Error occurred during processing"},
-                        "Assessment": {"PrimaryDiagnosis": ""},
-                        "Plan": {"TreatmentAndMedications": ""}
+                        "Subjective": {
+                            "ChiefComplaint": extracted_data.get("reason_for_visit", ""),
+                            "HistoryOfPresentIllness": {
+                                "Onset": "",
+                                "Location": "",
+                                "Duration": "",
+                                "Characteristics": "",
+                                "AggravatingFactors": "",
+                                "RelievingFactors": "",
+                                "Timing": "",
+                                "Severity": ""
+                            },
+                            "PastMedicalHistory": "",
+                            "FamilyHistory": "",
+                            "SocialHistory": "",
+                            "ReviewOfSystems": soap_sections.get("subjective", "")
+                        },
+                        "Assessment": {
+                            "PrimaryDiagnosis": extracted_data.get("condition", ""),
+                            "DifferentialDiagnosis": "",
+                            "ProblemList": ""
+                        },
+                        "Plan": {
+                            "TreatmentAndMedications": "",
+                            "FurtherTestingOrImaging": "",
+                            "PatientEducation": "",
+                            "FollowUp": soap_sections.get("plan", "")
+                        }
                     }
                 }
-                # Don't set soap_path in this case
+            except Exception as e:
+                logger.error(f"Error generating SOAP note: {e}")
+                soap_note = None
             
-            # Try to create a patient record if data is valid
-            patient_id = None
-            if processed_yaml and isinstance(processed_yaml, dict):
-                patient_id = assistant._create_patient_from_yaml(processed_yaml)
-            
-            # Return the structured data along with file paths and ID
+        # Create file paths (these are fictional but help with frontend compatibility)
+        data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        yaml_dir = os.path.join(data_dir, 'yaml_output')
+        raw_dir = os.path.join(yaml_dir, 'raw')
+        processed_dir = os.path.join(yaml_dir, 'processed')
+        soap_dir = os.path.join(data_dir, 'soap')
+        
+        # Create directories if needed
+        for dir_path in [data_dir, yaml_dir, raw_dir, processed_dir, soap_dir]:
+            os.makedirs(dir_path, exist_ok=True)
+        
+        raw_path = os.path.join(raw_dir, f'raw_yaml_{timestamp}.yaml')
+        processed_path = os.path.join(processed_dir, f'processed_yaml_{timestamp}.yaml')
+        soap_path = os.path.join(soap_dir, f'soap_note_{timestamp}.json')
+        
+        # Save files
+        with open(raw_path, 'w', encoding='utf-8') as f:
+            f.write(yaml_content)
+        
+        with open(processed_path, 'w', encoding='utf-8') as f:
+            f.write(yaml_content)
+        
+        if soap_note:
+            with open(soap_path, 'w', encoding='utf-8') as f:
+                json.dump(soap_note, f, indent=4)
+        
+        # Return the format expected by the frontend
             return {
                 "status": "success",
-                "data": processed_yaml,
+            "data": extracted_data,
                 "patient_id": patient_id,
-                "raw_yaml": yaml_content,  # Include the raw YAML content
-                "processed_yaml": yaml.dump(processed_yaml, default_flow_style=False),  # Include formatted YAML
+            "raw_yaml": yaml_content,
+            "processed_yaml": yaml_content,
                 "files": {
                     "raw_yaml": str(raw_path),
                     "processed_yaml": str(processed_path),
-                    "soap_note": soap_path
+                "soap_note": str(soap_path) if soap_note else None
                 },
-                "soap_note": soap_note,  # Include the SOAP note in the response
+            "soap_note": soap_note,
                 "message": "Successfully extracted structured data from transcript"
             }
-        except Exception as e:
-            logger.error(f"Error extracting data: {str(e)}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error extracting data from transcript: {str(e)}"
-            )
             
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error in extract_data endpoint: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
@@ -620,12 +819,29 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
     """
     logger.info(f"Starting scheduling session for patient {patient_id}")
     await websocket.accept()
-    assistant = None
     
     try:
-        # Initialize the speech assistant
+        # Initialize using unified service architecture
         assistant = SpeechAssistant()
         assistant.patient_id = patient_id
+        
+        # Import the database manager within the function to avoid circular imports
+        from .database_utils import PatientDatabaseManager
+        db_manager = PatientDatabaseManager()
+        
+        # Verify patient exists
+        patient = db_manager.get_patient_by_id(patient_id)
+        if not patient:
+            logger.warning(f"Patient with ID {patient_id} not found, continuing with default patient data")
+            # Instead of returning an error, continue with a default approach
+            patient = {
+                "patient_id": patient_id,
+                "name": "Patient",
+                "phone": "",
+                "email": "",
+                "address": "",
+                "date_of_birth": None
+            }
         
         # Send initial greeting
         greeting = "Welcome to Moremi AI Scheduler! Please hold while I process your conversation."
@@ -675,7 +891,8 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                     if assistant.suit_doc:
                         slots_response = ""
                         for doc in assistant.suit_doc:
-                            slots = db_manager._get_new_date(doc['doctor_id'])
+                            # Use the unified scheduler service to get slots
+                            slots = db_manager.get_available_slots(doctor_id=doc['doctor_id'], days_ahead=30)
                             if slots:
                                 slots_response += f'\n{db_manager.format_available_slots(slots, doc["doctor_name"])}\n'
                                 break
@@ -731,8 +948,15 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                     if summary and summary.lower() != "null":
                         try:
                             parsed = json.loads(summary)
-                            # Save appointment details
-                            schedule_appointment(patient_id, parsed)
+                            # Save appointment details using the scheduler service
+                            appointment_id = scheduler_service.create_appointment(
+                                patient_id=patient_id,
+                                appointment_details=parsed
+                            )
+                            
+                            # Add appointment ID to the response
+                            parsed["appointment_id"] = appointment_id
+                            
                             await websocket.send_json({
                                 "type": "summary",
                                 "text": json.dumps(parsed)
@@ -772,9 +996,6 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
     finally:
         logger.info(f"Cleaning up schedule_session for patient {patient_id}")
         tts_client.stop()
-        if assistant:
-            # Clean up any resources
-            pass
 
 @app.websocket("/ws/conversation")
 async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(...), type: str = Query(...), token: str = Query(None)):
@@ -800,29 +1021,45 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
             "greeting_sent": False  # Flag to track if greeting has been sent
         }
         
+        # Initialize dictionaries for managing active conversations if they don't exist
+        if not hasattr(app.state, "active_conversations"):
+            app.state.active_conversations = {}
+        
         # Look up the reminder if a reminder_id is provided
         reminder_id = f"{type}_{patient_id}"
         reminder = None
         
         # Directly access the reminder from the dictionary using the key
-        reminder = active_conversations.get(reminder_id)
+        reminder = app.state.active_conversations.get(reminder_id)
         
         # If not found with simple key, try to find it in all values
         if not reminder:
-            for key, value in active_conversations.items():
+            for key, value in app.state.active_conversations.items():
                 if key.startswith(f"{type}_{patient_id}"):
                     reminder = value
                     break
         
         logger.info(f"Reminder lookup for {reminder_id}: {'Found' if reminder else 'Not found'}")
         
-        # Initialize the appropriate agent based on type
-        agent = None
+        # Initialize the appropriate service from unified_ai_service.py
+        service = None
         try:
+            # Create a dummy data class to hold patient information
+            class ReminderData:
+                def __init__(self, patient_id, reminder_type):
+                    self.patient_id = patient_id
+                    self.message_type = reminder_type
+                    self.patient_name = "Patient"  # Default name
+                    self.details = {"patient_id": patient_id}
+            
+            # Use reminder data if available, otherwise create placeholder
+            reminder_data = reminder or ReminderData(patient_id, type)
+            
+            # Initialize the appropriate service based on type
             if type == "medication":
-                agent = MedicalAgent(reminder or None, "medication", days_ahead=30)
+                service = medication_service
             elif type == "appointment":
-                agent = MedicalAgent(reminder or None, "appointment", days_ahead=30)
+                service = scheduler_service
             else:
                 await websocket.send_json({
                     "type": "error",
@@ -830,12 +1067,13 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                     "message_id": "error_invalid_type"
                 })
                 return
+                
         except Exception as agent_err:
-            logger.error(f"Failed to initialize agent: {str(agent_err)}")
+            logger.error(f"Failed to initialize service: {str(agent_err)}")
             await websocket.send_json({
                 "type": "error",
-                "message": f"Failed to initialize conversation agent: {str(agent_err)}",
-                "message_id": "error_agent_init"
+                "message": f"Failed to initialize conversation service: {str(agent_err)}",
+                "message_id": "error_service_init"
             })
             return
             
@@ -843,11 +1081,11 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
         if not conversation_state["greeting_sent"]:
             # Customize greeting based on conversation type
             if type == "medication":
-                initial_message = f"Hello {reminder.patient_name if reminder else 'Patient'}! This is MinoHealth calling about your medication reminder. How are you doing today?"
+                initial_message = f"Hello {getattr(reminder, 'patient_name', 'Patient')}! This is MinoHealth calling about your medication reminder. How are you doing today?"
             elif type == "appointment":
-                initial_message = f"Hello {reminder.patient_name if reminder else 'Patient'}! This is MinoHealth calling about your upcoming appointment. How are you doing today?"
+                initial_message = f"Hello {getattr(reminder, 'patient_name', 'Patient')}! This is MinoHealth calling about your upcoming appointment. How are you doing today?"
             else:
-                initial_message = f"Hello {reminder.patient_name if reminder else 'Patient'}! This is MinoHealth calling. How can I assist you today?"
+                initial_message = f"Hello {getattr(reminder, 'patient_name', 'Patient')}! This is MinoHealth calling. How can I assist you today?"
                 
             message_id = f"initial_greeting_{patient_id}_{type}"
             
@@ -862,24 +1100,20 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                 conversation_state["last_message_id"] = message_id
                 conversation_state["greeting_sent"] = True
                 
-                # Try to generate speech for the initial message using TTSClient
-                audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
-                    initial_message, 
-                    play_locally=False, 
-                    return_data=True
-                )
+                # Try to generate speech for the initial message using unified service
+                audio_info = tts_client.get_audio_for_frontend(initial_message)
                 
-                if base64_audio:
+                if audio_info and 'audio' in audio_info:
                     # Store audio format information
                     conversation_state["audio_format"] = {
-                        "sample_rate": sample_rate,
+                        "sample_rate": audio_info.get('sample_rate', 24000),
                         "encoding": "PCM_FLOAT"
                     }
                     
                     await websocket.send_json({
                         "type": "audio",
-                        "audio": base64_audio,
-                        "sample_rate": sample_rate,
+                        "audio": audio_info['audio'],
+                        "sample_rate": audio_info.get('sample_rate', 24000),
                         "message_id": f"audio_{message_id}",
                         "encoding": "PCM_FLOAT"
                     })
@@ -923,6 +1157,7 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                     # Process audio for transcription
                     try:
                         audio_bytes = base64.b64decode(audio_base64)
+                        # Use the stt_client from the unified service
                         transcription = stt_client.transcribe_audio(audio_bytes)
                         
                         # Check if transcription contains an error message
@@ -953,16 +1188,27 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                             "text": transcription
                         })
                         
-                        # Process with agent - each message gets a unique ID based on timestamp and content hash
-                        if agent and hasattr(agent, 'Moremi'):
-                            # Add the transcription to the agent's messages
-                            if not hasattr(agent, 'messages'):
-                                agent.messages = []
-                            agent.messages.append(Message(user_input=transcription))
-                            
-                            # Get response from Moremi
-                            response = agent.Moremi(agent.messages, agent.system_prompt)
-                            agent.messages[-1].add_response(response)
+                        # Process with the appropriate unified service
+                        if service:
+                            # Generate response based on conversation type
+                            if type == "medication":
+                                response = service.handle_medication_reminder({
+                                    "patient_name": getattr(reminder, "patient_name", "Patient"),
+                                    "patient_id": patient_id,
+                                    "message": transcription
+                                })
+                            elif type == "appointment":
+                                response = service.handle_appointment_reminder({
+                                    "patient_name": getattr(reminder, "patient_name", "Patient"),
+                                    "patient_id": patient_id,
+                                    "message": transcription
+                                })
+                            else:
+                                # Default to simple processing with base AI service
+                                response = ai_service.process_with_prompt(
+                                    "conversation", 
+                                    transcription
+                                )
                             
                             # Send text response
                             await websocket.send_json({
@@ -971,25 +1217,17 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                                 "text": response
                             })
                             
-                            # Generate and send audio using TTSClient
-                            audio_data, sample_rate, base64_audio = tts_client.TTS(
-                                response,
-                                play_locally=False, 
-                                return_data=True
-                            )
+                            # Generate and send audio
+                            audio_info = tts_client.get_audio_for_frontend(response)
                             
-                            if base64_audio:
-                                # Store for frontend use
-                                agent.audio_base64 = base64_audio
-                                
-                                # Send to client
+                            if audio_info and 'audio' in audio_info:
                                 await websocket.send_json({
                                     "type": "audio",
-                                    "audio": base64_audio,
-                                    "sample_rate": sample_rate
+                                    "audio": audio_info['audio'],
+                                    "sample_rate": audio_info.get('sample_rate', 24000)
                                 })
                         else:
-                            # Fallback response if agent isn't properly initialized
+                            # Fallback response if service isn't properly initialized
                             response = f"Thank you for your message: '{transcription}'. How else can I help with your {type}?"
                             response_id = f"fallback_{conversation_state['message_count']}_{hash(response)}"
                             
@@ -1000,19 +1238,15 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                                 "text": response
                             })
                             
-                            # Try to generate speech with TTSClient
+                            # Try to generate speech
                             try:
-                                audio_data, sample_rate, base64_audio = tts_client.TTS(
-                                    response,
-                                    play_locally=False, 
-                                    return_data=True
-                                )
+                                audio_info = tts_client.get_audio_for_frontend(response)
                                 
-                                if base64_audio:
+                                if audio_info and 'audio' in audio_info:
                                     await websocket.send_json({
                                         "type": "audio",
-                                        "audio": base64_audio,
-                                        "sample_rate": sample_rate
+                                        "audio": audio_info['audio'],
+                                        "sample_rate": audio_info.get('sample_rate', 24000)
                                     })
                             except Exception as audio_err:
                                 logger.error(f"Failed to generate speech for response: {str(audio_err)}")
@@ -1049,17 +1283,13 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
                         
                         # Generate farewell audio
                         try:
-                            audio_data, sample_rate, base64_audio, _ = tts_client.TTS(
-                                farewell,
-                                play_locally=False, 
-                                return_data=True
-                            )
+                            audio_info = tts_client.get_audio_for_frontend(farewell)
                             
-                            if base64_audio:
+                            if audio_info and 'audio' in audio_info:
                                 await websocket.send_json({
                                     "type": "audio",
-                                    "audio": base64_audio,
-                                    "sample_rate": sample_rate,
+                                    "audio": audio_info['audio'],
+                                    "sample_rate": audio_info.get('sample_rate', 24000),
                                     "message_id": f"audio_farewell_{command_id}",
                                     "encoding": "PCM_FLOAT"
                                 })
@@ -1111,163 +1341,172 @@ async def conversation_websocket(websocket: WebSocket, patient_id: int = Query(.
     except Exception as e:
         logger.error(f"Error in conversation WebSocket: {str(e)}")
     finally:
-        if websocket.client_state.CONNECTED:
+        if websocket.client_state == WebSocketState.CONNECTED:
             await websocket.close()
 
-# =========== APPOINTMENT MANAGER API ENDPOINTS ============ #
-
-@app.post("/start-scheduler", response_model=List[ReminderResponse])
-async def start_scheduler(request: SchedulerRequest, background_tasks: BackgroundTasks):
-    """
-    Start the scheduler process for either appointments or medications
-    """
+@app.websocket("/ws/diagnosis/{patient_id}")
+async def diagnosis_session(websocket: WebSocket, patient_id: int):
+    """Handle a diagnosis conversation session."""
     try:
-        with SchedulerManager(request.days_ahead) as scheduler:
-            if request.type == 'appointment':
-                reminders = scheduler.process_appointment_reminders(
-                    hours_ahead=request.hours_ahead,
-                    days_ahead=request.days_ahead
-                )
-            elif request.type == 'medication':
-                reminders = scheduler.process_medication_reminders(
-                    days_ahead=request.days_ahead
-                )
-            else:
-                raise HTTPException(status_code=400, detail="Invalid reminder type")
-
-            # Convert reminders to response format
-            reminder_responses = []
-            
-            # Store active reminders for conversations with consistent keys
-            for reminder in reminders:
-                # Ensure patient_id is available
-                patient_id = reminder.details.get('patient_id', 1)  # Default to 1 if not found
-                
-                # Create consistent keys for active_conversations
-                simple_key = f"{reminder.message_type}_{patient_id}"
-                full_key = f"{reminder.message_type}_{patient_id}_{datetime.now().timestamp()}"
-                
-                # Store reminder with both keys for flexibility
-                active_conversations[simple_key] = reminder
-                active_conversations[full_key] = reminder
-                
-                # Add to response
-                reminder_responses.append(
-                    ReminderResponse(
-                        patient_name=reminder.patient_name,
-                        message_type=reminder.message_type,
-                        details=reminder.details,
-                        timestamp=reminder.timestamp
-                    )
-                )
-            
-            logger.info(f"Stored {len(reminders)} active conversations with keys: {list(active_conversations.keys())}")
-            return reminder_responses
-
-    except Exception as e:
-        logger.error(f"Error in scheduler: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/start-conversation/{reminder_id}")
-async def start_conversation(reminder_id: str, background_tasks: BackgroundTasks):
-    """
-    Start a conversation for a specific reminder
-    """
-    try:
-        # Get the reminder from your storage/database
-        reminder = active_conversations.get(reminder_id)
-        if not reminder:
-            raise HTTPException(status_code=404, detail="Reminder not found")
-
-        # Initialize MedicalAgent
-        agent = MedicalAgent(reminder, reminder.message_type, days_ahead=30)
+        await websocket.accept()  # Accept the WebSocket connection first
         
-        # Start the conversation
-        background_tasks.add_task(agent.conversation_manager)
+        # Import the database manager within the function to avoid circular imports
+        from .database_utils import PatientDatabaseManager
+        db_manager = PatientDatabaseManager()
+        
+        # Verify patient exists
+        patient = db_manager.get_patient_by_id(patient_id)
+        if not patient:
+            logger.warning(f"Patient with ID {patient_id} not found, continuing with default patient data")
+            patient = {
+                "patient_id": patient_id,
+                "name": "Patient",
+                "phone": "",
+                "email": "",
+                "address": "",
+                "date_of_birth": None
+            }
+        
+        # Initialize conversation history with system message
+        conversation_history = [
+            {"role": "system", "content": "You are a helpful medical diagnosis assistant."}
+        ]
+        
+        # Add greeting to conversation history only
+        greeting = f"Hello! I'm your differential diagnosis assistant. How can I help you today?"
+        conversation_history.append({"role": "agent", "content": greeting})
+        
+        # Send initial greeting
+        await websocket.send_json({
+            "type": "message",
+            "role": "agent",
+            "text": greeting
+        })
+        
+        # Process messages
+        while True:
+            try:
+                data = await websocket.receive_json()
+                message_type = data.get("type")
+                
+                if message_type == "end_conversation":
+                    break
+                    
+                if message_type == "message":
+                    user_message = data.get("text", "")
+                    if not user_message:
+                        continue
+                    
+                    # Add user message to history
+                    conversation_history.append({"role": "user", "content": user_message})
+                    
+                    # Process with diagnosis service
+                    response = diagnosis_service.diagnose(user_message)
+                    
+                    # Add assistant response to history
+                    conversation_history.append({"role": "agent", "content": response})
+                                        
+                    # Send response to client
+                    await websocket.send_json({
+                        "type": "message",
+                        "role": "agent",
+                        "text": response
+})
+                    
+            except WebSocketDisconnect:
+                break
+            except Exception as e:
+                logger.error(f"Error processing message: {str(e)}")
+                await websocket.send_json({
+                      "type": "error",
+                    "message": "Error processing message. Please try again."
+                })
+                
+            except Exception as e:
+                logger.error(f"Error in diagnosis session: {str(e)}")
+            if websocket.client_state == WebSocketState.CONNECTED:  # Fixed client state check
+                await websocket.send_json({
+                    "type": "error",
+                    "message": "An error occurred. Please try again."
+                })
+    finally:
+        try:
+            await websocket.close()
+        except:
+            pass
 
-        return ConversationResponse(
-            status="started",
-            message="Conversation initiated",
-            conversation_id=reminder_id
-        )
 
-    except Exception as e:
-        logger.error(f"Error starting conversation: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+async def stream_diagnosis_response(user_input: str):
+    """
+    Simulate streaming response from the diagnosis service.
+    In a real implementation, this would connect to a streaming LLM API.
     
-@app.post("/speech-input/{conversation_id}")
-async def receive_speech_input(conversation_id: str):
-    """
-    Receive speech input for an active conversation
-    """
-    try:
-        # Using existing transcribe_audio method which works in the event loop
-        # Pass a dummy audio sample to avoid creating a new event loop with asyncio.run()
-        audio_bytes = b''  # Empty bytes as placeholder
-        user_input = stt_client.transcribe_audio(audio_bytes)
-        
-        if not user_input or not user_input.strip():
-            raise HTTPException(status_code=400, detail="No speech input detected")
-
-        return {"status": "success", "text": user_input}
-
-    except Exception as e:
-        logger.error(f"Error processing speech input: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/speech-output")
-async def generate_speech_output(text: str):
-    """
-    Generate speech output from text
-    """
-    try:
-        # Generate speech using the TTS client
-        audio_data, sample_rate, base64_audio, _ = tts_client.TTS(text, play_locally=False)
-        return {
-            "status": "success", 
-            "message": "Speech generated successfully",
-            "audio": base64_audio,
-            "sample_rate": sample_rate
-        }
-    except Exception as e:
-        logger.error(f"Error generating speech: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/end-conversation/{conversation_id}")
-async def end_conversation(conversation_id: str):
-    """
-    End an active conversation
-    """
-    try:
-        # End the conversation using the conversation manager
-        agent = MedicalAgent(None, None)
-        agent.end_conversation(conversation_id)
-        return {"status": "success", "message": "Conversation ended"}
-
-    except Exception as e:
-        logger.error(f"Error ending conversation: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/get-conversation-audio")
-async def get_conversation_audio(conversation_id: str):
-    """
-    Get the audio data for a specific conversation.
-    """
-    try:
-        audio_data = conversation_audio_cache.get(conversation_id)
-        
-        if not audio_data:
-            raise HTTPException(status_code=404, detail="No audio found for this conversation")
-            
-        return {
-            "conversation_id": conversation_id,
-            "audio_data": audio_data
-        }
-        
-    except Exception as e:
-        logger.error(f"Error in get_conversation_audio: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+    Args:
+        user_input: User's message
     
+    Yields:
+        Partial response strings
+    """
+    try:
+        # Get the full response first
+        full_response = diagnosis_service.diagnose(user_input)
+        
+        # Split into sentences or chunks
+        chunks = re.split(r'(?<=[.!?]) +', full_response)
+        
+        partial = ""
+        for chunk in chunks:
+            partial += chunk + " "
+            yield partial.strip()
+            await asyncio.sleep(0.1)  # Simulate network delay
+    except Exception as e:
+        logger.error(f"Error in streaming diagnosis response: {str(e)}")
+        yield f"I'm sorry, I encountered an error processing your request. {str(e)}"
+
+
+async def stream_diagnosis_summary(conversation: str):
+    """
+    Simulate streaming summary from the diagnosis service.
+    
+    Args:
+        conversation: Full conversation history
+    
+    Yields:
+        Partial summary strings
+    """
+    try:
+        # Get the full summary first
+        full_summary = diagnosis_service.summarize_diagnosis(conversation)
+        
+        try:
+            # If it's valid JSON, we can stream it in progressive steps
+            summary_obj = json.loads(full_summary)
+            
+            # Stream in logical steps
+            steps = [
+                {"status": "Processing primary diagnosis..."},
+                {"primaryDiagnosis": summary_obj.get("primaryDiagnosis", "")},
+                {"primaryDiagnosis": summary_obj.get("primaryDiagnosis", ""), 
+                 "differentialDiagnoses": summary_obj.get("differentialDiagnoses", [])},
+                {"primaryDiagnosis": summary_obj.get("primaryDiagnosis", ""), 
+                 "differentialDiagnoses": summary_obj.get("differentialDiagnoses", []),
+                 "recommendedTests": summary_obj.get("recommendedTests", [])},
+                summary_obj  # Final complete object
+            ]
+            
+            for step in steps:
+                yield json.dumps(step)
+                await asyncio.sleep(0.3)  # Slightly longer delay for summary
+                
+        except json.JSONDecodeError:
+            # Fall back to simpler approach for non-JSON responses
+            yield '{"status": "Processing..."}'
+            await asyncio.sleep(0.5)
+            yield full_summary
+    except Exception as e:
+        logger.error(f"Error in streaming diagnosis summary: {str(e)}")
+        yield json.dumps({"error": f"Error generating summary: {str(e)}"})
+
 
 @app.get("/health")
 async def health_check():

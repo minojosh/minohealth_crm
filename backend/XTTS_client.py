@@ -229,7 +229,7 @@ class TTSClient:
         self.p.terminate()
 
 def main():
-    tts_url = "https://47ea-34-16-148-110.ngrok-free.app"
+    tts_url = os.getenv('SPEECH_SERVICE_URL', '')
     print(tts_url)
     client = TTSClient(server_url = tts_url)
     try:

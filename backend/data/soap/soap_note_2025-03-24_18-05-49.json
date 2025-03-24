@@ -1,0 +1,32 @@
+{
+    "SOAP": {
+        "Subjective": {
+            "ChiefComplaint": null,
+            "HistoryOfPresentIllness": {
+                "Onset": "",
+                "Location": "",
+                "Duration": "",
+                "Characteristics": "",
+                "AggravatingFactors": "",
+                "RelievingFactors": "",
+                "Timing": "",
+                "Severity": ""
+            },
+            "PastMedicalHistory": "",
+            "FamilyHistory": "",
+            "SocialHistory": "",
+            "ReviewOfSystems": "- Chief complaint: Not specified\n- History of present illness: Not specified\n- Past medical history: Not specified\n- Medications: Not specified\n- Allergies: Not specified\n- Review of systems: Not specified"
+        },
+        "Assessment": {
+            "PrimaryDiagnosis": null,
+            "DifferentialDiagnosis": "",
+            "ProblemList": ""
+        },
+        "Plan": {
+            "TreatmentAndMedications": "",
+            "FurtherTestingOrImaging": "",
+            "PatientEducation": "",
+            "FollowUp": "- Diagnostic plans: Not specified\n- Treatment plans: Not specified\n- Patient education: Not specified\n- Follow-up instructions: Not specified"
+        }
+    }
+}

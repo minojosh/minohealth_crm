@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import React, { useCallback } from 'react';
 
 // Constants for error detection
-const SUSPICIOUS_TRANSCRIPTION = "Thanks for watching.";
 // Expanded list of known problematic patterns
 const SUSPICIOUS_PATTERNS = [
   "thanks for watching", 

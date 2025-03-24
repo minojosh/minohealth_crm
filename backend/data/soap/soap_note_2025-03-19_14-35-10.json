@@ -1,0 +1,32 @@
+{
+    "SOAP": {
+        "Subjective": {
+            "ChiefComplaint": null,
+            "HistoryOfPresentIllness": {
+                "Onset": "",
+                "Location": "",
+                "Duration": "",
+                "Characteristics": "",
+                "AggravatingFactors": "",
+                "RelievingFactors": "",
+                "Timing": "",
+                "Severity": ""
+            },
+            "PastMedicalHistory": "",
+            "FamilyHistory": "",
+            "SocialHistory": "",
+            "ReviewOfSystems": "- Chief complaint: N/A\n- History of present illness: N/A\n- Past medical history: N/A\n- Medications: N/A\n- Allergies: N/A\n- Review of systems: N/A"
+        },
+        "Assessment": {
+            "PrimaryDiagnosis": null,
+            "DifferentialDiagnosis": "",
+            "ProblemList": ""
+        },
+        "Plan": {
+            "TreatmentAndMedications": "",
+            "FurtherTestingOrImaging": "",
+            "PatientEducation": "",
+            "FollowUp": "- Diagnostic plans: N/A\n- Treatment plans: N/A\n- Patient education: N/A\n- Follow-up instructions: N/A\nBased on the provided conversation, there is no medical information available to generate a comprehensive SOAP note."
+        }
+    }
+}

@@ -1,0 +1,1170 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeftIcon, MicrophoneIcon, StopIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
+import { Card, CardBody } from "@heroui/card";
+import { Button } from "@heroui/button";
+import { Textarea } from "@heroui/input";
+import DiagnosisSummary from '@/components/differential-diagnosis/DiagnosisSummary';
+
+// Config values that can be adjusted
+const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const AUDIO_CHUNK_SIZE = 30000; // 30 seconds of audio
+const MAX_RETRIES = 3;
+
+// Audio context for TTS streaming
+let audioContext: AudioContext | null = null;
+let audioQueue: AudioBuffer[] = [];
+let isPlaying = false;
+
+interface Message {
+  role: 'user' | 'agent';
+  text: string;
+  type?: string;
+  isPartial?: boolean;
+}
+
+interface DiagnosisResult {
+  primaryDiagnosis: string;
+  differentialDiagnoses: string[];
+  recommendedTests: string[];
+  fullSummary: string;
+  patientId: number;
+  conditionId?: number;
+}
+
+interface DiagnosisConversationProps {
+  patientId: number;
+  onBack: () => void;
+}
+
+const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps) => {
+  // State management
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [websocket, setWebsocket] = useState<WebSocket | null>(null);
+  const [wsRetries, setWsRetries] = useState(0);
+  const [inputText, setInputText] = useState('');
+  const [diagnosisSummary, setDiagnosisSummary] = useState<DiagnosisResult | null>(null);
+  const [isFetchingSummary, setIsFetchingSummary] = useState(false);
+  const [ttsStream, setTtsStream] = useState<ReadableStreamDefaultReader | null>(null);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const audioBuffersRef = useRef<AudioBuffer[]>([]);
+  const currentlyPlayingRef = useRef<boolean>(false);
+
+  // Initialize audio context when needed
+  const getAudioContext = () => {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return audioContext;
+  };
+
+  // Connect to WebSocket when component mounts
+  useEffect(() => {
+    connectWebSocket();
+    
+    // Clean up when component unmounts
+    return () => {
+      if (websocket) {
+        websocket.close();
+      }
+      if (mediaRecorder) {
+        stopRecording();
+      }
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
+      if (ttsStream) {
+        ttsStream.cancel();
+      }
+      // Stop any audio playback
+      if (audioContext) {
+        audioBuffersRef.current = [];
+        currentlyPlayingRef.current = false;
+        audioContext.close();
+        audioContext = null;
+      }
+    };
+  }, [patientId]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Add a keepalive function to ensure the WebSocket stays connected
+  useEffect(() => {
+    const pingInterval = setInterval(() => {
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        // Send a ping message to keep the connection alive
+        try {
+          websocket.send(JSON.stringify({ type: 'ping' }));
+        } catch (err) {
+          console.error('Error sending ping:', err);
+        }
+      }
+    }, 30000); // Send ping every 30 seconds
+
+    return () => {
+      clearInterval(pingInterval);
+    };
+  }, [websocket]);
+
+  // Function to play TTS audio buffers sequentially
+  const playNextAudioBuffer = () => {
+    if (!audioBuffersRef.current.length || !audioContext || currentlyPlayingRef.current) return;
+    
+    currentlyPlayingRef.current = true;
+    const buffer = audioBuffersRef.current.shift();
+    if (!buffer) {
+      currentlyPlayingRef.current = false;
+      return;
+    }
+    
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.onended = () => {
+      currentlyPlayingRef.current = false;
+      playNextAudioBuffer();
+    };
+    source.start(0);
+  };
+
+  // TTS streaming function
+  const streamTextToSpeech = async (text: string) => {
+    try {
+      const baseUrl = API_URL.replace(/\/+$/, '');
+      
+      // First try the streaming TTS endpoint
+      try {
+        const response = await fetch(`${baseUrl}/tts-stream`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            text,
+            language: "en" // Provide language parameter
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`TTS streaming request failed with status: ${response.status}`);
+        }
+
+        // Process the streaming response
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('No reader available from response');
+        }
+
+        // Read chunks from the stream
+        let decoder = new TextDecoder();
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          
+          // Decode the text stream
+          const chunk = decoder.decode(value, { stream: true });
+          
+          // Process each line (each chunk might contain multiple JSON objects)
+          const lines = chunk.split('\n').filter(line => line.trim());
+          for (const line of lines) {
+            try {
+              const jsonChunk = JSON.parse(line);
+              
+              if (jsonChunk.error) {
+                console.error('TTS stream error:', jsonChunk.error);
+                continue;
+              }
+              
+              if (jsonChunk.chunk) {
+                // Decode the base64 audio
+                const audioData = atob(jsonChunk.chunk);
+                const audioBytes = new Uint8Array(audioData.length);
+                for (let i = 0; i < audioData.length; i++) {
+                  audioBytes[i] = audioData.charCodeAt(i);
+                }
+                
+                // Create audio context and decode
+                const ctx = getAudioContext();
+                ctx.decodeAudioData(
+                  audioBytes.buffer as ArrayBuffer,
+                  (audioBuffer) => {
+                    audioBuffersRef.current.push(audioBuffer);
+                    if (!currentlyPlayingRef.current) {
+                      playNextAudioBuffer();
+                    }
+                  },
+                  (error) => {
+                    console.error('Error decoding audio chunk:', error);
+                  }
+                );
+              }
+            } catch (e) {
+              console.error('Error parsing JSON chunk:', e, line);
+            }
+          }
+        }
+      } catch (streamingError) {
+        // Streaming failed, fall back to regular TTS
+        console.warn('TTS streaming failed, falling back to regular TTS:', streamingError);
+        
+        // Use regular TTS endpoint as fallback
+        const fallbackResponse = await fetch(`${baseUrl}/tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            text,
+            speaker: "en-US" 
+          }),
+        });
+
+        if (!fallbackResponse.ok) {
+          throw new Error(`Fallback TTS request failed with status: ${fallbackResponse.status}`);
+        }
+
+        const result = await fallbackResponse.json();
+        
+        if (result.success && result.audio) {
+          try {
+            // Convert base64 audio to arraybuffer
+            const audioData = atob(result.audio);
+            const audioBytes = new Uint8Array(audioData.length);
+            for (let i = 0; i < audioData.length; i++) {
+              audioBytes[i] = audioData.charCodeAt(i);
+            }
+            
+            // Decode audio
+            const ctx = getAudioContext();
+            ctx.decodeAudioData(
+              audioBytes.buffer as ArrayBuffer,
+              (audioBuffer) => {
+                audioBuffersRef.current.push(audioBuffer);
+                if (!currentlyPlayingRef.current) {
+                  playNextAudioBuffer();
+                }
+              },
+              (error) => {
+                console.error('Error decoding audio data:', error);
+              }
+            );
+          } catch (error) {
+            console.error('Error processing audio data:', error);
+          }
+        } else {
+          console.error('TTS request did not return valid audio data');
+        }
+      }
+    } catch (err) {
+      console.error('All TTS attempts failed:', err);
+    }
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Modified WebSocket connection function with better error handling
+  const connectWebSocket = () => {
+    // Close existing connection if any
+    if (websocket) {
+      try {
+        websocket.close();
+      } catch (err) {
+        console.error('Error closing existing WebSocket:', err);
+      }
+    }
+
+    try {
+      // Create new connection
+      const ws = new WebSocket(`${WEBSOCKET_URL}/ws/diagnosis/${patientId}`);
+      
+      // Set a connection timeout
+      const connectionTimeout = setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+          setError('Connection timeout. Please refresh and try again.');
+          try {
+            ws.close();
+          } catch (e) {
+            console.error('Error closing timed out connection:', e);
+          }
+        }
+      }, 10000);
+      
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        clearTimeout(connectionTimeout);
+        setError(null);
+        setWsRetries(0);
+        
+        // Initialize with empty messages array
+        // The greeting will come from the backend
+        setMessages([]);
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('Received message:', data);
+          
+          // Handle different message types
+          if (data.type === 'message' || data.type === 'partial_message') {
+            const isPartial = data.type === 'partial_message';
+            const messageText = data.text || '';
+            
+            // Update existing partial message or add new message
+            setMessages(prevMessages => {
+              const lastMessage = prevMessages[prevMessages.length - 1];
+              
+              // If we have a partial message from the agent, update it
+              if (lastMessage && lastMessage.role === 'agent' && lastMessage.isPartial) {
+                const updatedMessages = [...prevMessages];
+                updatedMessages[updatedMessages.length - 1] = {
+                  ...lastMessage,
+                  text: messageText,
+                  isPartial: isPartial
+                };
+                return updatedMessages;
+              } else {
+                // Add new message
+                return [...prevMessages, {
+                  role: data.role,
+                  text: messageText,
+                  type: data.type,
+                  isPartial: isPartial
+                }];
+              }
+            });
+            
+            // If this is a new or updated message from the agent, speak it with TTS
+            if (data.role === 'agent' && messageText) {
+              // For determining if we should play the full message or just the new portion
+              const currentMessages = [...messages];
+              const lastMessage = currentMessages.length > 0 ? currentMessages[currentMessages.length - 1] : null;
+
+              // Only attempt TTS if we have some text to speak
+              if (messageText.trim().length > 0) {
+                // For new messages, speak the whole thing
+                if (!lastMessage || lastMessage.role !== 'agent') {
+                  streamTextToSpeech(messageText);
+                } 
+                // For existing messages that got updated, only speak the new part
+                else if (lastMessage && lastMessage.text && messageText.length > lastMessage.text.length) {
+                  const newTextPortion = messageText.substring(lastMessage.text.length);
+                  if (newTextPortion.trim().length > 0) {
+                    streamTextToSpeech(newTextPortion);
+                  }
+                }
+              }
+            }
+            
+            if (data.type === 'message') {
+              setIsProcessing(false);
+            }
+          } else if (data.type === 'error') {
+            setError(data.message);
+            setIsProcessing(false);
+          } else if (data.type === 'transcription' || data.type === 'partial_transcription') {
+            // Update the last user message with transcription
+            setMessages(prevMessages => {
+              const lastUserMessageIndex = [...prevMessages].reverse()
+                .findIndex(msg => msg.role === 'user' && (msg.type === 'audio_processing' || msg.type === 'partial_transcription'));
+              
+              if (lastUserMessageIndex >= 0) {
+                const actualIndex = prevMessages.length - 1 - lastUserMessageIndex;
+                const updatedMessages = [...prevMessages];
+                updatedMessages[actualIndex] = {
+                  role: 'user',
+                  text: data.text,
+                  type: data.type,
+                  isPartial: data.type === 'partial_transcription'
+                };
+                return updatedMessages;
+              }
+              
+              return prevMessages;
+            });
+            
+            if (data.type === 'transcription') {
+              setIsProcessing(false);
+            }
+          } else if (data.type === 'diagnosis_summary' || data.type === 'partial_diagnosis_summary') {
+            try {
+              // Try parsing the summary data, whether it's a string or already an object
+              let summary;
+              if (typeof data.text === 'string') {
+                try {
+                  summary = JSON.parse(data.text);
+                } catch (parseError) {
+                  console.warn('Could not parse diagnosis summary JSON, using text directly');
+                  // Create a more useful fallback summary
+                  const textSummary = data.text || "No summary provided";
+                  
+                  // Try to extract key information using regex patterns
+                  const primaryDiagnosisMatch = textSummary.match(/primary\s*diagnosis:?\s*([^\n\.]+)/i);
+                  const differentialMatches = textSummary.match(/differential\s*diagnos[ie]s:?\s*([^\n\.]+)/i);
+                  const testsMatch = textSummary.match(/recommended\s*tests:?\s*([^\n\.]+)/i);
+                  
+                  summary = {
+                    primaryDiagnosis: primaryDiagnosisMatch ? primaryDiagnosisMatch[1].trim() : "Could not parse diagnosis",
+                    differentialDiagnoses: differentialMatches ? 
+                      differentialMatches[1].split(',').map((d: string) => d.trim()) : [],
+                    recommendedTests: testsMatch ? 
+                      testsMatch[1].split(',').map((t: string) => t.trim()) : [],
+                    fullSummary: textSummary,
+                    patientId: patientId
+                  };
+                }
+              } else {
+                // If it's already an object, use it directly
+                summary = data.text;
+              }
+              
+              // Update any "Generating summary..." message
+              setMessages(prevMessages => {
+                const lastIndex = prevMessages.length - 1;
+                if (lastIndex >= 0 && 
+                    prevMessages[lastIndex].role === 'agent' && 
+                    prevMessages[lastIndex].type === 'system' &&
+                    prevMessages[lastIndex].isPartial) {
+                  const updatedMessages = [...prevMessages];
+                  updatedMessages.pop(); // Remove the temporary message
+                  return updatedMessages;
+                }
+                return prevMessages;
+              });
+              
+              // Set the diagnosis summary state
+              setDiagnosisSummary(summary);
+              
+              if (data.type === 'diagnosis_summary') {
+                setIsProcessing(false);
+                setIsFetchingSummary(false);
+              }
+            } catch (e) {
+              console.error('Error handling diagnosis summary:', e);
+              setError('Failed to process diagnosis summary');
+              setIsProcessing(false);
+              setIsFetchingSummary(false);
+            }
+          } else if (data.type === 'pong') {
+            // Handle pong response (keepalive)
+            console.log('Received pong from server');
+          }
+        } catch (jsonError) {
+          console.error('Error parsing WebSocket message:', jsonError, event.data);
+          setError('Received invalid data from server');
+        }
+      };
+      
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setError('Connection error. Please try again.');
+        setIsProcessing(false);
+        setIsFetchingSummary(false);
+        
+        // Try to reconnect after a delay
+        if (wsRetries < MAX_RETRIES) {
+          setTimeout(() => {
+            setWsRetries(prev => prev + 1);
+            connectWebSocket();
+          }, 2000 * (wsRetries + 1)); // Exponential backoff
+        }
+      };
+      
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+      };
+      
+      setWebsocket(ws);
+    } catch (err) {
+      console.error('Failed to create WebSocket:', err);
+      setError('Failed to connect. Please check your network connection and try again.');
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      // Request high-quality audio for better transcription
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 16000,
+          channelCount: 1
+        }
+      });
+      
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 16000
+      });
+      
+      const chunks: Blob[] = [];
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+          setAudioChunks(prev => [...prev, e.data]);
+          
+          // If we've been recording for a while, process intermediate chunks
+          if (chunks.length > 0 && isRecording && recorder.state === 'recording') {
+            const audioBlob = new Blob(chunks.splice(0, chunks.length), { type: 'audio/webm' });
+            processAudioData(audioBlob, true);
+          }
+        }
+      };
+      
+      recorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        processAudioData(audioBlob, false);
+      };
+      
+      // Set up timeslice recording for more frequent chunks
+      recorder.start(500); // Record in 0.5-second chunks for more responsive transcription
+      
+      // Add placeholder message
+      setMessages(prevMessages => [...prevMessages, {
+        role: 'user',
+        text: 'Recording audio...',
+        type: 'audio_processing'
+      }]);
+      
+      setIsRecording(true);
+      setAudioChunks([]);
+      setMediaRecorder(recorder);
+      setError(null);
+      
+      // Set up a timeout to automatically stop recording after AUDIO_CHUNK_SIZE ms
+      recordingTimeoutRef.current = setTimeout(() => {
+        if (recorder && recorder.state === 'recording') {
+          stopRecording();
+        }
+      }, AUDIO_CHUNK_SIZE);
+    } catch (err) {
+      console.error('Error accessing microphone:', err);
+      setError('Microphone access denied. Please check your browser permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      try {
+        mediaRecorder.stop();
+        // Make sure we stop all tracks to properly release the microphone
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        
+        // Update UI to show we're now processing the final audio
+        setMessages(prevMessages => {
+          const index = prevMessages.findIndex(msg => 
+            msg.role === 'user' && (msg.type === 'audio_processing' || msg.type === 'partial_transcription')
+          );
+          
+          if (index !== -1) {
+            const updatedMessages = [...prevMessages];
+            updatedMessages[index] = {
+              ...updatedMessages[index],
+              text: 'Processing your audio...',
+              isPartial: true
+            };
+            return updatedMessages;
+          }
+          return prevMessages;
+        });
+
+      } catch (err) {
+        console.error('Error stopping recording:', err);
+      } finally {
+        setIsRecording(false);
+        if (recordingTimeoutRef.current) {
+          clearTimeout(recordingTimeoutRef.current);
+          recordingTimeoutRef.current = null;
+        }
+      }
+    }
+  };
+
+  const processAudioData = async (audioBlob: Blob, isPartial: boolean = false) => {
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+      setError('Connection lost. Please refresh and try again.');
+      return;
+    }
+
+    if (!isPartial) {
+      setIsProcessing(true);
+    }
+    
+    try {
+      // First attempt to use the STT service directly
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '');
+      
+      if (baseUrl) {
+        try {
+          // Convert blob to ArrayBuffer first
+          const arrayBuffer = await audioBlob.arrayBuffer();
+          
+          // Get audio data as float32 samples
+          const audioCtx = new AudioContext({ sampleRate: 16000 });
+          const audioData = await audioCtx.decodeAudioData(arrayBuffer);
+          
+          // Get channel data (use first channel if stereo)
+          const audioSamples = audioData.getChannelData(0);
+          
+          // Normalize the audio if needed
+          let maxAbs = 0;
+          for (let i = 0; i < audioSamples.length; i++) {
+            maxAbs = Math.max(maxAbs, Math.abs(audioSamples[i]));
+          }
+          
+          const normalizedSamples = maxAbs > 0 ? 
+            new Float32Array(audioSamples.map(s => s / maxAbs)) : 
+            audioSamples;
+            
+          // Convert to base64
+          const uint8Array = new Uint8Array(normalizedSamples.buffer);
+          let base64Audio = '';
+          
+          for (let i = 0; i < uint8Array.length; i++) {
+            base64Audio += String.fromCharCode(uint8Array[i]);
+          }
+          
+          base64Audio = btoa(base64Audio);
+          
+          // Send to STT service
+          const transcribeUrl = `${baseUrl}/transcribe`;
+          const response = await fetch(transcribeUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+              audio: base64Audio,
+              maintain_context: true, // Enable context maintenance for better transcriptions
+              session_id: `diagnosis_${patientId}` // Use consistent session ID
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          if (result.transcription) {
+            // If this is a partial transcription, update UI but don't send to server yet
+            if (isPartial) {
+              setMessages(prevMessages => {
+                const index = prevMessages.findIndex(msg => 
+                  msg.role === 'user' && (msg.type === 'audio_processing' || msg.type === 'partial_transcription')
+                );
+                
+                if (index !== -1) {
+                  const updatedMessages = [...prevMessages];
+                  updatedMessages[index] = {
+                    role: 'user',
+                    text: result.transcription,
+                    type: 'partial_transcription',
+                    isPartial: true
+                  };
+                  return updatedMessages;
+                }
+                
+                return prevMessages;
+              });
+            } else {
+              // For final transcription, send to the diagnosis WebSocket
+              websocket.send(JSON.stringify({
+                type: 'message',
+                role: 'user',
+                text: result.transcription
+              }));
+              
+              // Update the audio processing message with the transcription
+              setMessages(prevMessages => {
+                const index = prevMessages.findIndex(msg => 
+                  msg.role === 'user' && (msg.type === 'audio_processing' || msg.type === 'partial_transcription')
+                );
+                
+                if (index !== -1) {
+                  const updatedMessages = [...prevMessages];
+                  updatedMessages[index] = {
+                    role: 'user',
+                    text: result.transcription,
+                    type: 'message',
+                    isPartial: false
+                  };
+                  return updatedMessages;
+                }
+                
+                return prevMessages;
+              });
+              
+              setIsProcessing(true);
+            }
+            return;
+          }
+        } catch (error) {
+          console.error("STT service error:", error);
+          // Fall back to sending raw audio if STT service fails
+        }
+      }
+      
+      // Fallback: send audio directly to the websocket
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      reader.onloadend = () => {
+        const base64data = reader.result as string;
+        // Remove the data URL prefix
+        const base64Audio = base64data.split(',')[1];
+        
+        // Send audio data to server
+        websocket.send(JSON.stringify({
+          type: isPartial ? 'partial_audio' : 'audio',
+          data: base64Audio
+        }));
+      };
+    } catch (err) {
+      console.error('Error processing audio:', err);
+      setError('Error processing audio. Please try again.');
+      if (!isPartial) {
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  const sendMessage = () => {
+    if (!inputText.trim() || !websocket || websocket.readyState !== WebSocket.OPEN) return;
+    
+    // Add message to conversation
+    setMessages(prevMessages => [...prevMessages, {
+      role: 'user',
+      text: inputText,
+      type: 'message'
+    }]);
+    
+    // Send message to server
+    websocket.send(JSON.stringify({
+      type: 'message',
+      text: inputText
+    }));
+    
+    setInputText('');
+    setIsProcessing(true);
+  };
+
+  const sendInitialContext = (context: string) => {
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
+    
+    websocket.send(JSON.stringify({
+      type: 'context',
+      context
+    }));
+    
+    setIsProcessing(true);
+  };
+
+  const endConversation = () => {
+    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+      // Try to reconnect first if websocket isn't open
+      setError('Connection lost. Attempting to reconnect...');
+      connectWebSocket();
+      
+      // Set a timeout to retry the operation after reconnection
+      setTimeout(() => {
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+          setError(null);
+          endConversation(); // Retry the operation
+        } else {
+          setError('Failed to reconnect. Please try again later.');
+        }
+      }, 2000);
+      
+      return;
+    }
+    
+    setIsFetchingSummary(true);
+    setIsProcessing(true);
+
+    try {
+      // Get the full conversation text to send to the backend
+      const conversationText = messages
+        .filter(msg => msg.type !== 'audio_processing' && !msg.isPartial) // Filter out processing messages and partials
+        .map(msg => `${msg.role === 'user' ? 'Patient' : 'Doctor'}: ${msg.text}`)
+        .join('\n');
+      
+      // Add a final message showing that we're generating a summary
+      setMessages(prev => [...prev, {
+        role: 'agent',
+        text: 'Generating diagnosis summary...',
+        type: 'system',
+        isPartial: true
+      }]);
+
+      // Create a clone of the conversation for the backend in case connection is lost
+      const diagnosisData = {
+        conversation: conversationText,
+        patientId: patientId
+      };
+      
+      // Store the conversation locally as backup
+      localStorage.setItem(`diagnosis_conversation_${patientId}`, JSON.stringify(diagnosisData));
+
+      // Add event listeners to detect disconnection
+      const closeHandler = (event: CloseEvent) => {
+        console.error('WebSocket closed during summary generation:', event);
+        setError('Connection lost during summary generation. Attempting to reconnect...');
+        
+        // Try to reconnect
+        setTimeout(() => {
+          connectWebSocket();
+        }, 1000);
+        
+        // Remove the handler
+        if (websocket) {
+          websocket.removeEventListener('close', closeHandler);
+        }
+      };
+      
+      // Add temporary close handler
+      websocket.addEventListener('close', closeHandler);
+      
+      // Add an error handler specifically for this critical operation
+      const summaryErrorHandler = (e: Event) => {
+        console.error('WebSocket error during summary generation:', e);
+        setError('Error generating summary. Please try again.');
+        setIsProcessing(false);
+        setIsFetchingSummary(false);
+        
+        // Remove the temporary error handler
+        if (websocket) {
+          websocket.removeEventListener('error', summaryErrorHandler);
+          websocket.removeEventListener('close', closeHandler);
+        }
+      };
+      
+      // Add temporary error handler
+      websocket.addEventListener('error', summaryErrorHandler);
+      
+      // Set a timeout to automatically generate a fallback summary if the server takes too long
+      const fallbackTimeout = setTimeout(() => {
+        if (isFetchingSummary) {
+          console.warn('Summary generation timed out, using fallback');
+          
+          // Generate a simple fallback summary
+          const symptoms = extractSymptoms(conversationText);
+          const potentialConditions = getPotentialConditions(symptoms);
+          
+          const fallbackSummary = {
+            primaryDiagnosis: potentialConditions.length > 0 ? potentialConditions[0] : "Unable to determine",
+            differentialDiagnoses: potentialConditions.slice(1),
+            recommendedTests: getRecommendedTests(potentialConditions),
+            fullSummary: conversationText,
+            patientId: patientId
+          };
+          
+          // Update the UI
+          setDiagnosisSummary(fallbackSummary);
+          setIsProcessing(false);
+          setIsFetchingSummary(false);
+          
+          // Clean up
+          if (websocket) {
+            websocket.removeEventListener('error', summaryErrorHandler);
+            websocket.removeEventListener('close', closeHandler);
+          }
+        }
+      }, 20000); // 20 second timeout
+      
+      // Make sure the message isn't too large for WebSocket frame
+      if (conversationText.length > 50000) {
+        // If message is too large, truncate it
+        const truncatedText = conversationText.substring(0, 49900) + "...";
+        websocket.send(JSON.stringify({
+          type: 'end_conversation',
+          conversation: truncatedText
+        }));
+      } else {
+        // Send normal message
+        websocket.send(JSON.stringify({
+          type: 'end_conversation',
+          conversation: conversationText
+        }));
+      }
+      
+      // Set a timeout to remove all handlers after a while
+      setTimeout(() => {
+        if (websocket) {
+          websocket.removeEventListener('error', summaryErrorHandler);
+          websocket.removeEventListener('close', closeHandler);
+        }
+        clearTimeout(fallbackTimeout);
+      }, 25000); // 25 seconds
+    } catch (err) {
+      console.error('Error sending end conversation command:', err);
+      setError('Failed to generate summary. Please try again.');
+      setIsProcessing(false);
+      setIsFetchingSummary(false);
+    }
+  };
+  
+  // Helper function to extract symptoms from conversation
+  const extractSymptoms = (conversation: string): string[] => {
+    const symptomPatterns = [
+      /(?:experiencing|having|suffering from|complaining of|presenting with)\s+([^,.]+)/gi,
+      /(?:symptom|pain|discomfort|issue)(?:s)?\s+(?:of|like|such as)?\s+([^,.]+)/gi,
+      /(?:feel|feeling|felt)\s+([^,.]+)/gi
+    ];
+    
+    const symptoms = [];
+    for (const pattern of symptomPatterns) {
+      let match;
+      while ((match = pattern.exec(conversation)) !== null) {
+        if (match[1].trim().length > 3) {
+          symptoms.push(match[1].trim());
+        }
+      }
+    }
+    
+    return [...new Set(symptoms)]; // Remove duplicates
+  };
+  
+  // Helper function to suggest potential conditions from symptoms
+  const getPotentialConditions = (symptoms: string[]): string[] => {
+    // Very basic mapping - in a real app this would be much more sophisticated
+    const conditionMap: {[key: string]: string[]} = {
+      'fever': ['Common Cold', 'Influenza', 'COVID-19', 'Pneumonia'],
+      'cough': ['Bronchitis', 'Asthma', 'COVID-19', 'Common Cold'],
+      'headache': ['Migraine', 'Tension Headache', 'Sinusitis', 'Dehydration'],
+      'pain': ['Muscle Strain', 'Arthritis', 'Fibromyalgia'],
+      'chest': ['Angina', 'Heartburn', 'Costochondritis', 'Myocardial Infarction'],
+      'breath': ['Asthma', 'COPD', 'Pneumonia', 'Heart Failure'],
+      'nausea': ['Gastroenteritis', 'Food Poisoning', 'Migraine', 'Appendicitis'],
+      'dizzy': ['Vertigo', 'Low Blood Pressure', 'Anemia', 'Dehydration'],
+      'tired': ['Chronic Fatigue Syndrome', 'Anemia', 'Depression', 'Sleep Apnea'],
+      'anxiety': ['Generalized Anxiety Disorder', 'Panic Disorder', 'Stress'],
+      'depression': ['Major Depressive Disorder', 'Bipolar Disorder', 'Persistent Depressive Disorder'],
+      'back pain': ['Muscle Strain', 'Herniated Disc', 'Sciatica', 'Osteoporosis'],
+      'joint pain': ['Arthritis', 'Gout', 'Bursitis', 'Lupus'],
+      'rash': ['Eczema', 'Psoriasis', 'Contact Dermatitis', 'Hives'],
+      'memory': ['Early Dementia', 'Mild Cognitive Impairment', 'Stress-Related Memory Issues'],
+      'vision': ['Myopia', 'Cataracts', 'Glaucoma', 'Macular Degeneration'],
+      'hearing': ['Age-Related Hearing Loss', 'Ear Infection', 'Tinnitus'],
+      'weight': ['Thyroid Disorder', 'Diabetes', 'Depression'],
+      'sleep': ['Insomnia', 'Sleep Apnea', 'Restless Leg Syndrome', 'Depression']
+    };
+    
+    const conditions: string[] = [];
+    for (const symptom of symptoms) {
+      for (const [key, diagnoses] of Object.entries(conditionMap)) {
+        if (symptom.toLowerCase().includes(key)) {
+          conditions.push(...diagnoses);
+        }
+      }
+    }
+    
+    // Get unique conditions and sort by frequency (most frequent first)
+    const conditionCounts = conditions.reduce((acc, condition) => {
+      acc[condition] = (acc[condition] || 0) + 1;
+      return acc;
+    }, {} as {[key: string]: number});
+    
+    return Object.entries(conditionCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(entry => entry[0]);
+  };
+  
+  // Helper function to suggest recommended tests for conditions
+  const getRecommendedTests = (conditions: string[]): string[] => {
+    const testMap: {[key: string]: string[]} = {
+      'Common Cold': ['Physical Examination'],
+      'Influenza': ['Rapid Influenza Diagnostic Test', 'PCR Test'],
+      'COVID-19': ['COVID-19 PCR Test', 'COVID-19 Antigen Test'],
+      'Pneumonia': ['Chest X-ray', 'Blood Culture', 'Sputum Culture'],
+      'Bronchitis': ['Physical Examination', 'Chest X-ray'],
+      'Asthma': ['Spirometry', 'Peak Flow Test', 'Methacholine Challenge Test'],
+      'Migraine': ['Physical and Neurological Exam', 'MRI in certain cases'],
+      'Tension Headache': ['Physical Examination'],
+      'Sinusitis': ['Physical Examination', 'Nasal Endoscopy', 'CT Scan'],
+      'Dehydration': ['Blood Tests', 'Urinalysis'],
+      'Angina': ['Electrocardiogram (ECG)', 'Stress Test', 'Coronary Angiography'],
+      'Heart Failure': ['Echocardiogram', 'Chest X-ray', 'Blood Tests', 'ECG'],
+      'Myocardial Infarction': ['Electrocardiogram (ECG)', 'Blood Tests for Cardiac Enzymes']
+    };
+    
+    const tests = new Set<string>();
+    for (const condition of conditions.slice(0, 3)) { // Only check top 3 conditions
+      if (testMap[condition]) {
+        testMap[condition].forEach(test => tests.add(test));
+      }
+    }
+    
+    return Array.from(tests);
+  };
+
+  // Handle initial symptoms input if no messages yet
+  const handleInitialSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+    
+    // Add initial symptoms as user message
+    setMessages(prevMessages => [...prevMessages, {
+      role: 'user',
+      text: inputText,
+      type: 'message'
+    }]);
+    
+    // Send as context
+    sendInitialContext(inputText);
+    setInputText('');
+  };
+
+  // Render either the conversation or the diagnosis summary
+  if (diagnosisSummary) {
+    return (
+      <Card className="h-full overflow-hidden">
+        <CardBody className="flex flex-col p-0">
+          <div className="p-4 flex justify-between items-center border-b">
+            <Button
+              variant="light"
+              isIconOnly
+              onClick={() => setDiagnosisSummary(null)}
+              className="mr-2"
+            >
+              <ArrowLeftIcon className="h-5 w-5" />
+            </Button>
+            <h2 className="text-xl font-semibold flex-1">Diagnosis Summary</h2>
+          </div>
+          <div className="flex-1 overflow-auto p-4">
+            <DiagnosisSummary diagnosisResult={diagnosisSummary} />
+          </div>
+          <div className="p-4 border-t">
+            <Button 
+              color="primary" 
+              className="w-full"
+              onClick={onBack}
+            >
+              Back to Patients
+            </Button>
+          </div>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="h-full overflow-hidden">
+      <CardBody className="flex flex-col p-0">
+        <div className="p-4 flex justify-between items-center border-b">
+          <Button
+            variant="light"
+            isIconOnly
+            onClick={onBack}
+            className="mr-2"
+          >
+            <ArrowLeftIcon className="h-5 w-5" />
+          </Button>
+          <h2 className="text-xl font-semibold flex-1">Diagnosis Conversation</h2>
+          <Button
+            color="primary"
+            variant="ghost"
+            onClick={endConversation}
+            disabled={isProcessing || messages.length <= 1 || isFetchingSummary}
+          >
+            {isFetchingSummary ? "Generating Summary..." : "Complete Diagnosis"}
+          </Button>
+        </div>
+        
+        <div className="flex-1 overflow-auto p-4">
+          <div className="space-y-4">
+            {messages.map((message, index) => (
+              <div 
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div 
+                  className={`max-w-[80%] p-3 rounded-lg ${
+                    message.role === 'user' 
+                      ? 'bg-primary text-white' 
+                      : 'bg-default-100'
+                  } ${message.isPartial ? 'opacity-80' : ''}`}
+                >
+                  {message.type === 'audio_processing' ? (
+                    <div className="flex items-center">
+                      <span className="mr-2">🎤</span>
+                      <span>{message.text}</span>
+                    </div>
+                  ) : (
+                    <p style={{ whiteSpace: 'pre-wrap' }}>{message.text}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+        
+        {error && (
+          <div className="p-3 m-3 bg-danger-100 text-danger border border-danger rounded-md">
+            {error}
+          </div>
+        )}
+        
+        <div className="p-4 border-t">
+          <form onSubmit={e => { e.preventDefault(); sendMessage(); }} className="flex w-full gap-3">
+            <Textarea
+              placeholder="Type your message..."
+              value={inputText}
+              onChange={e => setInputText(e.target.value)}
+              disabled={isProcessing || isRecording || isFetchingSummary}
+              className="w-full h-full"
+              rows={2}
+              size='lg'
+            />
+            <div className="flex flex-col gap-2">
+              {!isRecording ? (
+                <Button
+                  type="button"
+                  color="primary"
+                  variant="flat"
+                  isIconOnly
+                  onClick={startRecording}
+                  disabled={isProcessing || isFetchingSummary}
+                >
+                  <MicrophoneIcon className="h-5 w-5" />
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  color="danger"
+                  variant="ghost"
+                  isIconOnly
+                  onClick={stopRecording}
+                  disabled={isFetchingSummary}
+                >
+                  <StopIcon className="h-5 w-5" />
+                </Button>
+              )}
+              <Button
+                type="submit"
+                color="primary"
+                endContent={<PaperAirplaneIcon className="h-4 w-4" />}
+                disabled={!inputText.trim() || isProcessing || isRecording || isFetchingSummary}
+                isIconOnly
+              >
+              </Button>
+            </div>
+          </form>
+        </div>
+      </CardBody>
+    </Card>
+  );
+};
+
+export default DiagnosisConversation; 

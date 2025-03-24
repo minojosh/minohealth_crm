@@ -296,7 +296,7 @@ export default function DataExtractor() {
           console.log("Base64 conversion complete. Length:", base64Data.length);
           
           // Strip trailing slashes and construct URL
-          const baseUrl = process.env.NEXT_PUBLIC_SPEECH_SERVICE_URL?.replace(/\/+$/, '') || 'http://localhost:8000';
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') || 'http://localhost:8000';
           const transcribeUrl = `${baseUrl}/transcribe`;
           console.log("Transcription URL:", transcribeUrl);
 
@@ -1007,8 +1007,8 @@ export default function DataExtractor() {
               tab: "text-white",
             }}
           >
-            <Tab key="extract" title="Extract Data" />
-            <Tab key="patients" title="View Patients" />
+            {/* <Tab key="extract" title="Extract Data" /> */}
+            {/* <Tab key="patients" title="View Patients" /> */}
           </Tabs>
         </div>
 
@@ -1024,7 +1024,7 @@ export default function DataExtractor() {
               <CardBody>
                 <h2 className="text-xl font-semibold text-white mb-4">Voice Input</h2>
                 
-                <div className="mb-4">
+                <div className="mb-4 flex justify-center">
                   <button
                     onClick={handleExtractFromAudio}
                     className={`rounded-lg px-6 py-3 flex items-center gap-2 ${
@@ -1097,7 +1097,7 @@ export default function DataExtractor() {
               </CardBody>
             </Card>
             
-            <div className="mb-6">
+            {/* <div className="mb-6">
               <h3 className="font-medium text-white mb-2">Or upload a WAV file:</h3>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
@@ -1126,7 +1126,7 @@ export default function DataExtractor() {
                   Selected file: {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
                 </p>
               )}
-            </div>
+            </div> */}
             
             {extractedData && (
               <Card className="bg-gray-800 border-none shadow-lg">

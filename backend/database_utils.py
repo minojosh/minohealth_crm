@@ -258,54 +258,58 @@ class PatientDatabaseManager:
     def get_patient_medical_conditions(self, patient_id: int) -> List[Dict[str, Any]]:
         """Get medical conditions for a patient."""
         try:
-            from .database import MedicalCondition, Symptom
-            
             with get_session() as session:
+                # Import here to avoid circular imports
+                from .database import MedicalCondition, Symptom
+                
                 conditions = session.query(MedicalCondition).filter(
                     MedicalCondition.patient_id == patient_id
                 ).all()
                 
-                # Convert to list of dictionaries
-                condition_list = []
+                result = []
                 for condition in conditions:
                     # Get symptoms for this condition
                     symptoms = session.query(Symptom).filter(
                         Symptom.condition_id == condition.id
                     ).all()
                     
-                    symptom_list = [
-                        {
-                            'symptom_id': symptom.id,
-                            'name': symptom.symptom_name,
-                            'severity': symptom.severity
-                        }
-                        for symptom in symptoms
-                    ]
-                    
-                    condition_list.append({
-                        'condition_id': condition.id,
-                        'name': condition.condition_name,
+                    condition_dict = {
+                        'id': condition.id,
+                        'condition_name': condition.condition_name,
                         'date_recorded': condition.date_recorded.isoformat() if condition.date_recorded else None,
                         'notes': condition.notes,
-                        'symptoms': symptom_list
-                    })
+                        'symptoms': [{'name': s.symptom_name, 'severity': s.severity} for s in symptoms]
+                    }
+                    
+                    result.append(condition_dict)
                 
-                return condition_list
+                return result
                 
         except Exception as e:
-            logger.error(f"Error getting patient medical conditions: {str(e)}")
+            logger.error(f"Error getting medical conditions: {str(e)}")
             return []
-
+            
+    def get_patient_by_id(self, patient_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get patient by ID (alias for get_patient method).
+        
+        Args:
+            patient_id: The patient ID to retrieve
+            
+        Returns:
+            Patient information as dictionary or None if not found
+        """
+        return self.get_patient(patient_id)
+            
     def get_all_patients(self) -> List[Dict[str, Any]]:
         """Get all patients."""
         try:
             with get_session() as session:
                 patients = session.query(Patient).all()
                 
-                # Convert to list of dictionaries
-                patient_list = []
+                result = []
                 for patient in patients:
-                    patient_list.append({
+                    result.append({
                         'patient_id': patient.patient_id,
                         'name': patient.name,
                         'phone': patient.phone,
@@ -314,7 +318,7 @@ class PatientDatabaseManager:
                         'date_of_birth': patient.date_of_birth.isoformat() if patient.date_of_birth else None
                     })
                 
-                return patient_list
+                return result
                 
         except Exception as e:
             logger.error(f"Error getting all patients: {str(e)}")

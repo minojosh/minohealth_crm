@@ -202,7 +202,6 @@ class SpeechAssistant:
             self.system_prompt = ""
             self.summary_system_prompt = ""
 
-
     def save_conversation(self, messages) -> None:
         """Save the conversation history to a file."""
         try:

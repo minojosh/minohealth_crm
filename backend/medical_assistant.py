@@ -364,6 +364,20 @@ class Assistant:
         except Exception as e:
             logger.error(f"Error saving conversation: {str(e)}")
 
+
+        try:
+            logger.info("Synthesizing speech...")
+            result = self.synthes
+    
+    def _save_conversation(self) -> None:
+        """Save the conversation history and process the transcription."""
+        try:
+            with open(self.conversation_path, 'w') as f:
+                json.dump([msg.to_dict() for msg in self.messages], f, indent =4)
+            logger.info(f"Conversation saved to {self.conversation_path}")
+        except Exception as e:
+            logger.error(f"Error saving conversation: {str(e)}")
+            
     def _load_prompts(self) -> None:
         """Load system prompts from configuration."""
         try:

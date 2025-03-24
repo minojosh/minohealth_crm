@@ -1,0 +1,32 @@
+{
+    "SOAP": {
+        "Subjective": {
+            "ChiefComplaint": "concerns about speech clarity",
+            "HistoryOfPresentIllness": {
+                "Onset": "",
+                "Location": "",
+                "Duration": "",
+                "Characteristics": "",
+                "AggravatingFactors": "",
+                "RelievingFactors": "",
+                "Timing": "",
+                "Severity": ""
+            },
+            "PastMedicalHistory": "",
+            "FamilyHistory": "",
+            "SocialHistory": "",
+            "ReviewOfSystems": "* Chief complaint: Speech clarity concerns\n* History of present illness: Difficulty understanding Tommy, particularly by unfamiliar people. Tommy gets frustrated when not understood. Hesitant to participate in class discussions.\n* Past medical history: None mentioned\n* Medications: None mentioned\n* Allergies: None mentioned\n* Review of systems: Not applicable"
+        },
+        "Assessment": {
+            "PrimaryDiagnosis": "moderate articulation disorder",
+            "DifferentialDiagnosis": "",
+            "ProblemList": ""
+        },
+        "Plan": {
+            "TreatmentAndMedications": "",
+            "FurtherTestingOrImaging": "",
+            "PatientEducation": "",
+            "FollowUp": "* Diagnostic plans: None mentioned\n* Treatment plans:\n\t+ Speech therapy twice a week\n\t+ Sound production training\n\t+ Phonological awareness\n\t+ Minimal pair activities\n\t+ Sound placement cues\n\t+ Comprehensive home program\n* Patient education:\n\t+ Carryover activities\n\t+ Progress monitoring\n\t+ Reinforcement strategies\n\t+ Communication tips\n* Follow-up instructions:\n\t+ Detailed weekly progress notes\n\t+ Regular parent consultations\n\t+ Collaboration with teacher\n\t+ Quarterly reviews\n## CPT Code\n* 92507: Evaluation and treatment of articulation disorders"
+        }
+    }
+}

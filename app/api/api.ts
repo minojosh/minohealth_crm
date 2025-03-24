@@ -6,7 +6,6 @@ export const API_ENDPOINTS = {
     // Speech synthesis endpoints
     tts: `${API_BASE_URL}/tts`,
     ttsStream: `${API_BASE_URL}/tts-stream`,
-    generateSpeech: `${API_BASE_URL}/generate_speech`,
     // Speech-to-text endpoints
     transcribe: `${API_BASE_URL}/transcribe`,
     // WebSocket endpoints
