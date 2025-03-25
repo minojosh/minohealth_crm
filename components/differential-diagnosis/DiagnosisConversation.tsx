@@ -139,134 +139,134 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
     source.start(0);
   };
 
-  // TTS streaming function
-  const streamTextToSpeech = async (text: string) => {
-    try {
-      const baseUrl = API_URL.replace(/\/+$/, '');
+  // // TTS streaming function
+  // const streamTextToSpeech = async (text: string) => {
+  //   try {
+  //     const baseUrl = API_URL.replace(/\/+$/, '');
       
-      // First try the streaming TTS endpoint
-      try {
-        const response = await fetch(`${baseUrl}/tts-stream`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            text,
-            language: "en" // Provide language parameter
-          }),
-        });
+  //     // First try the streaming TTS endpoint
+  //     try {
+  //       const response = await fetch(`${baseUrl}/tts-stream`, {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify({ 
+  //           text,
+  //           language: "en" // Provide language parameter
+  //         }),
+  //       });
 
-        if (!response.ok) {
-          throw new Error(`TTS streaming request failed with status: ${response.status}`);
-        }
+  //       if (!response.ok) {
+  //         throw new Error(`TTS streaming request failed with status: ${response.status}`);
+  //       }
 
-        // Process the streaming response
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error('No reader available from response');
-        }
+  //       // Process the streaming response
+  //       const reader = response.body?.getReader();
+  //       if (!reader) {
+  //         throw new Error('No reader available from response');
+  //       }
 
-        // Read chunks from the stream
-        let decoder = new TextDecoder();
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
+  //       // Read chunks from the stream
+  //       let decoder = new TextDecoder();
+  //       while (true) {
+  //         const { value, done } = await reader.read();
+  //         if (done) break;
           
-          // Decode the text stream
-          const chunk = decoder.decode(value, { stream: true });
+  //         // Decode the text stream
+  //         const chunk = decoder.decode(value, { stream: true });
           
-          // Process each line (each chunk might contain multiple JSON objects)
-          const lines = chunk.split('\n').filter(line => line.trim());
-          for (const line of lines) {
-            try {
-              const jsonChunk = JSON.parse(line);
+  //         // Process each line (each chunk might contain multiple JSON objects)
+  //         const lines = chunk.split('\n').filter(line => line.trim());
+  //         for (const line of lines) {
+  //           try {
+  //             const jsonChunk = JSON.parse(line);
               
-              if (jsonChunk.error) {
-                console.error('TTS stream error:', jsonChunk.error);
-                continue;
-              }
+  //             if (jsonChunk.error) {
+  //               console.error('TTS stream error:', jsonChunk.error);
+  //               continue;
+  //             }
               
-              if (jsonChunk.chunk) {
-                // Decode the base64 audio
-                const audioData = atob(jsonChunk.chunk);
-                const audioBytes = new Uint8Array(audioData.length);
-                for (let i = 0; i < audioData.length; i++) {
-                  audioBytes[i] = audioData.charCodeAt(i);
-                }
+  //             if (jsonChunk.chunk) {
+  //               // Decode the base64 audio
+  //               const audioData = atob(jsonChunk.chunk);
+  //               const audioBytes = new Uint8Array(audioData.length);
+  //               for (let i = 0; i < audioData.length; i++) {
+  //                 audioBytes[i] = audioData.charCodeAt(i);
+  //               }
                 
-                // Create audio context and decode
-                const ctx = getAudioContext();
-                ctx.decodeAudioData(
-                  audioBytes.buffer as ArrayBuffer,
-                  (audioBuffer) => {
-                    audioBuffersRef.current.push(audioBuffer);
-                    if (!currentlyPlayingRef.current) {
-                      playNextAudioBuffer();
-                    }
-                  },
-                  (error) => {
-                    console.error('Error decoding audio chunk:', error);
-                  }
-                );
-              }
-            } catch (e) {
-              console.error('Error parsing JSON chunk:', e, line);
-            }
-          }
-        }
-      } catch (streamingError) {
-        // Streaming failed, fall back to regular TTS
-        console.warn('TTS streaming failed, falling back to regular TTS:', streamingError);
+  //               // Create audio context and decode
+  //               const ctx = getAudioContext();
+  //               ctx.decodeAudioData(
+  //                 audioBytes.buffer as ArrayBuffer,
+  //                 (audioBuffer) => {
+  //                   audioBuffersRef.current.push(audioBuffer);
+  //                   if (!currentlyPlayingRef.current) {
+  //                     playNextAudioBuffer();
+  //                   }
+  //                 },
+  //                 (error) => {
+  //                   console.error('Error decoding audio chunk:', error);
+  //                 }
+  //               );
+  //             }
+  //           } catch (e) {
+  //             console.error('Error parsing JSON chunk:', e, line);
+  //           }
+  //         }
+  //       }
+  //     } catch (streamingError) {
+  //       // Streaming failed, fall back to regular TTS
+  //       console.warn('TTS streaming failed, falling back to regular TTS:', streamingError);
         
-        // Use regular TTS endpoint as fallback
-        const fallbackResponse = await fetch(`${baseUrl}/tts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            text,
-            speaker: "en-US" 
-          }),
-        });
+  //       // Use regular TTS endpoint as fallback
+  //       const fallbackResponse = await fetch(`${baseUrl}/tts`, {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify({ 
+  //           text,
+  //           speaker: "en-US" 
+  //         }),
+  //       });
 
-        if (!fallbackResponse.ok) {
-          throw new Error(`Fallback TTS request failed with status: ${fallbackResponse.status}`);
-        }
+  //       if (!fallbackResponse.ok) {
+  //         throw new Error(`Fallback TTS request failed with status: ${fallbackResponse.status}`);
+  //       }
 
-        const result = await fallbackResponse.json();
+  //       const result = await fallbackResponse.json();
         
-        if (result.success && result.audio) {
-          try {
-            // Convert base64 audio to arraybuffer
-            const audioData = atob(result.audio);
-            const audioBytes = new Uint8Array(audioData.length);
-            for (let i = 0; i < audioData.length; i++) {
-              audioBytes[i] = audioData.charCodeAt(i);
-            }
+  //       if (result.success && result.audio) {
+  //         try {
+  //           // Convert base64 audio to arraybuffer
+  //           const audioData = atob(result.audio);
+  //           const audioBytes = new Uint8Array(audioData.length);
+  //           for (let i = 0; i < audioData.length; i++) {
+  //             audioBytes[i] = audioData.charCodeAt(i);
+  //           }
             
-            // Decode audio
-            const ctx = getAudioContext();
-            ctx.decodeAudioData(
-              audioBytes.buffer as ArrayBuffer,
-              (audioBuffer) => {
-                audioBuffersRef.current.push(audioBuffer);
-                if (!currentlyPlayingRef.current) {
-                  playNextAudioBuffer();
-                }
-              },
-              (error) => {
-                console.error('Error decoding audio data:', error);
-              }
-            );
-          } catch (error) {
-            console.error('Error processing audio data:', error);
-          }
-        } else {
-          console.error('TTS request did not return valid audio data');
-        }
-      }
-    } catch (err) {
-      console.error('All TTS attempts failed:', err);
-    }
-  };
+  //           // Decode audio
+  //           const ctx = getAudioContext();
+  //           ctx.decodeAudioData(
+  //             audioBytes.buffer as ArrayBuffer,
+  //             (audioBuffer) => {
+  //               audioBuffersRef.current.push(audioBuffer);
+  //               if (!currentlyPlayingRef.current) {
+  //                 playNextAudioBuffer();
+  //               }
+  //             },
+  //             (error) => {
+  //               console.error('Error decoding audio data:', error);
+  //             }
+  //           );
+  //         } catch (error) {
+  //           console.error('Error processing audio data:', error);
+  //         }
+  //       } else {
+  //         console.error('TTS request did not return valid audio data');
+  //       }
+  //     }
+  //   } catch (err) {
+  //     console.error('All TTS attempts failed:', err);
+  //   }
+  // };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -351,19 +351,19 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
               const lastMessage = currentMessages.length > 0 ? currentMessages[currentMessages.length - 1] : null;
 
               // Only attempt TTS if we have some text to speak
-              if (messageText.trim().length > 0) {
+             // if (messageText.trim().length > 0) {
                 // For new messages, speak the whole thing
-                if (!lastMessage || lastMessage.role !== 'agent') {
-                  streamTextToSpeech(messageText);
-                } 
+                // if (!lastMessage || lastMessage.role !== 'agent') {
+                //   streamTextToSpeech(messageText);
+                // } 
                 // For existing messages that got updated, only speak the new part
-                else if (lastMessage && lastMessage.text && messageText.length > lastMessage.text.length) {
-                  const newTextPortion = messageText.substring(lastMessage.text.length);
-                  if (newTextPortion.trim().length > 0) {
-                    streamTextToSpeech(newTextPortion);
-                  }
-                }
-              }
+                // else if (lastMessage && lastMessage.text && messageText.length > lastMessage.text.length) {
+                //  const newTextPortion = messageText.substring(lastMessage.text.length);
+                //  if (newTextPortion.trim().length > 0) {
+                //    streamTextToSpeech(newTextPortion);
+                //  }
+                // }
+              // }
             }
             
             if (data.type === 'message') {
@@ -375,8 +375,10 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
           } else if (data.type === 'transcription' || data.type === 'partial_transcription') {
             // Update the last user message with transcription
             setMessages(prevMessages => {
-              const lastUserMessageIndex = [...prevMessages].reverse()
-                .findIndex(msg => msg.role === 'user' && (msg.type === 'audio_processing' || msg.type === 'partial_transcription'));
+              const lastUserMessageIndex = Array.from(prevMessages).reverse()
+                .findIndex(msg => 
+                  msg.role === 'user' && (msg.type === 'audio_processing' || msg.type === 'partial_transcription')
+                );
               
               if (lastUserMessageIndex >= 0) {
                 const actualIndex = prevMessages.length - 1 - lastUserMessageIndex;
@@ -932,7 +934,7 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
       }
     }
     
-    return [...new Set(symptoms)]; // Remove duplicates
+    return Array.from(new Set(symptoms)); // Remove duplicates
   };
   
   // Helper function to suggest potential conditions from symptoms

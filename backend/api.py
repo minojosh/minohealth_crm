@@ -238,54 +238,54 @@ async def root():
 #             "error": str(e)
 #         }
 
-@app.post("/tts-stream")
-async def text_to_speech_stream(request: TTSRequest):
-    """
-    Stream text to speech using TTS service with XTTS streaming capability
-    Returns a streaming response with audio chunks
-    """
+# @app.post("/tts-stream")
+# async def text_to_speech_stream(request: TTSRequest):
+#     """
+#     Stream text to speech using TTS service with XTTS streaming capability
+#     Returns a streaming response with audio chunks
+#     """
     
-    try:
-        # Log the incoming request
-        logger.info(f"TTS streaming request received for text: {request.text[:50]}...")
+#     try:
+#         # Log the incoming request
+#         logger.info(f"TTS streaming request received for text: {request.text[:50]}...")
         
-        # Check if streaming client is available
-        if not hasattr(tts_client, 'streaming_client') or tts_client.streaming_client is None:
-            logger.error("Streaming TTS client not available")
-            return {"success": False, "error": "Streaming TTS service not available"}
+#         # Check if streaming client is available
+#         if not hasattr(tts_client, 'streaming_client') or tts_client.streaming_client is None:
+#             logger.error("Streaming TTS client not available")
+#             return {"success": False, "error": "Streaming TTS service not available"}
         
-        async def generate_chunks():
-            """Generate audio chunks for streaming"""
-            for chunk in tts_client.streaming_client.stream_text(request.text):
-                # Yield audio chunks as they become available
-                if chunk and 'audio' in chunk:
-                    # Convert numpy array to bytes
-                    audio_bytes = io.BytesIO()
-                    np.save(audio_bytes, chunk['audio'])
-                    audio_bytes.seek(0)
-                    yield audio_bytes.read()
+#         async def generate_chunks():
+#             """Generate audio chunks for streaming"""
+#             for chunk in tts_client.streaming_client.stream_text(request.text):
+#                 # Yield audio chunks as they become available
+#                 if chunk and 'audio' in chunk:
+#                     # Convert numpy array to bytes
+#                     audio_bytes = io.BytesIO()
+#                     np.save(audio_bytes, chunk['audio'])
+#                     audio_bytes.seek(0)
+#                     yield audio_bytes.read()
                     
-                    # Add small delay to avoid overwhelming the client
-                    await asyncio.sleep(0.01)
+#                     # Add small delay to avoid overwhelming the client
+#                     await asyncio.sleep(0.01)
             
-        # Return streaming response
-        return StreamingResponse(
-            generate_chunks(),
-            media_type="application/octet-stream",
-            headers={
-                "X-Sample-Rate": str(24000),  # Default sample rate for XTTS
-                "Content-Disposition": "attachment; filename=audio_stream.bin"
-            }
-        )
+#         # Return streaming response
+#         return StreamingResponse(
+#             generate_chunks(),
+#             media_type="application/octet-stream",
+#             headers={
+#                 "X-Sample-Rate": str(24000),  # Default sample rate for XTTS
+#                 "Content-Disposition": "attachment; filename=audio_stream.bin"
+#             }
+#         )
             
-    except Exception as e:
-        # Log the error
-        logger.error(f"Error in TTS streaming endpoint: {str(e)}")
-        traceback.print_exc()
-        return {
-            "success": False,
-            "error": str(e)
-        }
+#     except Exception as e:
+#         # Log the error
+#         logger.error(f"Error in TTS streaming endpoint: {str(e)}")
+#         traceback.print_exc()
+#         return {
+#             "success": False,
+#             "error": str(e)
+#         }
 
 @app.post("/transcribe")
 async def transcribe_audio_endpoint(request: Request):
@@ -1383,6 +1383,13 @@ async def diagnosis_session(websocket: WebSocket, patient_id: int):
             "text": greeting
         })
         
+        tts_client.TTS(
+            greeting,
+            play_locally=True
+        )
+        
+        tts_client.wait_for_completion()
+        
         # Process messages
         while True:
             try:
@@ -1412,6 +1419,13 @@ async def diagnosis_session(websocket: WebSocket, patient_id: int):
                         "role": "agent",
                         "text": response
 })
+                    
+                    tts_client.TTS(
+                        response,
+                        play_locally=True
+                    )
+                    
+                    tts_client.wait_for_completion()
                     
             except WebSocketDisconnect:
                 break
