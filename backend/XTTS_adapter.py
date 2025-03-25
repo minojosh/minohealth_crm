@@ -6,6 +6,7 @@ import time
 import requests
 import json
 import io
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Configure logger
@@ -43,7 +44,7 @@ class TTSClient:
     Adapter class to provide backward compatibility with the old TTSClient API
     while using the new XTTS implementation under the hood.
     """
-    def __init__(self, api_url=None, timeout=15, audio_dir=None):
+    def __init__(self, api_url=None, audio_dir=None):
         """
         Initialize the TTS client adapter
         
@@ -53,15 +54,15 @@ class TTSClient:
             audio_dir (str): Directory to save audio files
         """
         # Load environment variables from .env file
-        # dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-        # load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
-        load_dotenv()
+        dotenv_path = Path(__file__).parent.parent / '.env'
+        load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
+
 
         # Initialize server URL - prioritize provided URL, then env var, then default
         if api_url is not None:
             self.api_url = api_url.rstrip('/')
         else:
-            env_url = os.getenv('SPEECH_SERVICE_URL') or os.getenv('STT_SERVER_URL')
+            env_url = os.getenv('XTTS_URL') or os.getenv('STT_SERVER_URL')
             if env_url:
                 self.api_url = env_url.rstrip('/')
             else:
@@ -77,8 +78,7 @@ class TTSClient:
         # Set default target sample rate
         self.target_sample_rate = 24000
         
-        # Initialize the request timeout
-        self.timeout = timeout
+
         
         # These are used to store the latest generated audio
         self.last_audio_data = None
@@ -238,7 +238,8 @@ class TTSClient:
         else:
             # Collect audio chunks from server (this is needed even if streaming, to return the data)
             all_audio_chunks = self._direct_request_to_server(text)
-            
+        
+        """    
         if not all_audio_chunks:
             logger.warning("No audio chunks received from server")
             return np.array([]).astype(np.float32), self.target_sample_rate, None, None
@@ -264,7 +265,8 @@ class TTSClient:
         self.last_file_path = file_path
         
         return audio_data, self.target_sample_rate, base64_audio, file_path
-
+        """
+        
     def get_audio_for_frontend(self, text, speaker="default", save_audio=True, file_name=None):
         """
         Generate audio formatted for frontend consumption
@@ -332,8 +334,10 @@ class TTSClient:
             logger.warning("Streaming client not available, using synchronous TTS instead")
             self.TTS(text, play_locally=True)
             return False
+        
+    
             
-    def wait_for_completion(self, timeout=30):
+    def wait_for_completion(self, timeout=1):
         """
         Wait for streaming audio to complete
         

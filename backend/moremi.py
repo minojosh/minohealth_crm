@@ -137,10 +137,9 @@ class ConversationManager:
                     except KeyboardInterrupt:
                         self.tts.stop()
                         pass
-                    finally:
-                        self.tts.wait_for_completion()
-                        self.tts.stop()
-        
+        if should_speak:
+            self.tts.wait_for_completion(2)      
+            self.tts.stop()      
         print("\n")
         
         self.conversation_history.append({"role": "assistant", "content": collected_content})
