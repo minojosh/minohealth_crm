@@ -137,7 +137,15 @@ class ReminderService:
                 except:
                     # Keep as is if parsing fails
                     pass
+                
+            dt = appointment_datetime
             
+            # Format to natural representation
+            appointment_datetime = dt.strftime("%d{} %B %Y, %I:%M %p").format(
+                "th" if 4 <= dt.day <= 20 or 24 <= dt.day <= 30
+                else {1: "st", 2: "nd", 3: "rd"}.get(dt.day % 10, "th")
+            )
+                        
             initial_message = agent.initial_appointment_message.format(
                 patient_name=reminder.patient_name,
                 doctor_name=doctor_name,
@@ -210,6 +218,9 @@ class ReminderService:
                         patient = scheduler.session.query(Patient).filter_by(patient_id=patient_id).first()
                         # Get doctor details for the response
                         doctor = scheduler.session.query(Doctor).filter_by(doctor_id=doctor_id).first()
+                        
+                        # Update the appointment datetime
+                        appointment.datetime = new_datetime_obj
                 else:   
                     logger.info("Patient asked for a reschedule")
                     # Schedule the appointment using the appointment manager
@@ -455,6 +466,22 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
     
     logger.info(f"WebSocket connection accepted for reminder ID: {reminder_id}")
     
+    # Create a ping task to keep the connection alive
+    ping_task = None
+    
+    async def send_ping():
+        while True:
+            try:
+                await asyncio.sleep(30)  # Send a ping every 30 seconds
+                await websocket.send_json({"type": "ping"})
+                logger.debug(f"Sent ping to client {reminder_id}")
+            except Exception as e:
+                logger.error(f"Error in ping task: {str(e)}")
+                break
+    
+    # Start the ping task
+    ping_task = asyncio.create_task(send_ping())
+    
     try:
         # Initialize voice assistant and medical agent
         voice_assistant = ReminderService.create_or_get_voice_assistant(reminder_id)
@@ -514,7 +541,7 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
             try:
                 data = await websocket.receive_json()
                 
-                if data['type'] == 'message':
+                if data.get("type") == "message":
                     try:
                         # Process the message with the agent
                         logger.info(f"Processing message: {data['text']}")
@@ -654,7 +681,7 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                             break
                             
                     
-                        elif data['type'] == 'end_conversation':
+                        elif data.get("type") == "end_conversation":
                             try:
                                 logger.info(f"Received end_conversation request for {reminder_id}")
                                 
@@ -753,6 +780,18 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                                 break
                             
                             
+                        # Handle ping messages from client
+                        elif data.get("type") == "ping":
+                            await websocket.send_json({"type": "pong"})
+                            logger.debug(f"Received ping from client {reminder_id}, sent pong")
+                            continue
+                        
+                        # Handle pong responses from client
+                        elif data.get("type") == "pong":
+                            logger.debug(f"Received pong from client {reminder_id}")
+                            continue
+                        
+                        
                         #Regular Response
                         else:
                             logger.info("Regular response")
@@ -806,8 +845,9 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
         tts_client.wait_for_completion()
         
     finally:
-        # Cleanup
-        pass
+        # Cancel the ping task when the connection is closed
+        if ping_task:
+            ping_task.cancel()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

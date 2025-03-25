@@ -516,6 +516,39 @@ class MedicalAgent:
             except ValueError as e:
                 pass  # If parsing fails, we'll try the ISO pattern
         
+        # Natural language format with ordinal day first - "29th March 2025, 04:45 PM"
+        ordinal_first_pattern = r"""
+            # Match day with ordinal suffix
+            (\d{1,2}(?:st|nd|rd|th))
+            \s+
+            # Match month
+            ([A-Za-z]+)
+            # Match year
+            (?:\s+(\d{4}))?
+            # Match separators and time
+            (?:,?\s+at\s+|,?\s+)?
+            # Match time
+            (\d{1,2}:\d{2}\s*[APM]{2})
+        """
+        
+        # Try ordinal_first_pattern first
+        ordinal_match = re.search(ordinal_first_pattern, response, re.VERBOSE)
+        if ordinal_match:
+            day_with_suffix = ordinal_match.group(1)
+            month = ordinal_match.group(2)
+            year = ordinal_match.group(3) if ordinal_match.group(3) else "2025"
+            time = ordinal_match.group(4)
+            
+            # Remove ordinal suffix from day
+            day = re.sub(r'(st|nd|rd|th)$', '', day_with_suffix)
+            
+            datetime_str = f"{day} {month} {year} {time}"
+            try:
+                dt = datetime.strptime(datetime_str, "%d %B %Y %I:%M %p")
+                return dt.strftime("%Y-%m-%d %H:%M")
+            except ValueError as e:
+                print(f"Ordinal first format parsing failed: {e}")
+                
         # For ISO format, extract date and time separately
         # Extract date: Look for YYYY-MM-DD pattern
         date_pattern = r"(\d{4}-\d{1,2}-\d{1,2})"

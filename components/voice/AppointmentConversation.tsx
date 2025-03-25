@@ -58,7 +58,9 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
   const reconnectAttemptsRef = useRef<number>(0);
   const latestAudioRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPongTimeRef = useRef<number>(Date.now());
+  
   // Add new state for conversation flow
   const [conversationState, setConversationState] = useState<'initial' | 'context' | 'specialty_search' | 'doctor_selection' | 'appointment_scheduling' | 'confirmation'>('initial');
   const [isListening, setIsListening] = useState(false);
@@ -127,6 +129,9 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
         }
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+        }
       };
     }
     
@@ -180,6 +185,20 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
             context: JSON.stringify(reminder)
           }));
         }
+        
+        // Set up client-side ping interval as a backup
+        lastPongTimeRef.current = Date.now();
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+        }
+        
+        // Send a ping every 45 seconds (different from server's 30s to avoid collision)
+        pingIntervalRef.current = setInterval(() => {
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            console.debug('Sending client ping');
+            wsRef.current.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 45000);
       };
       
       wsRef.current.onmessage = async (event) => {
@@ -199,7 +218,22 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
             }
             break;
             
-          
+          case 'ping':
+            // Respond to server pings with pongs
+            console.debug('Received ping from server, sending pong');
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({ type: 'pong' }));
+            }
+            // Update last pong time since we got activity from the server
+            lastPongTimeRef.current = Date.now();
+            break;
+            
+          case 'pong':
+            // Update the last pong time
+            console.debug('Received pong from server');
+            lastPongTimeRef.current = Date.now();
+            break;
+            
           case 'appointment_result':
             // Handle the final appointment result from the backend
             if (data.success && data.appointment) {
@@ -251,6 +285,12 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
         if (connectionStatus === 'connected') {
           setConnectionStatus('disconnected');
           handleReconnection(patientId);
+        }
+        
+        // Clear ping interval on close
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+          pingIntervalRef.current = null;
         }
       };
       
@@ -524,12 +564,6 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
               </span>
               Appointment Conversation
             </h2>
-            {isProcessing && (
-              <span className="text-sm text-blue-500 flex items-center">
-                <ArrowPathIcon className="w-4 h-4 mr-1 animate-spin" />
-                Processing...
-              </span>
-            )}
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
             Patient: <span className="font-medium">{reminder?.patient_name}</span> | 
@@ -604,6 +638,13 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
                 </>
               )}
             </Button>
+
+            {isProcessing && (
+              <span className="text-sm text-blue-500 flex items-center">
+                <ArrowPathIcon className="w-4 h-4 mr-1 animate-spin" />
+                Processing...
+              </span>
+            )}
 
             <Button
               color="success"
