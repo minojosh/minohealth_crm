@@ -1418,7 +1418,7 @@ async def diagnosis_session(websocket: WebSocket, patient_id: int):
                         "type": "message",
                         "role": "agent",
                         "text": response
-})
+                    })
                     
                     tts_client.TTS(
                         response,
@@ -1438,11 +1438,11 @@ async def diagnosis_session(websocket: WebSocket, patient_id: int):
                 
             except Exception as e:
                 logger.error(f"Error in diagnosis session: {str(e)}")
-            if websocket.client_state == WebSocketState.CONNECTED:  # Fixed client state check
-                await websocket.send_json({
-                    "type": "error",
-                    "message": "An error occurred. Please try again."
-                })
+            # if websocket.client_state == WebSocketState.CONNECTED:  # Fixed client state check
+            #     await websocket.send_json({
+            #         "type": "error",
+            #         "message": "An error occurred. Please try again."
+            #     })
     finally:
         try:
             await websocket.close()

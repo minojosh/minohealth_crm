@@ -47,6 +47,11 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
   const [error, setError] = useState<string | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef<number>(0);
   const [websocket, setWebsocket] = useState<WebSocket | null>(null);
   const [wsRetries, setWsRetries] = useState(0);
   const [inputText, setInputText] = useState('');
@@ -77,7 +82,7 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
         websocket.close();
       }
       if (mediaRecorder) {
-        stopRecording();
+        handleStopRecording();
       }
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
@@ -118,26 +123,26 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
     };
   }, [websocket]);
 
-  // Function to play TTS audio buffers sequentially
-  const playNextAudioBuffer = () => {
-    if (!audioBuffersRef.current.length || !audioContext || currentlyPlayingRef.current) return;
+  // // Function to play TTS audio buffers sequentially
+  // const playNextAudioBuffer = () => {
+  //   if (!audioBuffersRef.current.length || !audioContext || currentlyPlayingRef.current) return;
     
-    currentlyPlayingRef.current = true;
-    const buffer = audioBuffersRef.current.shift();
-    if (!buffer) {
-      currentlyPlayingRef.current = false;
-      return;
-    }
+  //   currentlyPlayingRef.current = true;
+  //   const buffer = audioBuffersRef.current.shift();
+  //   if (!buffer) {
+  //     currentlyPlayingRef.current = false;
+  //     return;
+  //   }
     
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
-    source.onended = () => {
-      currentlyPlayingRef.current = false;
-      playNextAudioBuffer();
-    };
-    source.start(0);
-  };
+  //   const source = audioContext.createBufferSource();
+  //   source.buffer = buffer;
+  //   source.connect(audioContext.destination);
+  //   source.onended = () => {
+  //     currentlyPlayingRef.current = false;
+  //     playNextAudioBuffer();
+  //   };
+  //   source.start(0);
+  // };
 
   // // TTS streaming function
   // const streamTextToSpeech = async (text: string) => {
@@ -493,9 +498,22 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
     }
   };
 
-  const startRecording = async () => {
+  const handleStartRecording = async () => {
     try {
-      // Request high-quality audio for better transcription
+      // First make sure any existing recording is stopped
+      if (isRecording) {
+        handleStopRecording();
+      }
+      
+      if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        setError('Connection not established');
+        return;
+      }
+
+      setIsRecording(true);
+      setError(null);
+
+      // Request microphone access with optimized settings
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -506,238 +524,208 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
         }
       });
       
-      const recorder = new MediaRecorder(stream, {
+      streamRef.current = stream;
+      
+      // Create an AudioContext to process the audio
+      const audioContext = new AudioContext({ sampleRate: 16000 });
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      
+      // Connect the audio nodes
+      source.connect(processor);
+      processor.connect(audioContext.destination);
+      
+      // Buffer to store raw audio data
+      const audioBuffer: Float32Array[] = [];
+      
+      // Process audio data
+      processor.onaudioprocess = (e) => {
+        const inputData = e.inputBuffer.getChannelData(0);
+        audioBuffer.push(new Float32Array(inputData));
+      };
+      
+      // Create MediaRecorder for backup WebM recording
+      const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus',
         audioBitsPerSecond: 16000
       });
-      
-      const chunks: Blob[] = [];
-      
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.push(e.data);
-          setAudioChunks(prev => [...prev, e.data]);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        try {
+          setIsProcessing(true);
           
-          // If we've been recording for a while, process intermediate chunks
-          if (chunks.length > 0 && isRecording && recorder.state === 'recording') {
-            const audioBlob = new Blob(chunks.splice(0, chunks.length), { type: 'audio/webm' });
-            processAudioData(audioBlob, true);
+          // Concatenate all audio chunks
+          const totalLength = audioBuffer.reduce((acc, chunk) => acc + chunk.length, 0);
+          
+          if (totalLength === 0) {
+            setError('No audio data captured');
+            setIsProcessing(false);
+            return;
           }
+          
+          const concatenated = new Float32Array(totalLength);
+          let offset = 0;
+          
+          for (const chunk of audioBuffer) {
+            concatenated.set(chunk, offset);
+            offset += chunk.length;
+          }
+
+          // Find maximum absolute value for normalization
+          let maxAbs = 0;
+          for (let i = 0; i < concatenated.length; i++) {
+            maxAbs = Math.max(maxAbs, Math.abs(concatenated[i]));
+          }
+          
+          if (maxAbs > 0) {  // Avoid division by zero
+            for (let i = 0; i < concatenated.length; i++) {
+              concatenated[i] = concatenated[i] / maxAbs;
+            }
+          } else {
+            setError('No audio signal detected');
+            setIsProcessing(false);
+            return;
+          }
+
+          // Check audio level after normalization
+          let sumAbs = 0;
+          for (let i = 0; i < concatenated.length; i++) {
+            sumAbs += Math.abs(concatenated[i]);
+          }
+          const level = sumAbs / concatenated.length;
+
+          if (level < 0.001) {
+            setError('Audio level too low, please speak louder');
+            setIsProcessing(false);
+            return;
+          }
+          
+          // Convert to base64
+          const uint8Array = new Uint8Array(concatenated.buffer);
+          let base64Data = '';
+          
+          for (let i = 0; i < uint8Array.length; i++) {
+            base64Data += String.fromCharCode(uint8Array[i]);
+          }
+          
+          base64Data = btoa(base64Data);
+          
+          // Strip trailing slashes and construct URL
+          const baseUrl = process.env.NEXT_PUBLIC_STT_SERVER_URL?.replace(/\/+$/, '');
+          const transcribeUrl = `${baseUrl}/transcribe`;
+
+          try {
+            // Send to STT service
+            const response = await fetch(transcribeUrl, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ audio: base64Data })
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.transcription) {
+              // Send transcription to WebSocket
+              if (websocket?.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                  type: 'message',
+                  text: result.transcription
+                }));
+                
+                // Add message locally for immediate feedback
+                setMessages(prev => [...prev, { role: 'user', text: result.transcription }]);
+                setIsProcessing(true);
+              } else {
+                setError('Connection lost. Please refresh the page.');
+              }
+            } else {
+              setError('No speech detected');
+            }
+          } catch (error) {
+            console.error("STT service error:", error);
+            setError('Failed to process your recording');
+          } finally {
+            setIsProcessing(false);
+            
+            // Clean up audio processing
+            processor.disconnect();
+            source.disconnect();
+            audioContext.close();
+          }
+          
+        } catch (error) {
+          console.error("Error processing recording:", error);
+          setError('Failed to process your recording');
+          setIsProcessing(false);
         }
       };
       
-      recorder.onstop = () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-        processAudioData(audioBlob, false);
-      };
+      mediaRecorder.start(1000);
       
-      // Set up timeslice recording for more frequent chunks
-      recorder.start(500); // Record in 0.5-second chunks for more responsive transcription
+    } catch (error: any) {
+      console.error("Error starting recording:", error);
+      let errorMessage = 'Could not access microphone';
       
-      // Add placeholder message
-      setMessages(prevMessages => [...prevMessages, {
-        role: 'user',
-        text: 'Recording audio...',
-        type: 'audio_processing'
-      }]);
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'No microphone found. Please connect a microphone and try again.';
+      }
       
-      setIsRecording(true);
-      setAudioChunks([]);
-      setMediaRecorder(recorder);
-      setError(null);
-      
-      // Set up a timeout to automatically stop recording after AUDIO_CHUNK_SIZE ms
-      recordingTimeoutRef.current = setTimeout(() => {
-        if (recorder && recorder.state === 'recording') {
-          stopRecording();
-        }
-      }, AUDIO_CHUNK_SIZE);
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
-      setError('Microphone access denied. Please check your browser permissions.');
+      setError(errorMessage);
+      setIsRecording(false);
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      try {
-        mediaRecorder.stop();
-        // Make sure we stop all tracks to properly release the microphone
-        mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        
-        // Update UI to show we're now processing the final audio
-        setMessages(prevMessages => {
-          const index = prevMessages.findIndex(msg => 
-            msg.role === 'user' && (msg.type === 'audio_processing' || msg.type === 'partial_transcription')
-          );
-          
-          if (index !== -1) {
-            const updatedMessages = [...prevMessages];
-            updatedMessages[index] = {
-              ...updatedMessages[index],
-              text: 'Processing your audio...',
-              isPartial: true
-            };
-            return updatedMessages;
-          }
-          return prevMessages;
-        });
-
-      } catch (err) {
-        console.error('Error stopping recording:', err);
-      } finally {
-        setIsRecording(false);
-        if (recordingTimeoutRef.current) {
-          clearTimeout(recordingTimeoutRef.current);
-          recordingTimeoutRef.current = null;
+  const handleStopRecording = () => {
+    // Set recording state to false immediately
+    setIsRecording(false);
+    
+    try {
+      // Stop the media recorder if it exists
+      if (mediaRecorderRef.current) {
+        if (mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
         }
       }
-    }
-  };
-
-  const processAudioData = async (audioBlob: Blob, isPartial: boolean = false) => {
-    if (!websocket || websocket.readyState !== WebSocket.OPEN) {
-      setError('Connection lost. Please refresh and try again.');
-      return;
-    }
-
-    if (!isPartial) {
-      setIsProcessing(true);
+    } catch (error) {
+      console.error("Error stopping media recorder:", error);
     }
     
     try {
-      // First attempt to use the STT service directly
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '');
-      
-      if (baseUrl) {
-        try {
-          // Convert blob to ArrayBuffer first
-          const arrayBuffer = await audioBlob.arrayBuffer();
-          
-          // Get audio data as float32 samples
-          const audioCtx = new AudioContext({ sampleRate: 16000 });
-          const audioData = await audioCtx.decodeAudioData(arrayBuffer);
-          
-          // Get channel data (use first channel if stereo)
-          const audioSamples = audioData.getChannelData(0);
-          
-          // Normalize the audio if needed
-          let maxAbs = 0;
-          for (let i = 0; i < audioSamples.length; i++) {
-            maxAbs = Math.max(maxAbs, Math.abs(audioSamples[i]));
-          }
-          
-          const normalizedSamples = maxAbs > 0 ? 
-            new Float32Array(audioSamples.map(s => s / maxAbs)) : 
-            audioSamples;
-            
-          // Convert to base64
-          const uint8Array = new Uint8Array(normalizedSamples.buffer);
-          let base64Audio = '';
-          
-          for (let i = 0; i < uint8Array.length; i++) {
-            base64Audio += String.fromCharCode(uint8Array[i]);
-          }
-          
-          base64Audio = btoa(base64Audio);
-          
-          // Send to STT service
-          const transcribeUrl = `${baseUrl}/transcribe`;
-          const response = await fetch(transcribeUrl, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ 
-              audio: base64Audio,
-              maintain_context: true, // Enable context maintenance for better transcriptions
-              session_id: `diagnosis_${patientId}` // Use consistent session ID
-            })
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const result = await response.json();
-
-          if (result.transcription) {
-            // If this is a partial transcription, update UI but don't send to server yet
-            if (isPartial) {
-              setMessages(prevMessages => {
-                const index = prevMessages.findIndex(msg => 
-                  msg.role === 'user' && (msg.type === 'audio_processing' || msg.type === 'partial_transcription')
-                );
-                
-                if (index !== -1) {
-                  const updatedMessages = [...prevMessages];
-                  updatedMessages[index] = {
-                    role: 'user',
-                    text: result.transcription,
-                    type: 'partial_transcription',
-                    isPartial: true
-                  };
-                  return updatedMessages;
-                }
-                
-                return prevMessages;
-              });
-            } else {
-              // For final transcription, send to the diagnosis WebSocket
-              websocket.send(JSON.stringify({
-                type: 'message',
-                role: 'user',
-                text: result.transcription
-              }));
-              
-              // Update the audio processing message with the transcription
-              setMessages(prevMessages => {
-                const index = prevMessages.findIndex(msg => 
-                  msg.role === 'user' && (msg.type === 'audio_processing' || msg.type === 'partial_transcription')
-                );
-                
-                if (index !== -1) {
-                  const updatedMessages = [...prevMessages];
-                  updatedMessages[index] = {
-                    role: 'user',
-                    text: result.transcription,
-                    type: 'message',
-                    isPartial: false
-                  };
-                  return updatedMessages;
-                }
-                
-                return prevMessages;
-              });
-              
-              setIsProcessing(true);
-            }
-            return;
-          }
-        } catch (error) {
-          console.error("STT service error:", error);
-          // Fall back to sending raw audio if STT service fails
-        }
+      // Stop all tracks in the stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+        });
       }
-      
-      // Fallback: send audio directly to the websocket
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      reader.onloadend = () => {
-        const base64data = reader.result as string;
-        // Remove the data URL prefix
-        const base64Audio = base64data.split(',')[1];
-        
-        // Send audio data to server
-        websocket.send(JSON.stringify({
-          type: isPartial ? 'partial_audio' : 'audio',
-          data: base64Audio
-        }));
-      };
-    } catch (err) {
-      console.error('Error processing audio:', err);
-      setError('Error processing audio. Please try again.');
-      if (!isPartial) {
-        setIsProcessing(false);
-      }
+    } catch (error) {
+      console.error("Error stopping media tracks:", error);
+    }
+    
+    // Clear references
+    mediaRecorderRef.current = null;
+    streamRef.current = null;
+    audioChunksRef.current = [];
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      handleStopRecording();
+    } else {
+      handleStartRecording();
     }
   };
 
@@ -1136,7 +1124,7 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
                   color="primary"
                   variant="flat"
                   isIconOnly
-                  onClick={startRecording}
+                  onClick={toggleRecording}
                   disabled={isProcessing || isFetchingSummary}
                 >
                   <MicrophoneIcon className="h-5 w-5" />
@@ -1147,7 +1135,7 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
                   color="danger"
                   variant="ghost"
                   isIconOnly
-                  onClick={stopRecording}
+                  onClick={toggleRecording}
                   disabled={isFetchingSummary}
                 >
                   <StopIcon className="h-5 w-5" />
