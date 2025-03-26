@@ -141,7 +141,7 @@ class ReminderService:
             dt = appointment_datetime
             
             # Format to natural representation
-            appointment_datetime = dt.strftime("%d{} %B %Y, %I:%M %p").format(
+            appointment_datetime = dt.strftime("%d{} %B at %I:%M %p").format(
                 "th" if 4 <= dt.day <= 20 or 24 <= dt.day <= 30
                 else {1: "st", 2: "nd", 3: "rd"}.get(dt.day % 10, "th")
             )
@@ -678,7 +678,7 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                                 })
                             
                             # Break the loop to close the connection
-                            break
+                            #break
                             
                     
                         elif data.get("type") == "end_conversation":
@@ -769,7 +769,7 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                                     })
                                 
                                 # Break the loop to close the connection
-                                break
+                                #break
                         
                             except Exception as e:
                                 logger.error(f"Error processing end_conversation: {str(e)}")
