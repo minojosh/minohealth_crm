@@ -1,0 +1,32 @@
+{
+    "SOAP": {
+        "Subjective": {
+            "ChiefComplaint": null,
+            "HistoryOfPresentIllness": {
+                "Onset": "",
+                "Location": "",
+                "Duration": "",
+                "Characteristics": "",
+                "AggravatingFactors": "",
+                "RelievingFactors": "",
+                "Timing": "",
+                "Severity": ""
+            },
+            "PastMedicalHistory": "",
+            "FamilyHistory": "",
+            "SocialHistory": "",
+            "ReviewOfSystems": "- Chief complaint: Running\n- History of present illness: Patient reports running and inquires if it's still running.\n- Past medical history: Not provided\n- Medications: Not provided\n- Allergies: Not provided\n- Review of systems: Not provided"
+        },
+        "Assessment": {
+            "PrimaryDiagnosis": null,
+            "DifferentialDiagnosis": "",
+            "ProblemList": ""
+        },
+        "Plan": {
+            "TreatmentAndMedications": "",
+            "FurtherTestingOrImaging": "",
+            "PatientEducation": "",
+            "FollowUp": "- Diagnostic plans: None\n- Treatment plans: None\n- Patient education: Not provided\n- Follow-up instructions: None"
+        }
+    }
+}

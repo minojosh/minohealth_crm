@@ -287,103 +287,103 @@ async def root():
 #             "error": str(e)
 #         }
 
-@app.post("/transcribe")
-async def transcribe_audio_endpoint(request: Request):
-    """
-    HTTP endpoint for audio transcription.
-    This proxies requests to the external STT service.
-    """
-    try:
-        data = await request.json()
+# @app.post("/transcribe")
+# async def transcribe_audio_endpoint(request: Request):
+#     """
+#     HTTP endpoint for audio transcription.
+#     This proxies requests to the external STT service.
+#     """
+#     try:
+#         data = await request.json()
         
-        # Track transcription sessions
-        session_id = data.get("session_id", str(uuid.uuid4()))
-        maintain_context = data.get("maintain_context", False)
+#         # Track transcription sessions
+#         session_id = data.get("session_id", str(uuid.uuid4()))
+#         maintain_context = data.get("maintain_context", False)
         
-        # Initialize transcription contexts if needed
-        if not hasattr(app.state, "transcription_contexts"):
-            app.state.transcription_contexts = {}
+#         # Initialize transcription contexts if needed
+#         if not hasattr(app.state, "transcription_contexts"):
+#             app.state.transcription_contexts = {}
             
-        # Check if this is a finish command or audio data
-        if 'command' in data and data['command'] == 'finish':
-            logger.info(f"Finish command received for session {session_id}, proxying to STT service")
-            # Clear the context when finished
-            if maintain_context and session_id in app.state.transcription_contexts:
-                logger.info(f"Clearing context for session {session_id}")
-                del app.state.transcription_contexts[session_id]
-            return {"transcription": "", "status": "finished", "session_id": session_id}
+#         # Check if this is a finish command or audio data
+#         if 'command' in data and data['command'] == 'finish':
+#             logger.info(f"Finish command received for session {session_id}, proxying to STT service")
+#             # Clear the context when finished
+#             if maintain_context and session_id in app.state.transcription_contexts:
+#                 logger.info(f"Clearing context for session {session_id}")
+#                 del app.state.transcription_contexts[session_id]
+#             return {"transcription": "", "status": "finished", "session_id": session_id}
         
-        if 'audio' in data:
-            # Process audio data
-            audio_data = data['audio']
-            try:
-                # Log incoming data stats
-                logger.info(f"Received base64 audio data of length: {len(audio_data)}")
+#         if 'audio' in data:
+#             # Process audio data
+#             audio_data = data['audio']
+#             try:
+#                 # Log incoming data stats
+#                 logger.info(f"Received base64 audio data of length: {len(audio_data)}")
                 
-                # Convert from base64 to bytes
-                audio_bytes = base64.b64decode(audio_data)
-                logger.info(f"Decoded audio bytes length: {len(audio_bytes)}")
+#                 # Convert from base64 to bytes
+#                 audio_bytes = base64.b64decode(audio_data)
+#                 logger.info(f"Decoded audio bytes length: {len(audio_bytes)}")
                 
-                # Get existing context for this session if maintain_context is True
-                initial_context = ""
-                if maintain_context:
-                    initial_context = app.state.transcription_contexts.get(session_id, "")
-                    logger.info(f"Using existing context for session {session_id}: {initial_context[:30]}{'...' if len(initial_context) > 30 else ''}")
+#                 # Get existing context for this session if maintain_context is True
+#                 initial_context = ""
+#                 if maintain_context:
+#                     initial_context = app.state.transcription_contexts.get(session_id, "")
+#                     logger.info(f"Using existing context for session {session_id}: {initial_context[:30]}{'...' if len(initial_context) > 30 else ''}")
                 
-                # Convert to numpy array for analysis
-                try:
-                    # First try float32 format
-                    if len(audio_bytes) % 4 == 0:  # Must be multiple of 4 bytes for float32
-                        audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
-                    else:
-                        # If not divisible by 4, try int16 format
-                        audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+#                 # Convert to numpy array for analysis
+#                 try:
+#                     # First try float32 format
+#                     if len(audio_bytes) % 4 == 0:  # Must be multiple of 4 bytes for float32
+#                         audio_np = np.frombuffer(audio_bytes, dtype=np.float32)
+#                     else:
+#                         # If not divisible by 4, try int16 format
+#                         audio_np = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
                     
-                    audio_stats = {
-                        "length": len(audio_np),
-                        "duration": len(audio_np) / 16000,  # Assuming 16kHz sample rate
-                        "min": float(np.min(audio_np)),
-                        "max": float(np.max(audio_np)),
-                        "mean": float(np.mean(audio_np)),
-                        "std": float(np.std(audio_np)),
-                        "non_zero": int(np.count_nonzero(audio_np))
-                    }
-                    logger.info(f"Audio statistics: {audio_stats}")
-                except ValueError as e:
-                    # Handle error but continue processing
-                    logger.warning(f"Could not analyze audio statistics: {e}")
+#                     audio_stats = {
+#                         "length": len(audio_np),
+#                         "duration": len(audio_np) / 16000,  # Assuming 16kHz sample rate
+#                         "min": float(np.min(audio_np)),
+#                         "max": float(np.max(audio_np)),
+#                         "mean": float(np.mean(audio_np)),
+#                         "std": float(np.std(audio_np)),
+#                         "non_zero": int(np.count_nonzero(audio_np))
+#                     }
+#                     logger.info(f"Audio statistics: {audio_stats}")
+#                 except ValueError as e:
+#                     # Handle error but continue processing
+#                     logger.warning(f"Could not analyze audio statistics: {e}")
                 
-                # Process using the STT client with context
-                logger.info("Sending audio to STT service...")
-                # Pass initial context to the transcription function if implemented
-                if hasattr(stt_client, 'transcribe_with_context'):
-                    transcription = stt_client.transcribe_with_context(audio_bytes, initial_context)
-                else:
-                    # Default to standard transcription
-                    transcription = stt_client.transcribe_audio(audio_bytes)
+#                 # Process using the STT client with context
+#                 logger.info("Sending audio to STT service...")
+#                 # Pass initial context to the transcription function if implemented
+#                 if hasattr(stt_client, 'transcribe_with_context'):
+#                     transcription = stt_client.transcribe_with_context(audio_bytes, initial_context)
+#                 else:
+#                     # Default to standard transcription
+#                     transcription = stt_client.transcribe_audio(audio_bytes)
                 
-                # Update context for future requests if transcription is successful
-                if maintain_context and transcription and transcription not in ("No speech detected", ""):
-                    # Add space between context and new transcription
-                    updated_context = f"{initial_context} {transcription}".strip()
-                    app.state.transcription_contexts[session_id] = updated_context
-                    logger.info(f"Updated context for session {session_id}, new length: {len(updated_context)}")
+#                 # Update context for future requests if transcription is successful
+#                 if maintain_context and transcription and transcription not in ("No speech detected", ""):
+#                     # Add space between context and new transcription
+#                     updated_context = f"{initial_context} {transcription}".strip()
+#                     app.state.transcription_contexts[session_id] = updated_context
+#                     logger.info(f"Updated context for session {session_id}, new length: {len(updated_context)}")
                 
-                logger.info(f"Transcription result: {transcription}")
-                return {
-                    "transcription": transcription,
-                    "session_id": session_id,
-                    "has_context": maintain_context and bool(initial_context)
-                }
-            except Exception as e:
-                logger.error(f"Error processing audio data: {str(e)}", exc_info=True)
-                return {"error": f"Failed to process audio: {str(e)}", "session_id": session_id}
+#                 logger.info(f"Transcription result: {transcription}")
+#                 return {
+#                     "transcription": transcription,
+#                     "session_id": session_id,
+#                     "has_context": maintain_context and bool(initial_context)
+#                 }
+#             except Exception as e:
+#                 logger.error(f"Error processing audio data: {str(e)}", exc_info=True)
+#                 return {"error": f"Failed to process audio: {str(e)}", "session_id": session_id}
         
-        return {"error": "Invalid request format", "session_id": session_id}
+#         return {"error": "Invalid request format", "session_id": session_id}
     
-    except Exception as e:
-        logger.error(f"Error in transcribe endpoint: {str(e)}", exc_info=True)
-        return {"error": f"Internal server error: {str(e)}"}
+#     except Exception as e:
+#         logger.error(f"Error in transcribe endpoint: {str(e)}", exc_info=True)
+#         return {"error": f"Internal server error: {str(e)}"}
 
 @app.post("/api/medical/extract")
 async def extract_medical_data(request: MedicalExtractionRequest):
