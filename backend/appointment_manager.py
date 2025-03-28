@@ -523,10 +523,10 @@ class MedicalAgent:
             \s+
             # Match month
             ([A-Za-z]+)
-            # Match year
-            (?:\s+(\d{4}))?
-            # Match separators and time
-            (?:,?\s+at\s+|,?\s+)?
+            # Optional year
+            (?:,?\s+(\d{4}))?
+            # Optional 'at' or comma before time
+            (?:,?\s+(?:at\s+)?|\s+at\s+)?
             # Match time
             (\d{1,2}:\d{2}\s*[APM]{2})
         """

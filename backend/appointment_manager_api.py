@@ -556,7 +556,7 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                             available_slots = agent.appointment_rescheduler()
                             
                             #Format the available slots
-                            slots_response = agent.moremi_response(f"Reword the information on available doctor slots here {available_slots} into a user friendly message", "You are a helpful assistant capable of summarizing and rewording text")
+                            slots_response = agent.moremi_response(f"Reword the information on available doctor slots here {available_slots} into a user friendly message, Output the dates as example: 29th March 2025 at 04:45 PM", "You are a helpful assistant capable of summarizing and rewording text")
                             agent.LLM.conversation_history[-2]['role'] = "assistant"
                             agent.LLM.conversation_history[-2]['content'] = f"These are the available slots I found from the database, {available_slots}, I should format into a user friendly message and send to the user"
                             
