@@ -28,7 +28,7 @@ import asyncio
 client = SpeechRecognitionClient()
 dotenv_path = os.path.join(os.path.dirname(__file__), '../.env')
 if not os.path.exists(dotenv_path):
-    logger.warning(f"Environment file not found at {dotenv_path}, using environment variables")
+    logging.warning(f"Environment file not found at {dotenv_path}, using environment variables")
 load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
 tts_url = os.getenv("XTTS_URL")
 print(f"tts_url: {tts_url}")
@@ -181,30 +181,39 @@ class SchedulerManager:
             logger.error(f"Error retrieving upcoming appointments: {e}")
             return []
 
-    def get_active_medications(self) -> List[Tuple[Medication, Patient]]:
-        """Retrieve active medications for all patients."""
+    def get_active_medications(self, days_ahead=0) -> List[Tuple[Medication,Patient]]:
+        """Retrieve medications that are active within the specified days ahead range.
+        
+        Args:
+            days_ahead: Number of days ahead to check for active medications. Default is 0 (today only).
+            
+        Returns:
+            List of tuples containing (Medication, Patient) for medications active within the date range.
+        """
+        # Calculate start and end dates for the range
         now = datetime.now()
+        start_date = now.date()
+        end_date = start_date + timedelta(days=days_ahead)
+        
         try:
-            logger.info(f"Querying active medications for date: {now.date()}")
-            medications = self.session.query(Medication, Patient).join(Patient).filter(
+            logger.info(f"Querying medications active between {start_date} and {end_date}")
+            active_medications = self.session.query(Medication, Patient).join(Patient).filter(
                 and_(
-                    Medication.start_date <= now.date(),
-                    Medication.end_date >= now.date()
+                    Medication.start_date <= end_date,  # Medication starts before or on the end date
+                    Medication.end_date >= start_date   # Medication ends after or on the start date
                 )
             ).all()
             
-            logger.info(f"Found {len(medications)} active medications")
+            logger.info(f"Found {len(active_medications)} medications active in the next {days_ahead} days")
             # Debug logging
-            for med, patient in medications:
-                logger.info(f"Found medication: {med.name} for patient: {patient.name}")
+            for med, patient in active_medications:
+                logger.info(f"Active medication: {med.name} for patient: {patient.name} (ends on {med.end_date})")
                 logger.debug(f"Medication details - Start: {med.start_date}, End: {med.end_date}, Dosage: {med.dosage}")
             
-            return medications
-            
+            return active_medications
         except Exception as e:
-            logger.error(f"Error retrieving active medications: {e}")
-            return []
-
+            logger.error(f"Error querying medications active in the next {days_ahead} days: {str(e)}")
+            raise
 
     def _get_new_date(self, doctor_id: int) -> List[dict]:
         """
@@ -359,14 +368,21 @@ class SchedulerManager:
                 success=False,
                 message=f"Failed to process medication reminder: {str(e)}"
             )
-   
-    def process_medication_reminders(self, days_ahead) -> List[ReminderMessage]:
-        """Process and create reminders for active medications."""
+    
+    def process_medication_reminders(self, days_ahead=0) -> List[ReminderMessage]:
+        """Process and create reminders for medications that are active within the specified days ahead range.
+        
+        Args:
+            days_ahead: Number of days ahead to check for active medications. Default is 0 (today only).
+        
+        Returns:
+            List of ReminderMessage objects for medications active within the date range.
+        """
         reminders = []
         results = []
         try:
-            logger.info("Retrieving active medications...")
-            medications = self.get_active_medications()
+            logger.info(f"Retrieving medications expiring within {days_ahead} days...")
+            medications = self.get_active_medications(days_ahead=days_ahead)
             logger.info(f"Retrieved {len(medications)} active medications")
             
             # First, create all reminder objects
@@ -756,37 +772,48 @@ def schedule_appointment(doctor_id: int, patient_id: int, appointment_datetime: 
         return {"success": False, "message": f"Failed to schedule appointment: {str(e)}"}
 
 def main():
-    """Main function to run the scheduler."""
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Run the appointment and medication scheduler.')
-    parser.add_argument('--hours-ahead', type=int, required=True,
-                      help='Number of hours ahead to check for appointments')
-    parser.add_argument('--days-ahead', type=int, required=True,
-                      help='Number of days ahead to look for available slots when rescheduling')
-    parser.add_argument('--type', type=str, required=True,
-                      help='Type of reminder to process (appointment or medication)')
-                                      
-    args = parser.parse_args()
-    
-    logger.info("Starting appointment and medication scheduler")
-    
-    try:
-        with SchedulerManager(args.days_ahead) as scheduler:
-            if args.type == 'appointment':
-                # Process appointment reminders with both hours_ahead and days_ahead
-                appointment_reminders = scheduler.process_appointment_reminders(
-                    hours_ahead=args.hours_ahead,
-                    days_ahead=args.days_ahead
-                )
-                logger.info(f"Processed {len(appointment_reminders)} appointment reminders")
-            else:
-                # Process medication reminders - only process one at a time
-                medication_reminders = scheduler.process_medication_reminders(days_ahead=args.days_ahead)
-                logger.info(f"Processed medication reminders")
-                
-    except Exception as e:
-        logger.error(f"Error in scheduler main function: {e}")
-        raise
+    # Main function to run the scheduler
+    if __name__ == "__main__":
+        # Parse command line arguments
+        parser = argparse.ArgumentParser(description='Run the appointment and medication scheduler.')
+        parser.add_argument('--hours-ahead', type=int, required=True,
+                          help='Number of hours ahead to check for appointments')
+        parser.add_argument('--days-ahead', type=int, required=True,
+                          help='Number of days ahead to look for available slots when rescheduling')
+        parser.add_argument('--type', type=str, required=True,
+                          help='Type of reminder to process (appointment or medication)')
+        parser.add_argument('--target-date', type=str, required=False,
+                          help='Target date for medication reminders (YYYY-MM-DD format)')
+                                          
+        args = parser.parse_args()
+        
+        logger.info("Starting appointment and medication scheduler")
+        
+        try:
+            with SchedulerManager(args.days_ahead) as scheduler:
+                if args.type == 'appointment':
+                    # Process appointment reminders with both hours_ahead and days_ahead
+                    appointment_reminders = scheduler.process_appointment_reminders(
+                        hours_ahead=args.hours_ahead,
+                        days_ahead=args.days_ahead
+                    )
+                    logger.info(f"Processed {len(appointment_reminders)} appointment reminders")
+                else:
+                    # Process medication reminders with target date
+                    target_date = None
+                    if args.target_date:
+                        try:
+                            target_date = datetime.strptime(args.target_date, '%Y-%m-%d').date()
+                            logger.info(f"Using target date: {target_date} for medication reminders")
+                        except ValueError:
+                            logger.error(f"Invalid date format: {args.target_date}. Using current date.")
+                    
+                    medication_reminders = scheduler.process_medication_reminders(target_date=target_date)
+                    logger.info(f"Processed {len(medication_reminders)} medication reminders")
+                    
+        except Exception as e:
+            logger.error(f"Error in scheduler main function: {e}")
+            raise
 
 if __name__ == "__main__":
     main()

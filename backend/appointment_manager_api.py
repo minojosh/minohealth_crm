@@ -328,12 +328,12 @@ class ReminderService:
             return []
     
     @staticmethod
-    def process_medication_reminders(scheduler, days_ahead):
+    def process_medication_reminders(scheduler, days_ahead=0):
         """Process medication reminders using the scheduler"""
         try:
-            logger.info("Processing medication reminders")
+            logger.info(f"Processing medication reminders for the next {days_ahead} days")
             # Get active medications
-            medications = scheduler.get_active_medications()
+            medications = scheduler.get_active_medications(days_ahead=days_ahead)
             logger.info(f"Retrieved {len(medications)} active medications")
             
             # Create reminder messages
@@ -417,7 +417,9 @@ async def start_scheduler(request: SchedulerRequest):
                     scheduler, hours_ahead=request.hours_ahead, days_ahead=request.days_ahead
                 )
             else:  # medication
-                # Note: process_medication_reminders only accepts days_ahead
+                # Use days_ahead parameter for medication reminders
+                logger.info(f"Using days_ahead: {request.days_ahead} for medication reminders")
+                
                 reminders = ReminderService.process_medication_reminders(
                     scheduler, days_ahead=request.days_ahead
                 )
@@ -691,7 +693,7 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                                     'text': f"An error occurred while ending the conversation: {str(e)}"
                                 })
                                 break    
-                    
+                        
                         elif data.get("type") == "end_conversation":
                             try:
                                 logger.info(f"Received end_conversation request for {reminder_id}")
