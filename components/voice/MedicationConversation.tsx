@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@heroui/button';
 import { Card, CardBody } from '@heroui/card';
 import { ReminderResponse } from '../../app/appointment-manager/types';
-import { MicrophoneIcon, StopIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { MicrophoneIcon, StopIcon, CheckCircleIcon, ArrowPathIcon  } from '@heroicons/react/24/solid';
 
 interface Message {
   role: 'user' | 'system' | 'agent';
@@ -491,8 +491,11 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
 
           {/* Processing indicator */}
           {isProcessing && (
-            <div className="text-primary text-sm mt-2">Processing...</div>
-          )}
+                        <span className="text-sm text-blue-500 flex items-center">
+                          <ArrowPathIcon className="w-4 h-4 mr-1 animate-spin" />
+                          Processing...
+                        </span>
+                      )}
 
           {/* Connection status */}
           {!wsConnected && (

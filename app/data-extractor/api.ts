@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_SPEECH_SERVICE_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_STT_SERVER_URL|| 'http://localhost:8000';
 
 export interface TranscriptionStatus {
   isRecording: boolean;

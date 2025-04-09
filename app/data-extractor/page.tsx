@@ -296,7 +296,7 @@ export default function DataExtractor() {
           console.log("Base64 conversion complete. Length:", base64Data.length);
           
           // Strip trailing slashes and construct URL
-          const baseUrl = process.env.NEXT_PUBLIC_SPEECH_SERVICE_URL?.replace(/\/+$/, '') || 'http://localhost:8000';
+          const baseUrl = process.env.NEXT_PUBLIC_STT_SERVER_URL?.replace(/\/+$/, '') || 'http://localhost:8000';
           const transcribeUrl = `${baseUrl}/transcribe`;
           console.log("Transcription URL:", transcribeUrl);
 

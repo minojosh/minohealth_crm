@@ -155,8 +155,7 @@ class ReminderService:
             initial_message = agent.initial_medication_message.format(
                 patient_name=reminder.patient_name,
                 medication_name=reminder.details.get('medication_name', 'your medication'),
-                medication_dosage=reminder.details.get('dosage', 'as prescribed'),
-                medication_frequency=reminder.details.get('frequency', 'as directed')
+                end_date=reminder.details.get('end_date', 'today'),
             )
         
         # Initialize conversation history
@@ -346,7 +345,8 @@ class ReminderService:
                     details={
                         'medication_name': medication.name,
                         'dosage': medication.dosage,
-                        'frequency': medication.frequency
+                        'frequency': medication.frequency,
+                        'end_date' : medication.end_date
                     }
                 )
                 reminder_messages.append(reminder)

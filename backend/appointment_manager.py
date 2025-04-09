@@ -411,8 +411,11 @@ class SchedulerManager:
         return reminders
 
 class MedicalAgent:
-    def __init__(self, reminder, message_type, days_ahead):
-        self.scheduler = SchedulerManager(days_ahead)
+    def __init__(self, reminder, message_type, days_ahead = None):
+        if days_ahead is None:
+            self.scheduler = SchedulerManager()
+        else:
+            self.scheduler = SchedulerManager(days_ahead)
         self.voice_assistant = VoiceAssistant()
         self.reminder = reminder
         self.message_type = message_type
