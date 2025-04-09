@@ -24,6 +24,7 @@ import base64
 import uuid
 import asyncio
 from pathlib import Path
+import time
 
 # Configure logging
 logging.basicConfig(
@@ -155,7 +156,7 @@ class ReminderService:
             initial_message = agent.initial_medication_message.format(
                 patient_name=reminder.patient_name,
                 medication_name=reminder.details.get('medication_name', 'your medication'),
-                end_date=reminder.details.get('end_date', 'today'),
+                end_date=reminder.details.get('end_date').strftime('%B %d at %I:%M %p')
             )
         
         # Initialize conversation history
@@ -179,7 +180,7 @@ class ReminderService:
             try:
                 # Extract appointment details from conversation
                 context = agent.format_conversation(agent.LLM.conversation_history)
-                final = agent.moremi_response(context, agent.extract_prompt)
+                final = agent.moremi_response(f"Extract ONLY the date time information from this conversation: {context}", agent.extract_prompt)
                 new_datetime = agent.extract_datetime_from_moremi(final)
                 # Normalize new_datetime format
                 new_datetime_obj = datetime.strptime(new_datetime, '%Y-%m-%d %H:%M')
@@ -581,118 +582,114 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                         # Check if this is a goodbye message
                         elif any(goodbye_message.strip('.!?').lower() in response.lower() for goodbye_message in goodbye_messages):
                             logger.info("Conversation is ending")
-                            try:    
-                                # Send goodbye message
-                                await websocket.send_json({
-                                    'type': 'message',
-                                    'text': response,
-                                    'is_goodbye': True
-                                })
-                                
-                                try:
-                                    # Use TTS for the confirmation
-                                    tts_client.TTS(
-                                        response,
-                                        play_locally=True
-                                    )
-                                    tts_client.wait_for_completion()
-                                except KeyboardInterrupt:
-                                    tts_client.stop()
-                                    pass
-                                
-                                # Use our centralized service to end the conversation
-                                result = ReminderService.end_conversation(reminder_id)
-                                
-                                # Send the result to the client
-                                if result.get('type') == 'appointment_result':
-                                    # Prepare a user-friendly message
-                                    if result.get('success', False):
-                                        appointment = result.get('appointment', {})
-                                        appointment_datetime = appointment.get('datetime', '')
-                                        if appointment_datetime:
-                                            try:
-                                                # Convert ISO format to readable format
-                                                dt = datetime.fromisoformat(appointment_datetime)
-                                                formatted_datetime = dt.strftime('%B %d at %I:%M %p')
-                                            except:
-                                                formatted_datetime = appointment_datetime
-                                        else:
-                                            formatted_datetime = "the scheduled time"
-                                        
-                                        confirmation = f"Great! Your appointment has been scheduled for {formatted_datetime}."
-                                        
-                                        # Send confirmation message
-                                        await websocket.send_json({
-                                            'type': 'message',
-                                            'text': confirmation
-                                        })
-                                        
-                                        # Use TTS for the confirmation
-                                        tts_client.TTS(
-                                            confirmation,
-                                            play_locally=True
-                                        )
-                                        tts_client.wait_for_completion()
+                            # Send goodbye message
+                            await websocket.send_json({
+                                'type': 'message',
+                                'text': response,
+                                'is_goodbye': True
+                            })
+                            
+                            try:
+                                # Use TTS for the confirmation
+                                tts_client.TTS(
+                                    response,
+                                    play_locally=True
+                                )
+                                tts_client.wait_for_completion()
+                            except KeyboardInterrupt:
+                                tts_client.stop()
+                                pass
+                            
+                            # Use our centralized service to end the conversation
+                            result = ReminderService.end_conversation(reminder_id)
+                            
+                            # Send the result to the client
+                            if result.get('type') == 'appointment_result':
+                                # Prepare a user-friendly message
+                                if result.get('success', False):
+                                    appointment = result.get('appointment', {})
+                                    appointment_datetime = appointment.get('datetime', '')
+                                    if appointment_datetime:
+                                        try:
+                                            # Convert ISO format to readable format
+                                            dt = datetime.fromisoformat(appointment_datetime)
+                                            formatted_datetime = dt.strftime('%B %d at %I:%M %p')
+                                        except:
+                                            formatted_datetime = appointment_datetime
                                     else:
-                                        error_msg = f"I couldn't schedule the appointment: {result.get('message', 'Unknown error')}"
-                                        
-                                        # Send error message
-                                        await websocket.send_json({
-                                            'type': 'message',
-                                            'text': error_msg
-                                        })
-                                        
-                                        # Use TTS for the error message
-                                        tts_client.TTS(
-                                            error_msg,
-                                            play_locally=True
-                                        )
-                                        tts_client.wait_for_completion()
+                                        formatted_datetime = "the scheduled time"
                                     
-                                    await asyncio.sleep(1)
-                                    # Send the detailed result
-                                    await websocket.send_json({
-                                        'type': 'appointment_result',
-                                        'success': result.get('success', False),
-                                        'message': result.get('message', ''),
-                                        'appointment': result.get('appointment', {})
-                                    })
-                                elif result.get('type') == 'medication_result':
-                                    # Prepare a user-friendly message
-                                    if result.get('success', False):
-                                        summary_msg = "Thank you for your time. Your medication information has been updated."
-                                    else:
-                                        summary_msg = "Thank you for your time. I couldn't generate a summary of our conversation."
+                                    confirmation = f"Great! Your appointment has been scheduled for {formatted_datetime}."
                                     
-                                    # Send summary message
+                                    # Send confirmation message
                                     await websocket.send_json({
                                         'type': 'message',
-                                        'text': summary_msg
+                                        'text': confirmation
                                     })
                                     
-                                    # Use TTS for the summary message
+                                    # Use TTS for the confirmation
                                     tts_client.TTS(
-                                        summary_msg,
+                                        confirmation,
                                         play_locally=True
                                     )
                                     tts_client.wait_for_completion()
                                     
-                                    # Send the detailed result
+                                else:
+                                    error_msg = f"I couldn't schedule the appointment: {result.get('message', 'Unknown error')}"
+                                    
+                                    # Send error message
                                     await websocket.send_json({
-                                        'type': 'medication_result',
-                                        'success': result.get('success', False),
-                                        'summary': result.get('summary', '')
+                                        'type': 'message',
+                                        'text': error_msg
                                     })
+                                    
+                                    # Use TTS for the error message
+                                    tts_client.TTS(
+                                        error_msg,
+                                        play_locally=True
+                                    )
+                                    tts_client.wait_for_completion()
                                 
-                                # Break the loop to close the connection
-                                #break
-                            except Exception as e:
-                                logger.error(f"Error processing end_conversation: {str(e)}")
+                                time.sleep(0.5)
+                                
+                                print("Got here again")
+                                # Send the detailed result
+                                await websocket.send_json({
+                                    'type': 'appointment_result',
+                                    'success': result.get('success', False),
+                                    'message': result.get('message', ''),
+                                    'appointment': result.get('appointment', {})
+                                })
+                                
+                            elif result.get('type') == 'medication_result':
+                                # Prepare a user-friendly message
+                                if result.get('success', False):
+                                    summary_msg = "Thank you for your time. Your medication information has been updated."
+                                else:
+                                    summary_msg = "Thank you for your time. I couldn't generate a summary of our conversation."
+                                
+                                # Send summary message
                                 await websocket.send_json({
                                     'type': 'message',
-                                    'text': f"An error occurred while ending the conversation: {str(e)}"
+                                    'text': summary_msg
                                 })
-                                break    
+                                
+                                # Use TTS for the summary message
+                                tts_client.TTS(
+                                    summary_msg,
+                                    play_locally=True
+                                )
+                                tts_client.wait_for_completion()
+                                
+                                # Send the detailed result
+                                await websocket.send_json({
+                                    'type': 'medication_result',
+                                    'success': result.get('success', False),
+                                    'summary': result.get('summary', '')
+                                })
+                            
+                            # Break the loop to close the connection
+                            break
                         
                         elif data.get("type") == "end_conversation":
                             try:
@@ -747,6 +744,7 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                                         )
                                         tts_client.wait_for_completion()
                                     
+                                    
                                     # Send the detailed result
                                     await websocket.send_json({
                                         'type': 'appointment_result',
@@ -754,6 +752,7 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                                         'message': result.get('message', ''),
                                         'appointment': result.get('appointment', {})
                                     })
+                                    
                                 elif result.get('type') == 'medication_result':
                                     # Prepare a user-friendly message
                                     if result.get('success', False):
@@ -782,7 +781,7 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                                     })
                                 
                                 # Break the loop to close the connection
-                                #break
+                                break
                         
                             except Exception as e:
                                 logger.error(f"Error processing end_conversation: {str(e)}")

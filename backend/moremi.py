@@ -265,9 +265,10 @@ class ConversationManager:
     def add_user_message(self, text=None, image_path=None):
         """Add a user message to the conversation history."""
         
-        if len(self.conversation_history) == 0 and self.custom_params["system_prompt"] != '':
+        if next((item for item in self.conversation_history if item["role"] == "system"), None) is None and self.custom_params["system_prompt"] != '':
             self.conversation_history.append({"role": "system",
                                               "content": self.custom_params["system_prompt"]})
+            
         elif next((item for item in self.conversation_history if item["role"] == "system"), None) is not None:
             # Update system prompt if it exists in conversation history
             target = next((item for item in self.conversation_history if item["role"] == "system"))
