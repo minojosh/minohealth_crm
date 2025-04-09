@@ -187,8 +187,6 @@ class TTSClient:
             # Prepare the request
             url = f"{self.server_url}/tts-stream"
             
-            # Send the request
-            import requests
             response = requests.post(
                 url,
                 json={"text": text},

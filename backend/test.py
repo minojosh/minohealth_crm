@@ -6,8 +6,8 @@ import os
 
 dotenv_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
-tts_client = TTSClient(api_url=os.getenv("XTTS_URL") or os.getenv("SPEECH_SERVICE_URL"))
-
+#tts_client = TTSClient(api_url=os.getenv("XTTS_URL") or os.getenv("SPEECH_SERVICE_URL"))
+tts_client = TTSClient("https://4185-34-34-51-11.ngrok-free.app/")
 #LLM = ConversationManager()
 
 # LLM.add_user_message("What is your name")
@@ -16,6 +16,6 @@ tts_client = TTSClient(api_url=os.getenv("XTTS_URL") or os.getenv("SPEECH_SERVIC
 
 # Use TTS for the reschedule message
 tts_client.TTS(
-    "My name is Prince",
+    "Hello, I am your virtual assistant. How can I help you today?",
     play_locally=True
 )
