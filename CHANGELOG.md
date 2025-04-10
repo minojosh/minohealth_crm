@@ -1,13 +1,14 @@
 ## TODOS
 
-- [ ] Fix numeric updates for incremental up, down and add remove fixed number beginning the count
 - [ ] Improve audio chunking management for api calls and responses
 - [ ] Improve UI for data management page
-- [ ] Remove the default number stuck on management page
+
+## PENDING
+
 
 ## BUGS
 
-- [  ] Error throwing up even after successful websocket connection
+* [ ] Error throwing up even after successful websocket connection
 
 ## FIXES
 
@@ -17,3 +18,4 @@
 - [X] Implement Open router implementation for model usage across codebase and usage
 - [X] Frontend component url pointing to local host
 - [X] Removed hours ahead when medication is selected
+- [X] Fix numeric updates for incremental up, down and add remove fixed number beginning the count

@@ -36,6 +36,8 @@ export default function AppointmentManager() {
   const [type, setType] = useState<'appointment' | 'medication'>('appointment');
   const [daysAhead, setDaysAhead] = useState<number>(1);
   const [hoursAhead, setHoursAhead] = useState<number>(1);
+  const [daysAheadInput, setDaysAheadInput] = useState<string>('1');
+  const [hoursAheadInput, setHoursAheadInput] = useState<string>('1');
   const [loading, setLoading] = useState(false);
   const [reminders, setReminders] = useState<ReminderResponse[]>([]);
   const [selectedReminder, setSelectedReminder] = useState<ReminderResponse | undefined>(undefined);
@@ -173,8 +175,24 @@ export default function AppointmentManager() {
                         labelPlacement="outside"
                         placeholder="Input days ahead"
                         type="number"
-                        value={daysAhead.toString()}
-                        onChange={(e) => setDaysAhead(parseInt(e.target.value) || 1)}
+                        value={daysAheadInput}
+                        onChange={(e) => {
+                          setDaysAheadInput(e.target.value);
+                          if (e.target.value === '') {
+                          } else {
+                            setDaysAhead(parseInt(e.target.value) || 1);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!e.target.value || parseInt(e.target.value) < 1) {
+                            setDaysAhead(1);
+                            setDaysAheadInput('1');
+                          } else {
+                            const numValue = parseInt(e.target.value);
+                            setDaysAhead(numValue);
+                            setDaysAheadInput(numValue.toString());
+                          }
+                        }}
                         min={1}
                         startContent={<CalendarIcon className="w-4 h-4 text-gray-400" />}
                       />
@@ -185,8 +203,24 @@ export default function AppointmentManager() {
                         labelPlacement="outside"
                         placeholder="Input hours ahead"
                         type="number"
-                        value={hoursAhead.toString()}
-                        onChange={(e) => setHoursAhead(parseInt(e.target.value) || 1)}
+                        value={hoursAheadInput}
+                        onChange={(e) => {
+                          setHoursAheadInput(e.target.value);
+                          if (e.target.value === '') {
+                          } else {
+                            setHoursAhead(parseInt(e.target.value) || 1);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!e.target.value || parseInt(e.target.value) < 1) {
+                            setHoursAhead(1);
+                            setHoursAheadInput('1');
+                          } else {
+                            const numValue = parseInt(e.target.value);
+                            setHoursAhead(numValue);
+                            setHoursAheadInput(numValue.toString());
+                          }
+                        }}
                         min={1}
                         startContent={<ClockIcon className="w-4 h-4 text-gray-400" />}
                       />
