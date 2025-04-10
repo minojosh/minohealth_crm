@@ -62,12 +62,9 @@ export function AppointmentConversation({ reminder, onComplete, className = "" }
   const lastPongTimeRef = useRef<number>(Date.now());
   
   // Add new state for conversation flow
-  const [conversationState, setConversationState] = useState<'initial' | 'context' | 'specialty_search' | 'doctor_selection' | 'appointment_scheduling' | 'confirmation'>('initial');
-  const [isListening, setIsListening] = useState(false);
-  const [specialtySearchComplete, setSpecialtySearchComplete] = useState(false);
+  const [conversationState, setConversationState] = useState<'initial' | 'context' | 'confirmation'>('initial');
   
   // Add to existing state declarations
-  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [appointmentDetails, setAppointmentDetails] = useState<any>(null);
 
   // Add text input functionality for testing

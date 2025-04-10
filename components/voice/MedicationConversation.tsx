@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@heroui/button';
 import { Card, CardBody } from '@heroui/card';
 import { ReminderResponse } from '../../app/appointment-manager/types';
-import { MicrophoneIcon, StopIcon, CheckCircleIcon, ArrowPathIcon  } from '@heroicons/react/24/solid';
+import { MicrophoneIcon, StopIcon, CheckCircleIcon, ArrowPathIcon, BellIcon } from '@heroicons/react/24/solid';
 
 interface Message {
   role: 'user' | 'system' | 'agent';
@@ -40,6 +40,13 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
   const reconnectAttemptsRef = useRef<number>(0);
   const MAX_RETRIES = 3;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to the latest message
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   // Message handling
   const addMessage = (role: 'user' | 'agent', content: string) => {
@@ -91,7 +98,13 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
           case 'message':
             addMessage(data.role || 'agent', data.text);
             if (data.role !== 'system') {
-              setIsProcessing(false);
+              // If this is a goodbye message, set processing to true
+              if (data.is_goodbye) {
+                console.log('Received goodbye message, showing processing indicator');
+                setIsProcessing(true);
+              } else {
+                setIsProcessing(false);
+              }
             }
             break;
           case 'summary':
@@ -408,100 +421,116 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
   return (
     <Card className={`w-full ${className}`}>
       <CardBody className="p-4">
-        <div className="flex flex-col h-[500px]">
-          {/* Messages container */}
-          <div className="flex-1 overflow-y-auto mb-4 space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] p-3 rounded-lg ${
-                    message.role === 'user'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 dark:bg-gray-800'
-                  }`}
-                >
-                  {message.content}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+        <div className="mb-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold flex items-center">
+              <span className="mr-2">
+                <BellIcon className="h-5 w-5 text-purple-500" />
+              </span>
+              Medication Conversation
+            </h2>
           </div>
-
-          {/* Controls */}
-          <div className="flex flex-col space-y-4 mt-4">
-            {/* Text input for testing */}
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={textInput}
-                onChange={(e) => setTextInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendTextMessage()}
-                placeholder="Type a message..."
-                className="flex-1 p-2 border rounded-md"
-                disabled={isProcessing || !wsConnected}
-              />
-              <Button
-                color="primary"
-                onClick={sendTextMessage}
-                disabled={isProcessing || !wsConnected || !textInput.trim()}
-              >
-                Send
-              </Button>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Button
-                color={isRecording ? 'danger' : 'primary'}
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={isProcessing || !wsConnected}
-                className="flex items-center gap-2"
-              >
-                {isRecording ? (
-                  <>
-                    <StopIcon className="w-5 h-5" />
-                    Stop Recording
-                  </>
-                ) : (
-                  <>
-                    <MicrophoneIcon className="w-5 h-5" />
-                    Start Recording
-                  </>
-                )}
-              </Button>
-
-              <Button
-                color="success"
-                onClick={finishConversation}
-                disabled={isRecording || isProcessing}
-                className="flex items-center gap-2"
-              >
-                <CheckCircleIcon className="w-5 h-5" />
-                Complete
-              </Button>
-            </div>
-          </div>
-
-          {/* Error message */}
-          {error && (
-            <div className="text-danger text-sm mt-2">{error}</div>
-          )}
-
-          {/* Processing indicator */}
-          {isProcessing && (
-                        <span className="text-sm text-blue-500 flex items-center">
-                          <ArrowPathIcon className="w-4 h-4 mr-1 animate-spin" />
-                          Processing...
-                        </span>
-                      )}
-
-          {/* Connection status */}
-          {!wsConnected && (
-            <div className="text-warning text-sm mt-2">Connecting...</div>
-          )}
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+            Patient: <span className="font-medium">{reminder?.patient_name}</span> | 
+            Medication: <span className="font-medium">{reminder?.details?.medication_name}</span>
+          </p>
         </div>
+
+        {/* Messages container */}
+        <div className="flex flex-col space-y-4 mb-4">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[70%] rounded-lg p-3 whitespace-pre-wrap ${
+                  message.role === 'user'
+                    ? 'bg-blue-600 text-white'
+                    : message.role === 'system'
+                    ? 'bg-gray-600 text-white'
+                    : 'bg-gray-200 text-gray-900'
+                }`}
+              >
+                {message.content}
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-col space-y-4 mt-4">
+          {/* Text input for testing */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && sendTextMessage()}
+              placeholder="Type a message..."
+              className="flex-1 p-2 border rounded-md"
+              disabled={isProcessing || !wsConnected}
+            />
+            <Button
+              color="primary"
+              onClick={sendTextMessage}
+              disabled={isProcessing || !wsConnected || !textInput.trim()}
+            >
+              Send
+            </Button>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Button
+              color={isRecording ? 'danger' : 'primary'}
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={isProcessing || !wsConnected}
+              className="flex items-center gap-2"
+            >
+              {isRecording ? (
+                <>
+                  <StopIcon className="w-5 h-5" />
+                  Stop Recording
+                </>
+              ) : (
+                <>
+                  <MicrophoneIcon className="w-5 h-5" />
+                  Start Recording
+                </>
+              )}
+            </Button>
+
+            {isProcessing && (
+              <span className="text-sm text-blue-500 flex items-center">
+                <ArrowPathIcon className="w-4 h-4 mr-1 animate-spin" />
+                Processing...
+              </span>
+            )}
+
+            <Button
+              color="success"
+              onClick={finishConversation}
+              disabled={isRecording || isProcessing}
+              className="flex items-center gap-2"
+            >
+              <CheckCircleIcon className="w-5 h-5" />
+              Complete
+            </Button>
+          </div>
+        </div>
+
+        {/* Error message */}
+        {error && (
+          <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+
+        {/* Connection status */}
+        {!wsConnected && (
+          <div className="text-warning text-sm mt-2">Connecting...</div>
+        )}
       </CardBody>
     </Card>
   );

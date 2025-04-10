@@ -664,7 +664,7 @@ async def websocket_endpoint(websocket: WebSocket, reminder_id: str):
                             elif result.get('type') == 'medication_result':
                                 # Prepare a user-friendly message
                                 if result.get('success', False):
-                                    summary_msg = "Thank you for your time. Your medication information has been updated."
+                                    summary_msg = "Thank you for your time. Please feel free to reach out to us at Mino Health Care anytime."
                                 else:
                                     summary_msg = "Thank you for your time. I couldn't generate a summary of our conversation."
                                 

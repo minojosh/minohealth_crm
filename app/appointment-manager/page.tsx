@@ -167,26 +167,30 @@ export default function AppointmentManager() {
                     <SelectItem key="medication">Medication</SelectItem>
                   </Select>
                   <div className="grid grid-cols-2 gap-4">
-                    <Input
-                      label="Days Ahead"
-                      labelPlacement="outside"
-                      placeholder="Input days ahead"
-                      type="number"
-                      value={daysAhead.toString()}
-                      onChange={(e) => setDaysAhead(parseInt(e.target.value) || 1)}
-                      min={1}
-                      startContent={<CalendarIcon className="w-4 h-4 text-gray-400" />}
-                    />
-                    <Input
-                      label="Hours Ahead"
-                      labelPlacement="outside"
-                      placeholder="Input hours ahead"
-                      type="number"
-                      value={hoursAhead.toString()}
-                      onChange={(e) => setHoursAhead(parseInt(e.target.value) || 1)}
-                      min={1}
-                      startContent={<ClockIcon className="w-4 h-4 text-gray-400" />}
-                    />
+                    <div className={type === 'medication' ? 'col-span-2' : ''}>
+                      <Input
+                        label="Days Ahead"
+                        labelPlacement="outside"
+                        placeholder="Input days ahead"
+                        type="number"
+                        value={daysAhead.toString()}
+                        onChange={(e) => setDaysAhead(parseInt(e.target.value) || 1)}
+                        min={1}
+                        startContent={<CalendarIcon className="w-4 h-4 text-gray-400" />}
+                      />
+                    </div>
+                    {type === 'appointment' && (
+                      <Input
+                        label="Hours Ahead"
+                        labelPlacement="outside"
+                        placeholder="Input hours ahead"
+                        type="number"
+                        value={hoursAhead.toString()}
+                        onChange={(e) => setHoursAhead(parseInt(e.target.value) || 1)}
+                        min={1}
+                        startContent={<ClockIcon className="w-4 h-4 text-gray-400" />}
+                      />
+                    )}
                   </div>
                   <Button 
                     color="primary" 
