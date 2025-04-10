@@ -40,3 +40,1536 @@
 2025-03-03 09:53:32,128 - backend.api - INFO - Audio WebSocket connection established
 2025-03-03 10:17:53,319 - backend.api - INFO - Audio WebSocket client disconnected
 2025-03-03 10:17:53,322 - backend.api - INFO - Closing audio WebSocket connection
+2025-04-09 20:45:32,176 - backend.api - INFO - Using LLM implementation: openrouter
+2025-04-09 20:45:33,227 - backend.api - INFO - Successfully loaded OpenRouter implementation
+2025-04-09 20:45:33,231 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:33,235 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:33,236 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:33,487 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:33,487 - backend.api - INFO - TTS Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:33,497 - backend.unified_ai_service_open_router - INFO - Successfully loaded configuration from C:\Users\Mecha Mino 5 Outlook\Documents\Mino Health AI labs\minoHealth CRM\minohealth_crm\backend\prompt.json
+2025-04-09 20:45:33,497 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:33,503 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:33,505 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:33,533 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:33,533 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:33,536 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:33,536 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 20:45:33,548 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 20:45:34,276 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 20:45:34,276 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 20:45:34,276 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:34,298 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:34,298 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:34,308 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:34,309 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:34,331 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:34,332 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:34,335 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:34,335 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 20:45:34,337 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 20:45:34,899 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 20:45:34,904 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 20:45:34,904 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:34,927 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:34,927 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:34,933 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:34,934 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:34,953 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:34,953 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:34,958 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:34,959 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 20:45:34,962 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 20:45:35,500 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 20:45:35,506 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 20:45:35,507 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:35,533 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:35,533 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:35,537 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:35,537 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:35,560 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:35,561 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:35,564 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:35,564 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 20:45:35,567 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 20:45:36,083 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 20:45:36,085 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 20:45:36,086 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:36,152 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:36,152 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:36,158 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:36,159 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:36,177 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:36,177 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:36,182 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 20:45:36,182 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 20:45:36,189 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 20:45:36,691 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 20:45:36,697 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 20:45:36,697 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 20:45:36,716 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 20:45:37,271 - backend.api - INFO - Active LLM implementation: openrouter
+2025-04-09 20:45:37,271 - backend.api - INFO - Using model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:02:07,378 - backend.api - INFO - Using LLM implementation: openrouter
+2025-04-09 21:02:07,923 - backend.api - INFO - Successfully loaded OpenRouter implementation
+2025-04-09 21:02:07,928 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:07,930 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:07,931 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:08,022 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:08,022 - backend.api - INFO - TTS Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,033 - backend.unified_ai_service_open_router - INFO - Successfully loaded configuration from C:\Users\Mecha Mino 5 Outlook\Documents\Mino Health AI labs\minoHealth CRM\minohealth_crm\backend\prompt.json
+2025-04-09 21:02:08,033 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,033 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,035 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:08,052 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:08,052 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,052 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,052 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:02:08,052 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:02:08,454 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:02:08,454 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:02:08,454 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:08,475 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:08,476 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,477 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,478 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:08,493 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:08,493 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,499 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,499 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:02:08,502 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:02:08,862 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:02:08,862 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:02:08,868 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:08,889 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:08,889 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,890 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,893 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:08,908 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:08,908 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,913 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:08,913 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:02:08,915 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:02:09,285 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:02:09,293 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:02:09,293 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:09,312 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:09,312 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:09,315 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:09,316 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:09,335 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:09,335 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:09,338 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:09,338 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:02:09,338 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:02:09,705 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:02:09,706 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:02:09,708 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:09,767 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:09,768 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:09,770 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:09,771 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:09,788 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:09,788 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:09,792 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:02:09,792 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:02:09,793 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:02:10,165 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:02:10,168 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:02:10,168 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:02:10,187 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:02:10,573 - backend.api - INFO - Active LLM implementation: openrouter
+2025-04-09 21:02:10,573 - backend.api - INFO - Using model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:16:30,209 - backend.api - INFO - Using LLM implementation: openrouter
+2025-04-09 21:16:30,914 - backend.api - INFO - Successfully loaded OpenRouter implementation
+2025-04-09 21:16:30,924 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:30,927 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:30,928 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:31,064 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:31,071 - backend.api - INFO - TTS Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:31,073 - backend.unified_ai_service_open_router - INFO - Successfully loaded configuration from C:\Users\Mecha Mino 5 Outlook\Documents\Mino Health AI labs\minoHealth CRM\minohealth_crm\backend\prompt.json
+2025-04-09 21:16:31,073 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:31,080 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:31,080 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:31,102 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:31,102 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:31,106 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:31,107 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:16:31,110 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:16:31,664 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:16:31,664 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:16:31,664 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:31,692 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:31,692 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:31,695 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:31,696 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:31,719 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:31,719 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:31,724 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:31,725 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:16:31,729 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:16:32,188 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:16:32,188 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:16:32,194 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:32,214 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:32,214 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:32,220 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:32,221 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:32,243 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:32,244 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:32,246 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:32,247 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:16:32,248 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:16:32,705 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:16:32,705 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:16:32,705 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:32,724 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:32,724 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:32,735 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:32,736 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:32,754 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:32,755 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:32,758 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:32,759 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:16:32,762 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:16:33,194 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:16:33,241 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:16:33,242 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:33,261 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:33,261 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:33,266 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:33,267 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:33,284 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:33,288 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:33,292 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:16:33,292 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:16:33,296 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:16:33,724 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:16:33,724 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:16:33,724 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:16:33,748 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:16:34,114 - backend.api - INFO - Active LLM implementation: openrouter
+2025-04-09 21:16:34,114 - backend.api - INFO - Using model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:22:35,707 - backend.api - INFO - Using LLM implementation: openrouter
+2025-04-09 21:22:36,537 - backend.api - INFO - Successfully loaded OpenRouter implementation
+2025-04-09 21:22:36,537 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:36,552 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:36,553 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:36,677 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:36,677 - backend.api - INFO - TTS Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:36,677 - backend.unified_ai_service_open_router - INFO - Successfully loaded configuration from C:\Users\Mecha Mino 5 Outlook\Documents\Mino Health AI labs\minoHealth CRM\minohealth_crm\backend\prompt.json
+2025-04-09 21:22:36,677 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:36,687 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:36,688 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:36,705 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:36,707 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:36,709 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:36,710 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:22:36,712 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:22:37,293 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:22:37,297 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:22:37,298 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:37,324 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:37,325 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:37,328 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:37,332 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:37,359 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:37,360 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:37,368 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:37,369 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:22:37,378 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:22:38,077 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:22:38,078 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:22:38,082 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:38,108 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:38,109 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:38,112 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:38,112 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:38,139 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:38,140 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:38,143 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:38,144 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:22:38,148 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:22:38,737 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:22:38,737 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:22:38,737 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:38,757 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:38,757 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:38,767 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:38,768 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:38,787 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:38,787 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:38,787 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:38,787 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:22:38,794 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:22:39,293 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:22:39,341 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:22:39,342 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:39,360 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:39,361 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:39,364 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:39,365 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:39,382 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:39,383 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:39,387 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:22:39,387 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:22:39,389 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:22:39,907 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:22:39,907 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:22:39,914 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:22:39,932 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:22:40,364 - backend.api - INFO - Active LLM implementation: openrouter
+2025-04-09 21:22:40,365 - backend.api - INFO - Using model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:08,178 - backend.api - INFO - Using LLM implementation: openrouter
+2025-04-09 21:39:08,826 - backend.api - INFO - Successfully loaded OpenRouter implementation
+2025-04-09 21:39:08,836 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:08,836 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:08,836 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:08,935 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:08,935 - backend.api - INFO - TTS Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:08,942 - backend.unified_ai_service_open_router - INFO - Successfully loaded configuration from C:\Users\Mecha Mino 5 Outlook\Documents\Mino Health AI labs\minoHealth CRM\minohealth_crm\backend\prompt.json
+2025-04-09 21:39:08,942 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:08,942 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:08,946 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:08,956 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:08,956 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:08,969 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:08,970 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:08,972 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:39:09,437 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:39:09,446 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:39:09,446 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:09,459 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:09,459 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:09,467 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:09,467 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:09,485 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:09,485 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:09,491 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:09,491 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:09,494 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:39:09,921 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:39:09,926 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:39:09,926 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:09,950 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:09,950 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:09,955 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:09,956 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:09,976 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:09,976 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:09,978 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:09,979 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:09,982 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:39:10,406 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:39:10,412 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:39:10,412 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:10,429 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:10,429 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:10,437 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:10,438 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:10,459 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:10,460 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:10,462 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:10,463 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:10,465 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:39:10,896 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:39:10,950 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:39:10,950 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:10,965 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:10,965 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:10,968 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:10,968 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:10,985 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:10,986 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:10,990 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:10,990 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:10,994 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:39:11,411 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:39:11,416 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:39:11,416 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:11,433 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:11,836 - backend.api - INFO - Active LLM implementation: openrouter
+2025-04-09 21:39:11,836 - backend.api - INFO - Using model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:45,546 - backend.api - INFO - Using LLM implementation: openrouter
+2025-04-09 21:39:46,720 - backend.api - INFO - Successfully loaded OpenRouter implementation
+2025-04-09 21:39:46,731 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:46,736 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:46,736 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:46,876 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:46,876 - backend.api - INFO - TTS Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:46,876 - backend.unified_ai_service_open_router - INFO - Successfully loaded configuration from C:\Users\Mecha Mino 5 Outlook\Documents\Mino Health AI labs\minoHealth CRM\minohealth_crm\backend\prompt.json
+2025-04-09 21:39:46,876 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:46,890 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:46,891 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:46,915 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:46,916 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:46,919 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:46,919 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:46,922 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:39:47,578 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:39:47,580 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:39:47,582 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:47,598 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:47,598 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:47,608 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:47,609 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:47,633 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:47,634 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:47,638 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:47,639 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:47,646 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:39:48,216 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:39:48,220 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:39:48,220 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:48,242 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:48,242 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:48,248 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:48,249 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:48,267 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:48,267 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:48,273 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:48,273 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:48,278 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:39:48,889 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:39:48,896 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:39:48,896 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:48,915 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:48,915 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:48,924 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:48,926 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:48,945 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:48,945 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:48,956 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:48,956 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:48,961 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:39:49,625 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:39:49,687 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:39:49,688 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:49,709 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:49,710 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:49,714 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:49,714 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:49,737 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:49,737 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:49,741 - backend.STT_client - INFO - Speech Service URL configured as: https://7043-34-105-57-40.ngrok-free.app
+2025-04-09 21:39:49,741 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-09 21:39:49,751 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-09 21:39:50,310 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-09 21:39:50,312 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-09 21:39:50,312 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-09 21:39:50,332 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-09 21:39:50,789 - backend.api - INFO - Active LLM implementation: openrouter
+2025-04-09 21:39:50,789 - backend.api - INFO - Using model: google/gemini-2.0-flash-lite-001
+2025-04-10 08:32:31,710 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:32:32,291 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:32:32,747 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:32:40,558 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:32:41,030 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:32:41,517 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:32:49,477 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:32:49,967 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:32:50,465 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:32:58,913 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:32:59,411 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:32:59,887 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:08,121 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:33:08,634 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:09,145 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:17,237 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:33:17,713 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:18,175 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:26,809 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:33:27,773 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:28,237 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:36,101 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:33:36,619 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:37,101 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:45,177 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:33:45,663 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:46,131 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:54,022 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:33:54,487 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:33:54,987 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:34:03,017 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:34:03,447 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:34:03,878 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:34:11,863 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:34:12,307 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:34:12,797 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:34:20,719 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:34:21,207 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:34:21,677 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:34:29,547 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:34:30,011 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:34:30,479 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:34:38,383 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:34:38,933 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:34:39,480 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:47:30,736 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:47:31,310 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:47:31,837 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:47:39,812 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:47:40,289 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:47:40,735 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:47:48,775 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:47:49,253 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:47:49,711 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:47:57,967 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:47:58,428 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:47:58,884 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:48:07,077 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:48:07,521 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:48:07,987 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:48:16,204 - backend.XTTS_adapter - INFO - Using streaming client for text: Hello! I'm your differential d...
+2025-04-10 08:48:16,790 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
+2025-04-10 08:48:17,247 - TTSClient - ERROR - Error from TTS server: 404 - <!DOCTYPE html>
+<html class="h-full" lang="en-US" dir="ltr">
+  <head>
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Regular-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-RegularItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Medium-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-Semibold-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/euclid-square/EuclidSquare-MediumItalic-WebS.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-Text.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-TextItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBold.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <link rel="preload" href="https://cdn.ngrok.com/static/fonts/ibm-plex-mono/IBMPlexMono-SemiBoldItalic.woff" as="font" type="font/woff" crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="author" content="ngrok">
+    <meta name="description" content="ngrok is the fastest way to put anything on the internet with a single command.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link id="style" rel="stylesheet" href="https://cdn.ngrok.com/static/css/error.css">
+    <noscript>The endpoint 7043-34-105-57-40.ngrok-free.app is offline. (ERR_NGROK_3200)</noscript>
+    <script id="script" src="https://cdn.ngrok.com/static/js/error.js" type="text/javascript"></script>
+  </head>
+  <body class="h-full" id="ngrok">
+    <div id="root" data-payload="eyJjZG5CYXNlIjoiaHR0cHM6Ly9jZG4ubmdyb2suY29tLyIsImNvZGUiOiIzMjAwIiwibWVzc2FnZSI6IlRoZSBlbmRwb2ludCA3MDQzLTM0LTEwNS01Ny00MC5uZ3Jvay1mcmVlLmFwcCBpcyBvZmZsaW5lLiIsInRpdGxlIjoiTm90IEZvdW5kIn0="></div>
+  </body>
+</html>
+
