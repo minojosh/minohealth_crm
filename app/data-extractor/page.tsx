@@ -15,9 +15,11 @@ import {
   getAllPatients, 
   ExtractedDataResponse, 
   PatientDetails, 
-  PatientDetailsResponse 
+  PatientDetailsResponse,
+  TranscriptionStatus
 } from "./api";
 import { audioService } from "../api/audio";
+import { API_ENDPOINTS } from '../api/api';
 
 
 export default function DataExtractor() {
@@ -295,9 +297,8 @@ export default function DataExtractor() {
           base64Data = btoa(base64Data);
           console.log("Base64 conversion complete. Length:", base64Data.length);
           
-          // Strip trailing slashes and construct URL
-          const baseUrl = process.env.NEXT_PUBLIC_STT_SERVER_URL?.replace(/\/+$/, '') || 'http://localhost:8000';
-          const transcribeUrl = `${baseUrl}/transcribe`;
+          // Use the centralized transcription endpoint
+          const transcribeUrl = API_ENDPOINTS.transcribe;
           console.log("Transcription URL:", transcribeUrl);
 
           // Send to STT service

@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { API_ENDPOINTS } from '../api/api'; // Import centralized endpoints
 
 export interface TranscriptionStatus {
   isRecording: boolean;
@@ -157,7 +157,8 @@ export async function extractData(transcript: string): Promise<ExtractedDataResp
   console.log('Sending transcript to extraction API:', transcript.substring(0, 100) + '...');
   
   try {
-    const response = await fetch(`${API_BASE_URL}/api/extract/data`, {
+    // Use the centralized endpoint
+    const response = await fetch(API_ENDPOINTS.medicalExtract, { 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -201,9 +202,8 @@ export async function extractFromAudio(audioData: string, sessionId?: string): P
   console.log('Sending audio for processing, session ID:', sessionId || 'none');
   
   try {
-    // Use the same URL structure as in SchedulerConversation.tsx
-    const baseUrl = process.env.NEXT_PUBLIC_SPEECH_SERVICE_URL?.replace(/\/+$/, '') || API_BASE_URL;
-    const transcribeUrl = `${baseUrl}/transcribe`;
+    // Use the centralized transcription endpoint
+    const transcribeUrl = API_ENDPOINTS.transcribe;
     console.log("Transcription URL:", transcribeUrl);
     
     // Send to STT service
@@ -248,44 +248,32 @@ export async function extractFromAudio(audioData: string, sessionId?: string): P
 
 export async function getPatientDetails(patientId: number): Promise<PatientDetailsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/patient/${patientId}`);
-
+    // Use the centralized endpoint
+    const response = await fetch(API_ENDPOINTS.patientDetails(patientId)); 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.error('API Error:', errorData);
-      throw new Error(
-        errorData?.detail || `HTTP error! status: ${response.status}`
-      );
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
-    console.error('Error getting patient details:', error);
+    console.error('Error fetching patient details:', error);
     throw error instanceof Error 
       ? error 
-      : new Error('Failed to get patient details');
+      : new Error('Failed to fetch patient details');
   }
 }
 
 export async function getAllPatients(): Promise<PatientsListResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/patients`);
-
+    // Use the centralized endpoint
+    const response = await fetch(API_ENDPOINTS.patients); 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.error('API Error:', errorData);
-      throw new Error(
-        errorData?.detail || `HTTP error! status: ${response.status}`
-      );
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
-    console.error('Error getting patients list:', error);
+    console.error('Error fetching all patients:', error);
     throw error instanceof Error 
       ? error 
-      : new Error('Failed to get patients list');
+      : new Error('Failed to fetch all patients');
   }
 }

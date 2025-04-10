@@ -45,19 +45,6 @@ import io
 from dotenv import load_dotenv
 from scipy import signal
 
-from .XTTS_adapter import TTSClient
-from .STT_client import SpeechRecognitionClient
-from .unified_ai_service import (
-    AIService,
-    SchedulerService,
-    DifferentialDiagnosisService,
-    MedicationReminderService,
-    MedicalAssistantService,
-    ConfigManager,
-    SpeechAssistant
-)
-
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -69,6 +56,57 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Initialize environment variables
+load_dotenv()
+
+# Import speech services
+from .XTTS_adapter import TTSClient
+from .STT_client import SpeechRecognitionClient
+
+# Dynamically import the LLM implementation based on environment variable
+llm_implementation = os.getenv("LLM_IMPLEMENTATION", "openrouter").lower()
+logger.info(f"Using LLM implementation: {llm_implementation}")
+
+if llm_implementation == "moremi":
+    # Import original Moremi implementation
+    try:
+        from .moremi import ConversationManager
+        from .unified_ai_service import (
+            AIService,
+            ConfigManager,
+            SchedulerService,
+            DifferentialDiagnosisService,
+            MedicationReminderService,
+            MedicalAssistantService,
+            SpeechAssistant
+        )
+        logger.info("Successfully loaded original Moremi implementation")
+    except ImportError:
+        # Fall back to OpenRouter if original implementation is not available
+        logger.warning("Original Moremi implementation not found, falling back to OpenRouter")
+        from .moremi_open_router import ConversationManager
+        from .unified_ai_service_open_router import (
+            AIService,
+            ConfigManager,
+            SchedulerService,
+            DifferentialDiagnosisService,
+            MedicationReminderService,
+            MedicalAssistantService,
+            SpeechAssistant
+        )
+else:
+    # Import OpenRouter implementation (default)
+    from .moremi_open_router import ConversationManager
+    from .unified_ai_service_open_router import (
+        AIService,
+        ConfigManager,
+        SchedulerService,
+        DifferentialDiagnosisService,
+        MedicationReminderService,
+        MedicalAssistantService,
+        SpeechAssistant
+    )
+    logger.info("Successfully loaded OpenRouter implementation")
 
 app = FastAPI(
     title="Moremi AI Scheduler API",
@@ -79,7 +117,7 @@ app = FastAPI(
 
 # Initialize speech server environment variable
 load_dotenv()
-speech_server_url = os.getenv("SPEECH_SERVER_URL")
+speech_server_url = os.getenv("SPEECH_SERVICE_URL")
 stt_client = SpeechRecognitionClient(server_url=speech_server_url)
 tts_client = TTSClient(api_url=speech_server_url)
 logger.info(f"TTS Service URL: {speech_server_url or 'Using default'}")
@@ -92,6 +130,13 @@ scheduler_service = SchedulerService(config_manager)
 diagnosis_service = DifferentialDiagnosisService(config_manager) 
 medication_service = MedicationReminderService(config_manager)
 medical_assistant_service = MedicalAssistantService(config_manager)
+
+# Log the LLM implementation in use
+logger.info(f"Active LLM implementation: {llm_implementation}")
+if llm_implementation == "openrouter":
+    logger.info(f"Using model: {os.getenv('OPENROUTER_MODEL', 'google/gemini-2.0-flash-lite-001')}")
+else:
+    logger.info(f"Using model: {os.getenv('MOREMI_MODEL', 'workspace/merged-llava-model')}")
 
 # Class to handle medical data extraction requests
 class MedicalExtractionRequest(BaseModel):
@@ -198,7 +243,10 @@ async def verify_token(token: str = Query(...)):
 @app.get("/")
 async def root():
     """Test endpoint to verify API documentation."""
-    return {"message": "Welcome to Moremi AI Scheduler API"}
+    if llm_implementation == "openrouter":
+        return {"message": "Welcome to MinoHealth AI API with OpenRouter integration"}
+    else:
+        return {"message": "Welcome to MinoHealth AI API with Moremi integration"}
 
 # @app.post("/tts")
 # async def text_to_speech(request: TTSRequest):
@@ -1449,7 +1497,6 @@ async def diagnosis_session(websocket: WebSocket, patient_id: int):
         except:
             pass
 
-
 async def stream_diagnosis_response(user_input: str):
     """
     Simulate streaming response from the diagnosis service.
@@ -1476,7 +1523,6 @@ async def stream_diagnosis_response(user_input: str):
     except Exception as e:
         logger.error(f"Error in streaming diagnosis response: {str(e)}")
         yield f"I'm sorry, I encountered an error processing your request. {str(e)}"
-
 
 async def stream_diagnosis_summary(conversation: str):
     """
@@ -1521,6 +1567,25 @@ async def stream_diagnosis_summary(conversation: str):
         logger.error(f"Error in streaming diagnosis summary: {str(e)}")
         yield json.dumps({"error": f"Error generating summary: {str(e)}"})
 
+@app.get("/llm-config")
+async def get_llm_config():
+    """Get the current LLM configuration details."""
+    if llm_implementation == "openrouter":
+        return {
+            "implementation": "openrouter",
+            "model": os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-lite-001"),
+            "api_base": "https://openrouter.ai/api/v1",
+            "site_info": {
+                "site_url": os.getenv("SITE_URL", ""),
+                "site_name": os.getenv("SITE_NAME", "CRM")
+            }
+        }
+    else:
+        return {
+            "implementation": "moremi",
+            "model": os.getenv("MOREMI_MODEL", "workspace/merged-llava-model"),
+            "api_base": os.getenv("MOREMI_API_BASE_URL", "")
+        }
 
 @app.get("/health")
 async def health_check():
