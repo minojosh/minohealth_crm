@@ -1,0 +1,32 @@
+{
+    "SOAP": {
+        "Subjective": {
+            "ChiefComplaint": "",
+            "HistoryOfPresentIllness": {
+                "Onset": "",
+                "Location": "",
+                "Duration": "",
+                "Characteristics": "",
+                "AggravatingFactors": "",
+                "RelievingFactors": "",
+                "Timing": "",
+                "Severity": ""
+            },
+            "PastMedicalHistory": "",
+            "FamilyHistory": "",
+            "SocialHistory": "",
+            "ReviewOfSystems": "*   **Chief Complaint:** The patient presents with a lot of information.\n*   **History of Present Illness:** The patient has a lot of information. The onset, duration, location, character, aggravating/alleviating factors, timing, and severity of the information are unknown due to the lack of specific details.\n*   **Past Medical History:** Unknown due to the lack of information.\n*   **Medications:** Unknown due to the lack of information.\n*   **Allergies:** Unknown due to the lack of information.\n*   **Review of Systems:** Unable to perform a review of systems due to the lack of information."
+        },
+        "Assessment": {
+            "PrimaryDiagnosis": "",
+            "DifferentialDiagnosis": "",
+            "ProblemList": ""
+        },
+        "Plan": {
+            "TreatmentAndMedications": "",
+            "FurtherTestingOrImaging": "",
+            "PatientEducation": "",
+            "FollowUp": "*   **Diagnostic Plans:** Due to the lack of information, no diagnostic plans can be made. Further information is needed.\n*   **Treatment Plans:** Due to the lack of information, no treatment plans can be made. Further information is needed.\n*   **Patient Education:** Unable to provide patient education due to the lack of information.\n*   **Follow-up Instructions:** Follow-up is needed when more information is available."
+        }
+    }
+}

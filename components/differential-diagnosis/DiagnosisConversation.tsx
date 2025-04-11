@@ -63,7 +63,7 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
       if (isRecording) {
         handleStopRecording();
       }
-      
+
       setIsRecording(true);
       setError(null);
 
@@ -286,7 +286,7 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
   const handleSendMessage = () => {
     if (inputText.trim()) {
       sendMessage(inputText);
-      setInputText('');
+    setInputText('');
     }
   };
 

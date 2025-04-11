@@ -1,0 +1,32 @@
+{
+    "SOAP": {
+        "Subjective": {
+            "ChiefComplaint": "",
+            "HistoryOfPresentIllness": {
+                "Onset": "",
+                "Location": "",
+                "Duration": "",
+                "Characteristics": "",
+                "AggravatingFactors": "",
+                "RelievingFactors": "",
+                "Timing": "",
+                "Severity": ""
+            },
+            "PastMedicalHistory": "",
+            "FamilyHistory": "",
+            "SocialHistory": "",
+            "ReviewOfSystems": "*   **Chief complaint:** Speech and language concerns.\n*   **History of present illness:** Patient, Tommy, underwent a speech and language evaluation. The goal is to interpret the results and understand the patient's speech, sound, language, and motor skills. The reason for the evaluation is not explicitly stated but implied to be related to concerns about these areas.\n*   **Past medical history:** Not available.\n*   **Medications:** Not available.\n*   **Allergies:** Not available.\n*   **Review of systems:** Not available."
+        },
+        "Assessment": {
+            "PrimaryDiagnosis": "",
+            "DifferentialDiagnosis": "",
+            "ProblemList": ""
+        },
+        "Plan": {
+            "TreatmentAndMedications": "",
+            "FurtherTestingOrImaging": "",
+            "PatientEducation": "",
+            "FollowUp": "*   **Diagnostic plans:** Review and interpret the results of the speech and language evaluation.\n*   **Treatment plans:** Develop an individualized treatment plan based on the evaluation findings. This may include speech therapy, language therapy, or other interventions.\n*   **Patient education:** Educate the parents/caregivers about the diagnosis, treatment plan, and strategies to support the patient's communication skills.\n*   **Follow-up instructions:** Schedule follow-up appointments to monitor progress and adjust the treatment plan as needed.\n```"
+        }
+    }
+}

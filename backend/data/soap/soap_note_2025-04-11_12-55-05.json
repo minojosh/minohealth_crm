@@ -1,0 +1,32 @@
+{
+    "SOAP": {
+        "Subjective": {
+            "ChiefComplaint": "",
+            "HistoryOfPresentIllness": {
+                "Onset": "",
+                "Location": "",
+                "Duration": "",
+                "Characteristics": "",
+                "AggravatingFactors": "",
+                "RelievingFactors": "",
+                "Timing": "",
+                "Severity": ""
+            },
+            "PastMedicalHistory": "",
+            "FamilyHistory": "",
+            "SocialHistory": "",
+            "ReviewOfSystems": "*   **Chief complaint:** Unable to determine from the provided information.\n*   **History of present illness:** Unable to determine from the provided information. The patient seems to be discussing technical aspects of a system, possibly related to data processing or software development. There is mention of restarting something and issues with endpoints.\n*   **Past medical history:** Unable to determine from the provided information.\n*   **Medications:** Unable to determine from the provided information.\n*   **Allergies:** Unable to determine from the provided information.\n*   **Review of systems:** Unable to determine from the provided information."
+        },
+        "Assessment": {
+            "PrimaryDiagnosis": "",
+            "DifferentialDiagnosis": "",
+            "ProblemList": ""
+        },
+        "Plan": {
+            "TreatmentAndMedications": "",
+            "FurtherTestingOrImaging": "",
+            "PatientEducation": "",
+            "FollowUp": "*   **Diagnostic plans:** Unable to determine from the provided information.\n*   **Treatment plans:** Unable to determine from the provided information.\n*   **Patient education:** Unable to determine from the provided information.\n*   **Follow-up instructions:** Unable to determine from the provided information."
+        }
+    }
+}

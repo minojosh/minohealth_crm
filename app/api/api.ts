@@ -6,22 +6,23 @@ dotenv.config();
 
 // Base URLs from environment variables
 const SPEECH_SERVICE_BASE_URL = (process.env.NEXT_PUBLIC_SPEECH_SERVICE_URL || 'http://localhost:8000').replace(/\/+$/, ''); // Reverted to use NEXT_PUBLIC_ for frontend access
-const BACKEND_API_BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000').replace(/\/+$/, ''); // Default to Next.js default port if not set
+const BACKEND_API_BASE_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, ''); // Default to Next.js default port if not set
 
 export const API_ENDPOINTS = {
     // Speech Service Endpoints
     tts: `${SPEECH_SERVICE_BASE_URL}/tts`,
     ttsStream: `${SPEECH_SERVICE_BASE_URL}/tts-stream`,
     transcribe: `${SPEECH_SERVICE_BASE_URL}/transcribe`,
+    uploadTranscribe: `${SPEECH_SERVICE_BASE_URL}/upload-transcribe/`,
     wsAudio: `${SPEECH_SERVICE_BASE_URL}/ws/audio`,
     wsSchedule: `${SPEECH_SERVICE_BASE_URL}/ws/schedule`,
     wsConversation: `${SPEECH_SERVICE_BASE_URL}/ws/conversation`,
 
     // Backend API Endpoints (using relative paths for Next.js API routes, assuming they are served from the same origin)
     // Alternatively, use BACKEND_API_BASE_URL if the backend is separate
-    medicalExtract: `/api/medical/extract`, // Example using relative path
-    medicalSoap: `/api/medical/soap`,       // Example using relative path
-    patients: `/api/patients`,              // Example using relative path
+    medicalExtract: `${BACKEND_API_BASE_URL}/api/medical/extract`, // Example using relative path
+    medicalSoap: `${BACKEND_API_BASE_URL}/api/medical/soap`,       // Example using relative path
+    patients: `${BACKEND_API_BASE_URL}/api/patients`,              // Example using relative path
     patientDetails: (id: number) => `/api/patients/${id}`, // Example using relative path
     
     // Deprecated Backend Endpoints (if needed)

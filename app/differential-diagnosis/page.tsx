@@ -1,7 +1,9 @@
 "use client";
 
-import DiagnosisConversation from "@/components/differential-diagnosis/DiagnosisConversation";
-import DiagnosisSummary from "@/components/differential-diagnosis/DiagnosisSummary";
+import DiagnosisConversation from "@/components/differential-diagnosis/Conversation";  
+import DiagnosisSummary from "@/components/differential-diagnosis/Summary";
+// import DiagnosisConversation from "@/components/differential-diagnosis/DiagnosisConversation";
+// import DiagnosisSummary from "@/components/differential-diagnosis/DiagnosisSummary";
 import React, { useState } from "react";
 import { useRouter } from 'next/navigation';
 

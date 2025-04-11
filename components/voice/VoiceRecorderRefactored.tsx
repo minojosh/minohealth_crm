@@ -70,7 +70,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   
   // Update parent component with transcription
   useEffect(() => {
-    if (transcription && onTranscriptionUpdate) {
+    if (transcription !== null && onTranscriptionUpdate) {
       onTranscriptionUpdate(transcription, sessionId);
     }
   }, [transcription, sessionId, onTranscriptionUpdate]);
