@@ -9365,3 +9365,82 @@ found character '`' that cannot start any token
     ```
     ^
 2025-04-11 15:28:19,703 - httpx - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-04-11 15:31:46,805 - backend.api - INFO - Using LLM implementation: openrouter
+2025-04-11 15:31:47,329 - backend.api - INFO - Successfully loaded OpenRouter implementation
+2025-04-11 15:31:47,336 - backend.STT_client - INFO - Speech Service URL configured as: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:47,341 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:47,341 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:47,441 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:47,441 - backend.api - INFO - TTS Service URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:47,444 - backend.unified_ai_service_open_router - INFO - Successfully loaded configuration from C:\Users\Mecha Mino 5 Outlook\Documents\Mino Health AI labs\minoHealth CRM\minohealth_crm\backend\prompt.json
+2025-04-11 15:31:47,444 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:47,447 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:47,448 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:47,466 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:47,466 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:47,468 - backend.STT_client - INFO - Speech Service URL configured as: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:47,469 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-11 15:31:47,472 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-11 15:31:48,036 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-11 15:31:48,042 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-11 15:31:48,043 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:48,067 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:48,067 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:48,074 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:48,076 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:48,098 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:48,099 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:48,106 - backend.STT_client - INFO - Speech Service URL configured as: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:48,107 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-11 15:31:48,112 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-11 15:31:48,546 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-11 15:31:48,546 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-11 15:31:48,546 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:48,573 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:48,574 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:48,576 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:48,576 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:48,598 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:48,598 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:48,602 - backend.STT_client - INFO - Speech Service URL configured as: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:48,603 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-11 15:31:48,607 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-11 15:31:49,007 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-11 15:31:49,007 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-11 15:31:49,007 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:49,035 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:49,035 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:49,039 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:49,040 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:49,060 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:49,060 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:49,064 - backend.STT_client - INFO - Speech Service URL configured as: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:49,064 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-11 15:31:49,068 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-11 15:31:49,548 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-11 15:31:49,548 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-11 15:31:49,548 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:49,566 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:49,566 - backend.unified_ai_service_open_router - INFO - Initializing TTS client with URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:49,576 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:49,576 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:49,598 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:49,598 - backend.unified_ai_service_open_router - INFO - Initializing STT client with URL: https://7b33-34-141-130-175.ngrok-free.app/
+2025-04-11 15:31:49,601 - backend.STT_client - INFO - Speech Service URL configured as: https://7b33-34-141-130-175.ngrok-free.app
+2025-04-11 15:31:49,601 - backend.unified_ai_service_open_router - INFO - Initializing OpenRouter client with model: google/gemini-2.0-flash-lite-001
+2025-04-11 15:31:49,604 - backend.moremi_open_router - INFO - Initializing ConversationManager with OpenRouter
+2025-04-11 15:31:50,011 - backend.moremi_open_router - INFO - Successfully initialized OpenAI client for OpenRouter
+2025-04-11 15:31:50,016 - backend.XTTS_adapter - INFO - Using XTTS Speech Service URL: http://localhost:8000
+2025-04-11 15:31:50,016 - backend.XTTS_adapter - INFO - Audio files will be saved to: backend/data/audio
+2025-04-11 15:31:50,036 - backend.XTTS_adapter - INFO - Successfully initialized the streaming TTS client
+2025-04-11 15:31:50,396 - backend.api - INFO - Active LLM implementation: openrouter
+2025-04-11 15:31:50,396 - backend.api - INFO - Using model: google/gemini-2.0-flash-lite-001
+2025-04-11 15:43:21,822 - backend.api - INFO - Medical data extraction request received: And we have a lot of information about him. So, we...
+2025-04-11 15:43:21,822 - backend.unified_ai_service_open_router - INFO - Extracting data from transcript: And we have a lot of information about him. So, we have a lot of information about him. And we have ...
+2025-04-11 15:43:22,841 - httpx - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-04-11 15:43:24,095 - backend.unified_ai_service_open_router - ERROR - Error parsing YAML: while scanning for the next token
+found character '`' that cannot start any token
+  in "<unicode string>", line 15, column 1:
+    ```
+    ^
+2025-04-11 15:43:24,382 - httpx - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
