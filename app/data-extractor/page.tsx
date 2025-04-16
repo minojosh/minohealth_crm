@@ -128,8 +128,8 @@ export default function DataExtractorPage() {
                         tabContent: "group-data-[selected=true]:text-white"
                     }}
                 >
-                    <Tab key={TABS.EXTRACT} title="Extract Data" />
-                    <Tab key={TABS.PATIENTS} title="View Patients" />
+                    {/* <Tab key={TABS.EXTRACT} title="Extract Data" /> */}
+                    {/* <Tab key={TABS.PATIENTS} title="View Patients" /> */}
                 </Tabs>
             </div>
 
@@ -172,7 +172,7 @@ export default function DataExtractorPage() {
 
                         {/* Transcription & Manual Extraction Section */}
                         <div>
-                             <h2 className="text-xl font-semibold text-white mb-4">Transcription</h2>
+                             {/* <h2 className="text-xl font-semibold text-white mb-4">Transcription</h2> */}
                              <TranscriptionView
                                  transcription={displayTranscription}
                                  onTranscriptionChange={setManualTranscription}

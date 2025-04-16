@@ -63,3 +63,4 @@ export interface TranscriptionStatus {
   duration: number;
   status: 'idle' | 'recording' | 'processing' | 'done' | 'error';
 }
+

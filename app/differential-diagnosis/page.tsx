@@ -17,20 +17,6 @@ export default function Page() {
             onBack={() => router.push('/')} // Redirecting to the differential-diagnosis page
           />
         </>
-{/*   
-        <DiagnosisSummary
-          diagnosisResult={{
-            primaryDiagnosis: "Primary Diagnosis",
-            differentialDiagnoses: [
-              "Differential Diagnosis 1",
-              "Differential Diagnosis 2",
-            ],
-            recommendedTests: ["Test 1", "Test 2"],
-            fullSummary: "Full Summary",
-            patientId: 1,
-          }}
-        />
-      )} */}
     </div>
   );
 }

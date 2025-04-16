@@ -616,7 +616,7 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
           base64Data = btoa(base64Data);
           
           // Strip trailing slashes and construct URL
-          const baseUrl = process.env.NEXT_PUBLIC_STT_SERVER_URL?.replace(/\/+$/, '');
+          const baseUrl = process.env.NEXT_PUBLIC_SPEECH_SERVICE_URL?.replace(/\/+$/, '');
           const transcribeUrl = `${baseUrl}/transcribe`;
 
           try {
@@ -913,7 +913,7 @@ const DiagnosisConversation = ({ patientId, onBack }: DiagnosisConversationProps
       // Extract Differential Diagnoses (handles numbered lists)
       // Look for the start of the differential section
       const differentialSectionMatch = markdownText.match(/\\*\\*2\\.\\s*Differential Diagnoses(?:\\s*\\(Ordered by Likelihood\\))?:\\*\\*/i);
-      if (differentialSectionMatch) {
+      if (differentialSectionMatch && differentialSectionMatch.index !== undefined) {
           const differentialText = markdownText.substring(differentialSectionMatch.index + differentialSectionMatch[0].length);
           // Match list items like "1. **Diagnosis Name**"
           const diffMatches = differentialText.matchAll(/\\d+\\.\\s*\\*\\*([^*]+)\\*\\*/gi);

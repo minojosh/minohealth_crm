@@ -3,7 +3,7 @@
  * Handles extracting structured data from transcriptions via API calls
  */
 
-import { ExtractedDataResponse } from '../../app/api/types';
+import { ExtractedDataResponse } from '../../app/data-extractor/api';
 
 export interface ExtractionOptions {
   apiUrl?: string;

@@ -379,34 +379,64 @@ class MedicalAssistantService(AIService):
             max_tokens=500,
             temperature=0.2
         )
-        
-        # Clean up the response - remove any non-YAML content
-        response_lines = response.split('\n')
-        yaml_lines = []
-        in_yaml = False
-        
-        for line in response_lines:
-            # Start capturing at the first YAML key
-            if line.strip().startswith('name:'):
-                in_yaml = True
-            
-            if in_yaml:
-                # Stop if we hit an empty line after YAML content
-                if not line.strip() and yaml_lines:
-                    break
+
+        # --- START YAML CLEANUP ---
+        import re
+        import yaml
+
+        logger.debug(f"Raw LLM response for YAML extraction:\n{response}") # Log raw response
+
+        # Try a slightly broader regex first
+        match = re.search(r"```(.*?)```", response, re.DOTALL)
+
+        yaml_content_to_parse = ""
+        if match:
+            yaml_content_to_parse = match.group(1).strip()
+            # Remove potential leading 'yaml' identifier if captured by broader regex
+            if yaml_content_to_parse.lower().startswith("yaml"):
+                 yaml_content_to_parse = yaml_content_to_parse[4:].strip()
+            logger.info("Extracted YAML content from within markdown fences using regex.")
+        else:
+            # Regex failed, try manual string stripping as a fallback
+            logger.warning("Regex did not find fences. Trying manual stripping.")
+            stripped_response = response.strip()
+            if stripped_response.startswith("```yaml") and stripped_response.endswith("```"):
+                 yaml_content_to_parse = stripped_response[7:-3].strip()
+                 logger.info("Extracted YAML content by manually stripping ```yaml.")
+            elif stripped_response.startswith("```") and stripped_response.endswith("```"):
+                 yaml_content_to_parse = stripped_response[3:-3].strip()
+                 logger.info("Extracted YAML content by manually stripping ```.")
+            else:
+                 # No fences found by regex or manual stripping, assume raw YAML
+                 logger.warning("No fences found by manual stripping either. Attempting to parse the raw stripped response.")
+                 yaml_content_to_parse = stripped_response
+
+
+        extracted_data = {} # Default to empty dict
+        if yaml_content_to_parse:
+            try:
+                 # Final safety check: Ensure content doesn't start with ``` if stripping failed
+                if yaml_content_to_parse.startswith("```"):
+                    logger.error("Parsing attempt aborted: Content still starts with ``` after cleanup attempts.")
+                    raise yaml.YAMLError("Content started with ``` unexpectedly.")
                     
-                yaml_lines.append(line)
-        
-        yaml_content = '\n'.join(yaml_lines)
-        
-        try:
-            # Import yaml module locally
-            import yaml
-            yaml_data = yaml.safe_load(yaml_content)
-            return yaml_data
-        except Exception as e:
-            logger.error(f"Error parsing YAML: {e}")
-            return {}
+                extracted_data = yaml.safe_load(yaml_content_to_parse)
+                if not isinstance(extracted_data, dict):
+                     logger.warning(f"YAML parsing yielded non-dict type: {type(extracted_data)}. Resetting to empty dict.")
+                     extracted_data = {}
+                logger.info("Successfully parsed extracted YAML content.")
+            except yaml.YAMLError as e:
+                logger.error(f"YAML parsing failed: {e}. Content that failed (first 500 chars):\n{yaml_content_to_parse[:500]}...")
+                extracted_data = {} # Ensure it's an empty dict on error
+            except Exception as e:
+                 logger.error(f"Unexpected error during YAML parsing: {e}. Content that failed (first 500 chars):\n{yaml_content_to_parse[:500]}...")
+                 extracted_data = {}
+        else:
+            logger.warning("No YAML content could be reliably extracted or parsed from LLM response.")
+            extracted_data = {} # Ensure it's an empty dict if no content
+
+        return extracted_data if isinstance(extracted_data, dict) else {}
+        # --- END YAML CLEANUP ---
 
     def generate_soap_note(self, conversation_text: str) -> Dict[str, Any]:
         """
