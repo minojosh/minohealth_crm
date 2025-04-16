@@ -8,6 +8,7 @@ import json
 import io
 from pathlib import Path
 from dotenv import load_dotenv
+import queue
 
 # Configure logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -117,8 +118,7 @@ class TTSClient:
             response = requests.post(
                 f"{self.api_url}/tts-stream",
                 json=data,
-                stream=True,
-                timeout=self.timeout
+                stream=True
             )
 
             if response.status_code != 200:
@@ -203,7 +203,7 @@ class TTSClient:
             logger.error(f"Error saving audio file: {e}")
             return None
 
-    def TTS(self, text, play_locally=False, return_data=True, save_audio=True, file_name=None):
+    def TTS(self, text, save_audio=True, file_name=None):
         """
         Generate speech from text with compatibility with the old API
         
@@ -221,51 +221,81 @@ class TTSClient:
             logger.warning("No text provided for TTS")
             return np.array([]).astype(np.float32), self.target_sample_rate, None, None
         
+        all_audio_chunks = []
         # Try to use streaming client if available
-        if self.streaming_client and play_locally:
+        if self.streaming_client:
             try:
                 # Queue text for streaming playback
                 logger.info(f"Using streaming client for text: {text[:30]}...")
-                self.streaming_client.stream_text(text)
-                self.streaming_client.wait_for_completion()
-                all_audio_chunks = self.streaming_client.all_audio_chunks
-                
-                # Since streaming is asynchronous, we still need to get the audio data for return and saving
-                # So we fall back to direct request approach for the data
+                for audio_chunk in self.streaming_client.stream_text(text):
+                    if audio_chunk:
+                        logger.info(f"Received audio chunk of size: {len(audio_chunk)} bytes")
+                        all_audio_chunks.append(audio_chunk)
+                        # Encode the raw audio bytes directly
+                        base64_audio = base64.b64encode(audio_chunk).decode('utf-8')
+                        yield base64_audio
+                        
+
             except Exception as e:
                 logger.error(f"Error using streaming client: {e}")
+                all_audio_chunks = []
         
         else:
             # Collect audio chunks from server (this is needed even if streaming, to return the data)
             all_audio_chunks = self._direct_request_to_server(text)
+    
         
-        """    
         if not all_audio_chunks:
             logger.warning("No audio chunks received from server")
             return np.array([]).astype(np.float32), self.target_sample_rate, None, None
         
         # Combine all audio chunks
         audio_bytes = b''.join(all_audio_chunks)
+        logger.info(f"Combined audio bytes length: {len(audio_bytes)} bytes")
+        
+        # Verify we have valid audio bytes
+        if len(audio_bytes) < 4:
+            logger.error("Audio bytes are too small to be valid audio")
+            return np.array([]).astype(np.float32), self.target_sample_rate, None, None
+            
+        # Convert to numpy array for processing
         audio_data = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
         
-        # Save audio to file if requested
-        file_path = None
-        if save_audio and len(audio_data) > 0:
+        # Log audio statistics for debugging
+        if len(audio_data) > 0:
+            min_val = np.min(audio_data)
+            max_val = np.max(audio_data)
+            mean_val = np.mean(audio_data)
+            logger.info(f"Audio data statistics - min: {min_val:.4f}, max: {max_val:.4f}, mean: {mean_val:.4f}, length: {len(audio_data)} samples")
+            
+          
             file_path = self.save_audio_file(audio_data, self.target_sample_rate, file_name)
         
-        # Convert to base64 for frontend use
+        # Convert to base64 for frontend use - make sure we use the raw int16 bytes, not the float32 data
         base64_audio = None
-        if len(audio_data) > 0:
+        try:
+            # Encode the raw audio bytes directly
             base64_audio = base64.b64encode(audio_bytes).decode('utf-8')
+            logger.info(f"Encoded base64 audio length: {len(base64_audio)} characters")
+            
+            # Verify the base64 encoding was successful
+            if not base64_audio or len(base64_audio) == 0:
+                logger.error("Base64 encoding failed - empty string returned")
+            
+            # Test validity of base64 string (should not throw exception)
+            test_decode = base64.b64decode(base64_audio.encode('utf-8'))
+            if len(test_decode) != len(audio_bytes):
+                logger.warning(f"Base64 decode test returned different length: expected {len(audio_bytes)}, got {len(test_decode)}")
+                
+        except Exception as e:
+            logger.error(f"Error encoding audio to base64: {e}")
+            base64_audio = None
         
-        # Store the last generated audio
-        self.last_audio_data = audio_data
-        self.last_sample_rate = self.target_sample_rate
-        self.last_base64_audio = base64_audio
-        self.last_file_path = file_path
-        
+        # Add a None for the file_path parameter (expected by calling code)
+        file_path = None
+            
         return audio_data, self.target_sample_rate, base64_audio, file_path
-        """
+       
         
     def get_audio_for_frontend(self, text, speaker="default", save_audio=True, file_name=None):
         """
@@ -325,7 +355,7 @@ class TTSClient:
         """
         if self.streaming_client:
             try:
-                self.streaming_client.stream_text(text)
+                self.TTS(text)
                 return True
             except Exception as e:
                 logger.error(f"Error streaming text: {e}")
@@ -359,3 +389,39 @@ class TTSClient:
                 self.streaming_client.stop()
             except Exception as e:
                 logger.error(f"Error stopping streaming client: {e}")
+
+    def generate_audio(self, text, play_locally=False, return_data=True, save_audio=False):
+        """Generate audio chunks from text using the streaming client.
+        
+        Args:
+            text (str): Text to convert to speech
+            play_locally (bool): Whether to play audio locally
+            return_data (bool): Whether to return audio data
+            save_audio (bool): Whether to save the audio
+            
+        Yields:
+            tuple: (audio_bytes, sample_rate, base64_audio) for each chunk
+        """
+        if not text:
+            logger.warning("No text provided for TTS")
+            return
+        
+        try:
+            # Use streaming client if available
+            if self.streaming_client:
+                logger.info(f"Using streaming client for text: {text[:30]}...")
+                self.streaming_client.stream_text(text)
+                
+                # Process chunks as they come in
+                for chunk in self.streaming_client._send_to_tts(text):
+                    if chunk:
+                        # Convert to base64
+                        base64_audio = base64.b64encode(chunk).decode('utf-8')
+                        yield chunk, self.target_sample_rate, base64_audio
+                        
+            else:
+                logger.warning("Streaming client not available")
+                
+        except Exception as e:
+            logger.error(f"Error generating audio: {e}")
+            return

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@heroui/button';
 import { Card, CardBody } from '@heroui/card';
 import { Divider } from '@heroui/divider';
@@ -8,8 +8,8 @@ import { Input } from '@heroui/input';
 import { Select, SelectItem } from '@heroui/select';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/table';
 import { ReminderResponse } from './types';
-import { AppointmentConversation } from '../../components/voice/AppointmentConversation';
-import { MedicationConversation } from '../../components/voice/MedicationConversation';
+import { AppointmentConversation, AppointmentConversationRef } from '../../components/voice/AppointmentConversation';
+import { MedicationConversation, MedicationConversationRef } from '../../components/voice/MedicationConversation';
 import { appointmentManagerApi } from './api';
 import { 
   ClockIcon, 
@@ -45,6 +45,35 @@ export default function AppointmentManager() {
   const [appointmentResult, setAppointmentResult] = useState<ConversationResult | null>(null);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [currentStep, setCurrentStep] = useState<FlowStep>(FlowStep.SEARCH);
+  
+  // Add ref for active conversation - update with union type
+  const conversationRef = useRef<AppointmentConversationRef | MedicationConversationRef | null>(null);
+  
+  // Add an effect to close WebSocket when component unmounts (e.g., navigating to a different page)
+  useEffect(() => {
+    // Add beforeunload event handler
+    const handleBeforeUnload = () => {
+      // Close WebSocket connection when page is unloaded
+      if (conversationRef.current && conversationRef.current.setShouldKeepConnection) {
+        console.log('[Navigation] Page unloading, closing WebSocket');
+        conversationRef.current.setShouldKeepConnection(false);
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      // Remove event listener
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      
+      // Close WebSocket connection when component unmounts
+      if (conversationRef.current && conversationRef.current.setShouldKeepConnection) {
+        console.log('[Navigation] Component unmounting, closing WebSocket');
+        conversationRef.current.setShouldKeepConnection(false);
+      }
+    };
+  }, []);
   
   // Process a single medication or appointment at a time
   const handleStartSchedule = async () => {
@@ -110,6 +139,18 @@ export default function AppointmentManager() {
     
     setAppointmentResult(result);
     setCurrentStep(FlowStep.RESULTS);
+  };
+  
+  // Add method to close connection when navigating away
+  const handleBackToSearch = () => {
+    // Close WebSocket connection if there's an active conversation
+    if (conversationRef.current && conversationRef.current.setShouldKeepConnection) {
+      console.log('[Navigation] Closing WebSocket before navigating back to search');
+      conversationRef.current.setShouldKeepConnection(false);
+    }
+    
+    // Reset state and navigate
+    setCurrentStep(FlowStep.SEARCH);
   };
   
   // Format the reminder type for display
@@ -299,11 +340,13 @@ export default function AppointmentManager() {
                         <AppointmentConversation 
                           reminder={selectedReminder}
                           onComplete={(result) => handleCompleteConversation(result)}
+                          ref={conversationRef}
                         />
                       ) : (
                         <MedicationConversation 
                           reminder={selectedReminder}
                           onComplete={(result) => handleCompleteConversation(result)}
+                          ref={conversationRef}
                         />
                       )}
                     </div>
@@ -408,7 +451,7 @@ export default function AppointmentManager() {
                   <div className="flex justify-between mt-4">
                     <Button 
                       color="default"
-                      onClick={() => setCurrentStep(FlowStep.SEARCH)}
+                      onClick={handleBackToSearch}
                       startContent={<ArrowPathIcon className="h-4 w-4" />}
                     >
                       Back to Schedule
@@ -416,6 +459,10 @@ export default function AppointmentManager() {
                     <Button 
                       color="primary"
                       onClick={() => {
+                        // Close WebSocket connection
+                        if (conversationRef.current && conversationRef.current.setShouldKeepConnection) {
+                          conversationRef.current.setShouldKeepConnection(false);
+                        }
                         setSelectedReminder(undefined);
                         setAppointmentResult(null);
                         setCurrentStep(FlowStep.SEARCH);
@@ -442,7 +489,7 @@ export default function AppointmentManager() {
             color="default" 
             variant="flat" 
             size="sm" 
-            onClick={() => setCurrentStep(FlowStep.SEARCH)}
+            onClick={handleBackToSearch}
           >
             Back to Search
           </Button>

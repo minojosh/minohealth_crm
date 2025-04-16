@@ -589,6 +589,56 @@ export function clearAudioData(sessionId?: string): void {
   }
 }
 
+// Track all active AudioContext instances
+let activeAudioContexts: AudioContext[] = [];
+
+// Function to register an AudioContext for tracking and cleanup
+function registerAudioContext(ctx: AudioContext): void {
+  activeAudioContexts.push(ctx);
+  
+  // Cleanup when it's closed
+  ctx.addEventListener('statechange', () => {
+    if (ctx.state === 'closed') {
+      // Remove from tracking array when closed
+      activeAudioContexts = activeAudioContexts.filter(c => c !== ctx);
+    }
+  });
+}
+
+// Function to close all active AudioContext instances
+export function cleanupAllAudioContexts(): void {
+  console.log(`Cleaning up ${activeAudioContexts.length} active AudioContext instances`);
+  
+  // Copy the array since we'll be modifying it during iteration
+  const contextsToClean = [...activeAudioContexts];
+  
+  for (const ctx of contextsToClean) {
+    try {
+      if (ctx && ctx.state !== 'closed') {
+        ctx.close().catch(err => {
+          console.warn("Error closing AudioContext during cleanup:", err);
+        });
+      }
+    } catch (err) {
+      console.warn("Error during AudioContext cleanup:", err);
+    }
+  }
+  
+  // Clear the tracking array (will be updated via event listeners)
+  activeAudioContexts = [];
+}
+
+// Clean up audio cache and contexts
+export function cleanupAudio(): void {
+  // Clear cached audio data
+  clearAudioData();
+  
+  // Clean up any lingering audio contexts
+  cleanupAllAudioContexts();
+  
+  console.log("Audio system cleaned up");
+}
+
 // Singleton AudioContext with resample handling
 const getAudioContext = (() => {
   let ctx: AudioContext | null = null;
@@ -615,28 +665,139 @@ export async function playAudioFromBase64(
   encoding: 'PCM_FLOAT' | 'PCM_16' = 'PCM_FLOAT',
   onUtteranceCreated?: (utterance: SpeechSynthesisUtterance) => void
 ): Promise<void> {
-  if (!base64Audio) return;
+  if (!base64Audio) {
+    console.error("No audio data provided");
+    return;
+  }
+  
+  let audioContext: AudioContext | null = null;
   
   try {
-    console.log(`Playing audio with sample rate: ${sampleRate}Hz, encoding: ${encoding}`);
+    console.log(`Playing audio with sample rate: ${sampleRate}Hz, encoding: ${encoding}, data length: ${base64Audio.length}`);
     
-    const audioContext = getAudioContext(sampleRate);
+    // Create new AudioContext each time to avoid blocked contexts
+    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+      sampleRate: sampleRate // Try to match the incoming sample rate if possible
+    });
+    
+    // Register for tracking and cleanup
+    registerAudioContext(audioContext);
+    
     const actualSampleRate = audioContext.sampleRate;
+    console.log(`AudioContext initialized with sample rate: ${actualSampleRate}Hz`);
     
-    // Decode base64 efficiently
-    const bytes = Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0));
+    try {
+      // Ensure audio context is running (needed for newer browsers)
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+        console.log("AudioContext resumed from suspended state");
+      }
+    } catch (err) {
+      console.warn("Error resuming audio context:", err);
+    }
+    
+    // Better base64 decoding
+    try {
+      console.log("Decoding base64 data...");
+      const binaryString = atob(base64Audio);
+      console.log(`Decoded binary data length: ${binaryString.length} bytes`);
+      
+      // Use a more robust method to convert binary string to Uint8Array
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      console.log(`Uint8Array created with ${bytes.length} bytes`);
     
     // Process based on encoding with resampling if needed
     let audioData: Float32Array;
+      
     if (encoding === 'PCM_16') {
-      const int16Data = new Int16Array(bytes.buffer);
-      audioData = new Float32Array(int16Data.length);
-      for (let i = 0; i < int16Data.length; i++) {
-        audioData[i] = int16Data[i] / 32768.0;
-      }
+        console.log("Processing as PCM_16 (Int16) audio...");
+        
+        // Verify we have enough bytes and they're even (2 bytes per sample for Int16)
+        if (bytes.length < 2) {
+          throw new Error(`Invalid audio data: too few bytes (${bytes.length})`);
+        }
+        
+        if (bytes.length % 2 !== 0) {
+          console.warn(`Audio data length (${bytes.length}) is not even, trimming last byte`);
+          bytes.slice(0, bytes.length - 1);
+        }
+        
+        // We need to handle alignment issues and endianness
+        const dataView = new DataView(bytes.buffer);
+        const samplesCount = Math.floor(bytes.length / 2);
+        const int16Samples = new Int16Array(samplesCount);
+        console.log(`Creating ${samplesCount} Int16 samples`);
+        
+        // Convert bytes to Int16 samples with correct endianness (little-endian)
+        let nonZeroSamples = 0;
+        for (let i = 0; i < samplesCount; i++) {
+          const byteOffset = i * 2;
+          if (byteOffset + 1 >= bytes.length) break;
+          
+          // Get Int16 (16-bit signed integer) value at the specified byte offset
+          // with little-endian byte order (true parameter)
+          const sampleValue = dataView.getInt16(byteOffset, true);
+          int16Samples[i] = sampleValue;
+          
+          if (sampleValue !== 0) nonZeroSamples++;
+        }
+        
+        console.log(`Got ${nonZeroSamples} non-zero samples out of ${samplesCount} total samples`);
+        
+        // Convert Int16 to Float32 (normalize to [-1, 1] range)
+        // Int16 range is -32768 to 32767, so divide by 32768 for normalization
+        audioData = new Float32Array(int16Samples.length);
+        for (let i = 0; i < int16Samples.length; i++) {
+          audioData[i] = int16Samples[i] / 32768.0;
+        }
+        
+        // Apply minimal audio processing only if needed (default to false)
+        // For TTS audio, we skip processing completely to maintain the original sound quality
+        const shouldProcessAudio = false;
+        if (shouldProcessAudio) {
+          console.log("Applying minimal audio processing");
+          audioData = processAudioForPlayback(audioData);
+        } else {
+          console.log("Skipping audio processing to maintain original quality");
+          // Only apply gentle clipping prevention if needed
+          let clippedSamples = 0;
+          for (let i = 0; i < audioData.length; i++) {
+            if (audioData[i] > 1.0) {
+              audioData[i] = 1.0;
+              clippedSamples++;
+            } else if (audioData[i] < -1.0) {
+              audioData[i] = -1.0;
+              clippedSamples++;
+            }
+          }
+          if (clippedSamples > 0) {
+            console.log(`Prevented clipping on ${clippedSamples} samples`);
+          }
+        }
+        
+        // Log sample statistics for debugging
+        const stats = calculateAudioStats(audioData);
+        console.log("Audio statistics:", stats);
     } else {
       // Assume PCM_FLOAT (Float32)
-      audioData = new Float32Array(bytes.buffer);
+        console.log("Processing as PCM_FLOAT (Float32) audio...");
+        if (bytes.length % 4 !== 0) {
+          console.warn(`Float32 data length (${bytes.length}) is not a multiple of 4, truncating`);
+        }
+        
+        const samplesCount = Math.floor(bytes.length / 4);
+        audioData = new Float32Array(samplesCount);
+        const dataView = new DataView(bytes.buffer);
+        
+        for (let i = 0; i < samplesCount; i++) {
+          const byteOffset = i * 4;
+          if (byteOffset + 3 >= bytes.length) break;
+          audioData[i] = dataView.getFloat32(byteOffset, true); // true = little endian
+        }
     }
     
     // Create properly sized buffer with resampling if needed
@@ -647,10 +808,13 @@ export async function playAudioFromBase64(
       actualSampleRate
     );
     
-    // Apply antialiasing if resampling
+      console.log(`AudioBuffer created: ${buffer.length} samples at ${buffer.sampleRate}Hz`);
+      
+      // Apply resampling as needed
     const bufferData = buffer.getChannelData(0);
     if (Math.abs(resampleRatio - 1.0) < 0.001) {
       // No resampling needed, just copy the data
+        console.log("No resampling needed, direct copy");
       bufferData.set(audioData);
     } else {
       console.log(`Resampling audio from ${sampleRate}Hz to ${actualSampleRate}Hz (ratio: ${resampleRatio})`);
@@ -664,21 +828,233 @@ export async function playAudioFromBase64(
       }
     }
     
-    // Play with clean start/stop
+    // Create source node and start playback
+    console.log("Creating source node and starting playback...");
     const source = audioContext.createBufferSource();
     source.buffer = buffer;
-    source.connect(audioContext.destination);
     
+    // Register the source for tracking
+    registerAudioSource(source);
+    
+    // Add gain node for volume control
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = 1.0; // Full volume
+    
+    // Connect the nodes: source -> gain -> destination
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Setup playback completion Promise
     return new Promise<void>((resolve) => {
-      source.onended = () => resolve();
+        let isResolved = false;
+        let audioContextClosed = false;
+        
+        const markAsResolved = () => {
+          if (!isResolved) {
+            isResolved = true;
+            resolve();
+            
+            // Clean up - only close if not already closed and after a delay
+            if (!audioContextClosed) {
+              audioContextClosed = true;
+              
+              // Wait a bit longer before closing to ensure all processing is complete
+              setTimeout(() => {
+                try {
+                  if (audioContext && audioContext.state !== 'closed') {
+                    console.log("Closing AudioContext after playback");
+                    audioContext.close().catch(err => {
+                      console.warn("Non-critical error while closing AudioContext:", err);
+                    });
+                  }
+                } catch (err) {
+                  console.warn("Error checking AudioContext state:", err);
+                }
+              }, 1000); // Longer timeout for reliable cleanup
+            }
+          }
+        };
+
+        source.onended = () => {
+          console.log("Audio playback completed naturally");
+          markAsResolved();
+        };
+        
+        // Start playback
       source.start(0);
+        console.log("Audio playback started");
       
       // Safety timeout in case onended doesn't fire
       const duration = buffer.duration * 1000;
-      setTimeout(() => resolve(), duration + 500);
-    });
+        const safetyTimeout = Math.max(duration + 2000, 5000); // At least 5 seconds or duration + 2s
+        console.log(`Setting safety timeout for ${Math.ceil(safetyTimeout)}ms`);
+        
+        setTimeout(() => {
+          console.log("Audio playback timeout reached");
+          markAsResolved();
+        }, safetyTimeout);
+      });
+    } catch (error) {
+      console.error("Error processing audio data:", error);
+      throw error;
+    }
   } catch (error) {
     console.error("Error playing audio:", error);
+    
+    // Close the AudioContext in case of error
+    if (audioContext && audioContext.state !== 'closed') {
+      try {
+        await audioContext.close();
+      } catch (closeError) {
+        console.warn("Error closing AudioContext:", closeError);
+      }
+    }
+    
     throw error;
   }
+}
+
+// Improved version with better noise filtering and normalization
+function calculateAudioStats(audioData: Float32Array) {
+  if (audioData.length === 0) return { min: 0, max: 0, mean: 0, maxAbs: 0, rms: 0 };
+  
+  let min = audioData[0];
+  let max = audioData[0];
+  let sum = 0;
+  let maxAbs = 0;
+  let sumSquared = 0;
+  
+  for (let i = 0; i < audioData.length; i++) {
+    const value = audioData[i];
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+    sum += value;
+    maxAbs = Math.max(maxAbs, Math.abs(value));
+    sumSquared += value * value;
+  }
+  
+  // Calculate RMS (Root Mean Square) - a better measure of audio loudness
+  const rms = Math.sqrt(sumSquared / audioData.length);
+  
+  return {
+    min,
+    max,
+    mean: sum / audioData.length,
+    maxAbs,
+    rms
+  };
+}
+
+// Add this new function to improve audio quality for playback
+function processAudioForPlayback(audioData: Float32Array): Float32Array {
+  console.log("Applying enhanced audio processing for natural playback");
+  
+  // Create a copy to avoid modifying the original data
+  const processed = new Float32Array(audioData.length);
+  processed.set(audioData);
+  
+  // Calculate statistics to help with processing
+  const stats = calculateAudioStats(processed);
+  console.log("Pre-processing stats:", stats);
+
+  // 1. Enhanced noise gate with smoother transition
+  const noiseGateThreshold = 0.003; // Reduced threshold for more natural sound
+  const smoothingFactor = 0.1;
+  let prevSample = 0;
+  let countBelowNoise = 0;
+  
+  for (let i = 0; i < processed.length; i++) {
+    if (Math.abs(processed[i]) < noiseGateThreshold) {
+      // Smooth transition to zero instead of hard gate
+      processed[i] = prevSample * (1 - smoothingFactor);
+      countBelowNoise++;
+    }
+    prevSample = processed[i];
+  }
+  
+  console.log(`Enhanced noise gate applied: ${countBelowNoise} samples (${(countBelowNoise/processed.length*100).toFixed(1)}%) processed`);
+  
+  // 2. Normalize to use more of the dynamic range, but leave headroom
+  let peak = 0;
+  for (let i = 0; i < processed.length; i++) {
+    peak = Math.max(peak, Math.abs(processed[i]));
+  }
+  
+  if (peak > 0) {
+    const targetPeak = 0.9; // Leave 10% headroom
+    const scaleFactor = targetPeak / peak;
+    for (let i = 0; i < processed.length; i++) {
+      processed[i] *= scaleFactor;
+    }
+  }
+  
+  // 3. Soft knee compression for more natural dynamics
+  const threshold = 0.4;
+  const ratio = 0.7;
+  const knee = 0.1;
+  let compressedCount = 0;
+  
+  for (let i = 0; i < processed.length; i++) {
+    const abs = Math.abs(processed[i]);
+    if (abs > threshold - knee) {
+      const overThreshold = abs - (threshold - knee);
+      const compressed = (threshold - knee) + (overThreshold * ratio);
+      processed[i] = Math.sign(processed[i]) * compressed;
+      compressedCount++;
+    }
+  }
+  
+  console.log(`Soft knee compression applied to ${compressedCount} samples`);
+  
+  // 4. Apply a very gentle low-pass filter to smooth any remaining artifacts
+  const alpha = 0.05; // Increased smoothing factor for better results
+  let filtered = processed[0];
+  for (let i = 1; i < processed.length; i++) {
+    filtered = filtered * (1 - alpha) + processed[i] * alpha;
+    processed[i] = filtered;
+  }
+  
+  // Log final stats
+  const finalStats = calculateAudioStats(processed);
+  console.log("Post-processing stats:", finalStats);
+  
+  return processed;
+}
+
+// Track active audio source nodes for quick stopping
+let activeAudioSources: AudioBufferSourceNode[] = [];
+
+// Function to register an audio source for tracking
+function registerAudioSource(source: AudioBufferSourceNode): void {
+  activeAudioSources.push(source);
+  
+  // Remove from tracking when it ends
+  source.onended = () => {
+    activeAudioSources = activeAudioSources.filter(s => s !== source);
+  };
+}
+
+/**
+ * Immediately stop all currently playing audio
+ * Simple function to silence audio when navigating away
+ */
+export function stopAllAudio(): void {
+  console.log(`Stopping ${activeAudioSources.length} active audio sources`);
+  
+  // Stop all active audio sources
+  for (const source of activeAudioSources) {
+    try {
+      if (source) {
+        source.onended = null; // Remove listener to avoid cleanup issues
+        source.stop();
+      }
+    } catch (err) {
+      // Ignore errors when stopping already stopped sources
+    }
+  }
+  
+  // Clear the tracking array
+  activeAudioSources = [];
+  
+  console.log("All audio playback stopped");
 }

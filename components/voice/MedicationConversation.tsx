@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Button } from '@heroui/button';
 import { Card, CardBody } from '@heroui/card';
 import { ReminderResponse } from '../../app/appointment-manager/types';
-import { MicrophoneIcon, StopIcon, CheckCircleIcon, ArrowPathIcon, BellIcon } from '@heroicons/react/24/solid';
+import { MicrophoneIcon, StopIcon, CheckCircleIcon, ArrowPathIcon, BellIcon, SpeakerWaveIcon } from '@heroicons/react/24/solid';
+import { playAudioFromBase64, stopAllAudio } from '../../app/api/audio';
 
 interface Message {
   role: 'user' | 'system' | 'agent';
@@ -15,6 +16,10 @@ interface ConversationResult {
   [key: string]: any;
 }
 
+export interface MedicationConversationRef {
+  setShouldKeepConnection: (value: boolean) => void;
+}
+
 interface ConversationPanelProps {
   reminder?: ReminderResponse;
   onComplete?: (result: ConversationResult) => void;
@@ -24,13 +29,134 @@ interface ConversationPanelProps {
 interface MedicationConversationProps extends ConversationPanelProps {
 }
 
-export function MedicationConversation({ reminder, onComplete, className = "" }: MedicationConversationProps) {
+interface AudioQueueItem {
+  audio: string;
+  sampleRate: number;
+  text?: string;
+}
+
+interface AudioInputQueue {
+  chunks: AudioChunk[];
+  isProcessing: boolean;
+}
+
+interface AudioOutputQueue {
+  chunks: AudioQueueItem[];
+  isPlaying: boolean;
+}
+
+interface AudioChunk {
+  data: Float32Array;
+  timestamp: number;
+  inProgress?: boolean;
+}
+
+interface SilenceDetectorConfig {
+  minSilenceDuration: number;  // milliseconds
+  silenceThreshold: number;    // threshold for Mean Absolute Value
+  maxChunkDuration: number;    // milliseconds
+}
+
+class AudioChunkProcessor {
+  private buffer: Float32Array[] = [];
+  private isInSilence: boolean = false;
+  private lastSoundTimestamp: number = Date.now();
+  private chunkStartTime: number = Date.now();
+
+  constructor(
+    private config: SilenceDetectorConfig = {
+      minSilenceDuration: 400,
+      silenceThreshold: 0.005,
+      maxChunkDuration: 10000
+    }
+  ) {}
+
+  processSample(sample: Float32Array): { shouldSend: boolean; chunk?: Float32Array } {
+    this.buffer.push(sample);
+    
+    const mav = this.calculateMeanAbsoluteValue(sample);
+    console.log('MAV:', mav.toFixed(6));
+    const currentTime = Date.now();
+    
+    if (mav < this.config.silenceThreshold) {
+      if (!this.isInSilence) {
+        this.isInSilence = true;
+        this.lastSoundTimestamp = currentTime;
+      }
+    } else {
+      this.isInSilence = false;
+      this.lastSoundTimestamp = currentTime;
+    }
+
+    const silenceDuration = currentTime - this.lastSoundTimestamp;
+    const chunkDuration = currentTime - this.chunkStartTime;
+    
+    if (
+      (this.isInSilence && silenceDuration >= this.config.minSilenceDuration) ||
+      chunkDuration >= this.config.maxChunkDuration
+    ) {
+      if (this.buffer.length > 0) {
+        const chunk = this.concatenateBuffer();
+        
+        // Only return chunk if it's not completely silent
+        if (!this.isChunkSilent(chunk)) {
+          this.resetBuffer();
+          this.chunkStartTime = currentTime;
+          return { shouldSend: true, chunk };
+        }
+        
+        // If chunk is silent, just reset buffer without sending
+        this.resetBuffer();
+        this.chunkStartTime = currentTime;
+      }
+    }
+
+    return { shouldSend: false };
+  }
+
+  private calculateMeanAbsoluteValue(samples: Float32Array): number {
+    let sum = 0;
+    for (let i = 0; i < samples.length; i++) {
+      sum += Math.abs(samples[i]);
+    }
+    return sum / samples.length;
+  }
+
+  private isChunkSilent(chunk: Float32Array): boolean {
+    const mav = this.calculateMeanAbsoluteValue(chunk);
+    return mav < this.config.silenceThreshold;
+  }
+
+  private concatenateBuffer(): Float32Array {
+    const totalLength = this.buffer.reduce((acc, curr) => acc + curr.length, 0);
+    const result = new Float32Array(totalLength);
+    let offset = 0;
+    
+    for (const chunk of this.buffer) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    
+    return result;
+  }
+
+  private resetBuffer(): void {
+    this.buffer = [];
+  }
+}
+
+export const MedicationConversation = forwardRef<MedicationConversationRef, MedicationConversationProps>(
+  function MedicationConversation({ reminder, onComplete, className = "" }, ref) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const [textInput, setTextInput] = useState<string>('');
+  const [ttsPlaying, setTtsPlaying] = useState(false);
+  const [audioQueue, setAudioQueue] = useState<AudioQueueItem[]>([]);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const audioQueueRef = useRef<AudioQueueItem[]>([]);
 
   // WebSocket and Audio refs
   const wsRef = useRef<WebSocket | null>(null);
@@ -40,6 +166,27 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
   const reconnectAttemptsRef = useRef<number>(0);
   const MAX_RETRIES = 3;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [shouldKeepConnection, setShouldKeepConnection] = useState(true);
+
+  // Add queue refs after other refs
+  const inputQueueRef = useRef<AudioInputQueue>({
+    chunks: [],
+    isProcessing: false
+  });
+
+  const outputQueueRef = useRef<AudioOutputQueue>({
+    chunks: [],
+    isPlaying: false
+  });
+
+  // Add audio processing refs
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const transcriptionBufferRef = useRef<string>('');
+
+  // Add currentTranscription state
+  const [currentTranscription, setCurrentTranscription] = useState<string>('');
 
   // Auto-scroll to the latest message
   useEffect(() => {
@@ -107,6 +254,26 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
               }
             }
             break;
+         
+          case 'audio':
+            console.log('[WebSocket] Received audio data from server', {
+              dataLength: data.audio ? data.audio.length : 0,
+              sampleRate: data.sample_rate,
+              text: data.text ? data.text.substring(0, 30) + '...' : null
+            });
+            
+            if (!data.audio) {
+              console.error('[WebSocket] Received audio message with no audio data');
+              break;
+            }
+
+            // Add the new chunk to the queue
+            setAudioQueue(prev => [...prev, {
+              audio: data.audio,
+              sampleRate: data.sample_rate || 24000,
+              text: data.text
+            }]);
+            break;
           case 'summary':
             if (data.text === "null") {
               addMessage('agent', "No medication update was recorded.");
@@ -126,6 +293,7 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
                 messages: messages
               });
             }
+            setShouldKeepConnection(false); // Signal that we're done with the conversation
             break;
           case 'error':
             setError(data.message);
@@ -153,14 +321,132 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
       };
     };
 
-    connectWebSocket();
+    // Add a small delay before connecting to ensure any previous connection is fully closed
+    const timeoutId = setTimeout(() => {
+      connectWebSocket();
+    }, 500);
+
     return () => {
       isComponentMounted = false;
-      if (wsRef.current) {
+      clearTimeout(timeoutId);
+      
+      if (!shouldKeepConnection && wsRef.current) {
+        console.log('[WebSocket] Component unmounting, closing connection');
         wsRef.current.close();
       }
+      
+      // Stop any audio that might be playing
+      stopAllAudio();
     };
-  }, [reminder]);
+  }, [reminder, shouldKeepConnection]);
+
+  // Cleanup effect when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clean up when component unmounts
+      setTtsPlaying(false);
+      
+      // Ensure any playing audio is stopped
+      stopAllAudio();
+    };
+  }, []);
+
+  // Expose the setShouldKeepConnection method via ref
+  useImperativeHandle(ref, () => ({
+    setShouldKeepConnection: (value: boolean) => {
+      console.log(`[MedicationConversation] Setting shouldKeepConnection to ${value}`);
+      setShouldKeepConnection(value);
+      
+      // If setting to false, immediately close the WebSocket
+      if (value === false && wsRef.current) {
+        // If the connection is open, send a cleanup message before closing
+        if (wsRef.current.readyState === WebSocket.OPEN) {
+          console.log('[MedicationConversation] Sending cleanup message before closing connection');
+          wsRef.current.send(JSON.stringify({
+            type: 'client_cleanup',
+            reason: 'navigation'
+          }));
+          
+          // Short timeout to allow the message to be sent before closing
+          setTimeout(() => {
+            console.log('[MedicationConversation] Closing WebSocket connection after cleanup message');
+            wsRef.current?.close();
+            
+            // Reset TTS playing state and stop any audio
+            setTtsPlaying(false);
+            stopAllAudio();
+            
+            // Stop any active recording
+            if (isRecording) {
+              stopRecording();
+            }
+          }, 100);
+        } else {
+          // Connection is already closed or closing
+          console.log('[MedicationConversation] Connection not open, skipping cleanup message');
+          
+          // Reset TTS playing state and stop any audio
+          setTtsPlaying(false);
+          stopAllAudio();
+          
+          // Stop any active recording
+          if (isRecording) {
+            stopRecording();
+          }
+        }
+      }
+    }
+  }));
+
+  const processNextChunk = async () => {
+    if (inputQueueRef.current.isProcessing || inputQueueRef.current.chunks.length === 0) {
+      return;
+    }
+
+    inputQueueRef.current.isProcessing = true;
+    const chunk = inputQueueRef.current.chunks[0];
+
+    try {
+      const uint8Array = new Uint8Array(chunk.data.buffer);
+      let base64Data = '';
+      for (let i = 0; i < uint8Array.length; i++) {
+        base64Data += String.fromCharCode(uint8Array[i]);
+      }
+      base64Data = btoa(base64Data);
+
+      const baseUrl = process.env.NEXT_PUBLIC_STT_SERVER_URL?.replace(/\/+$/, '');
+      const transcribeUrl = `${baseUrl}/transcribe`;
+
+      const response = await fetch(transcribeUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ audio: base64Data })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.transcription?.trim()) {
+        transcriptionBufferRef.current += ' ' + result.transcription.trim();
+        setCurrentTranscription(transcriptionBufferRef.current);
+      }
+
+    } catch (error) {
+      console.error("Error processing audio chunk:", error);
+    } finally {
+      // Remove the processed chunk and reset flag
+      inputQueueRef.current.chunks.shift();
+      inputQueueRef.current.isProcessing = false;
+      
+      // Process next chunk if available
+      if (inputQueueRef.current.chunks.length > 0) {
+        processNextChunk();
+      }
+    }
+  };
 
   const startRecording = async () => {
     try {
@@ -352,48 +638,81 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
     }
   };
 
-  const stopRecording = () => {
-    // Set recording state to false immediately
-    setIsRecording(false);
-    
+  const stopRecording = async () => {
     try {
-      // Stop the media recorder if it exists
-      if (mediaRecorderRef.current) {
-        if (mediaRecorderRef.current.state === 'recording') {
-          mediaRecorderRef.current.stop();
+        // 1. Stop processing first
+        if (processorRef.current) {
+            processorRef.current.onaudioprocess = null; // Remove the event handler first
+            processorRef.current.disconnect();
+            processorRef.current = null;
         }
-      }
+
+        // 2. Disconnect source
+        if (sourceRef.current) {
+            sourceRef.current.disconnect();
+            sourceRef.current = null;
+        }
+
+        // 3. Close audio context
+        if (audioContextRef.current) {
+            await audioContextRef.current.close();
+            audioContextRef.current = null;
+        }
+
+        // 4. Stop all tracks in the stream
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => {
+                track.stop();
+            });
+            streamRef.current = null;
+        }
+
+        // 5. Clear input queue
+        inputQueueRef.current = {
+            chunks: [],
+            isProcessing: false
+        };
+        
+        // Send any remaining transcription
+        if (transcriptionBufferRef.current && transcriptionBufferRef.current.trim()) {
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({
+                    type: 'message',
+                    text: transcriptionBufferRef.current.trim()
+                }));
+                addMessage('user', transcriptionBufferRef.current.trim());
+            }
+        }
+        
+        // Clear transcription buffers
+        transcriptionBufferRef.current = '';
+        setCurrentTranscription('');
+        
+        // Update recording state
+        setIsRecording(false);
+        
     } catch (error) {
-      console.error("Error stopping media recorder:", error);
+        console.error("Error cleaning up recording resources:", error);
+        // Still try to update state even if cleanup failed
+        setIsRecording(false);
     }
-    
-    try {
-      // Stop all tracks in the stream
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => {
-          track.stop();
-        });
-      }
-    } catch (error) {
-      console.error("Error stopping media tracks:", error);
-    }
-    
-    // Clear references
-    mediaRecorderRef.current = null;
-    streamRef.current = null;
-    audioChunksRef.current = [];
-  };
+};
 
   const finishConversation = () => {
     if (isRecording) {
       stopRecording();
     }
     
+    setShouldKeepConnection(false); // Signal that we're done with the conversation
+    
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'end_conversation'
       }));
       setIsProcessing(true);
+      
+      // Stop any playing audio
+      stopAllAudio();
     } else {
       setError('Connection lost. Please refresh the page.');
     }
@@ -418,6 +737,59 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
     setIsProcessing(true);
   };
 
+  // Keep audioQueueRef in sync with audioQueue state
+  useEffect(() => {
+    audioQueueRef.current = audioQueue;
+  }, [audioQueue]);
+
+  const processAudioQueue = useCallback(async () => {
+    if (isPlayingAudio || audioQueueRef.current.length === 0) {
+      return;
+    }
+
+    console.log('[WebSocket] TTS playback started');
+    setIsPlayingAudio(true);
+    setTtsPlaying(true);
+    const nextChunk = audioQueueRef.current[0];
+
+    try {
+      await playAudioFromBase64(
+        nextChunk.audio,
+        nextChunk.sampleRate || 24000,
+        'PCM_16'
+      );
+      
+      // Remove the played chunk from queue
+      setAudioQueue(prev => prev.slice(1));
+
+      if (audioQueue.length === 0) {
+        setTtsPlaying(false);
+      }
+    } catch (error) {
+      console.error('[Audio] Error playing audio chunk:', error);
+      setTtsPlaying(false);
+    } finally {
+      setIsPlayingAudio(false);
+      console.log('[WebSocket] TTS playback completed');
+    }
+  }, [audioQueue]);
+
+  // Monitor queue and process chunks
+  useEffect(() => {
+    if (!isPlayingAudio && audioQueue.length > 0) {
+      processAudioQueue();
+    }
+  }, [audioQueue, isPlayingAudio, processAudioQueue]);
+
+  // Add cleanup for audio queue when component unmounts
+  useEffect(() => {
+    return () => {
+      setAudioQueue([]);
+      setIsPlayingAudio(false);
+      stopAllAudio();
+    };
+  }, []);
+
   return (
     <Card className={`w-full ${className}`}>
       <CardBody className="p-4">
@@ -437,7 +809,7 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
         </div>
 
         {/* Messages container */}
-        <div className="flex flex-col space-y-4 mb-4">
+        <div className="flex flex-col space-y-4 mb-4 relative">
           {messages.map((message, index) => (
             <div
               key={index}
@@ -457,7 +829,26 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
             </div>
           ))}
           <div ref={messagesEndRef} />
+          
+          {ttsPlaying && (
+            <div className="absolute bottom-0 right-0 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full flex items-center shadow-md z-10">
+              <SpeakerWaveIcon className="w-4 h-4 mr-1 animate-pulse" />
+              <span className="text-xs font-medium">Speaking...</span>
+            </div>
+          )}
         </div>
+
+        {/* Current transcription display */}
+        {isRecording && currentTranscription && (
+          <div className="mb-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+              Currently transcribing:
+            </div>
+            <div className="text-gray-900 dark:text-gray-100">
+              {currentTranscription}
+            </div>
+          </div>
+        )}
 
         {/* Controls */}
         <div className="flex flex-col space-y-4 mt-4">
@@ -534,4 +925,4 @@ export function MedicationConversation({ reminder, onComplete, className = "" }:
       </CardBody>
     </Card>
   );
-}
+});
