@@ -1,17 +1,16 @@
+
+import numpy as np
+import logging
+from dotenv import load_dotenv
+import asyncio
 import requests
 import json
 import base64
-import time
 import threading
 import queue
-import pyaudio
-import numpy as np
-import argparse
-import os
-import logging
-from dotenv import load_dotenv
-from pathlib import Path
-from typing import Optional
+import time
+import re
+from typing import Optional, Generator, AsyncGenerator, List, Union, Iterable
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -22,174 +21,82 @@ class TTSClient:
         if not server_url:
             raise ValueError("Server URL is required")
         
-        # Audio playback components
         self.server_url = server_url
-        self.audio_queue = queue.Queue()
-        self.is_playing = False
-        self.p = pyaudio.PyAudio()
-        self.stream = None
-        self.stream_lock = threading.Lock()
-
+        
         # Text processing components
-        self.text_queue = queue.Queue()
         self.current_phrase = ""
         self.buffer_lock = threading.Lock()
         
         # Control flags
         self.stop_event = threading.Event()
-        self.audio_finished_event = threading.Event()
         
-        # Tracking for last audio chunk
-        self.last_chunk_time = 0
-        self.last_chunk_size = 0
-        self.last_chunk_lock = threading.Lock()
-        
-        # Start processing threads
-        self.text_thread = threading.Thread(target=self._process_text_queue, daemon=True)
-        self.text_thread.start()
-        
-        # Start audio stream
-        self.start_audio_stream()
-        
-        # Initialize audio chunks list
-        self.all_audio_chunks = []
-        
-        # Initialize abbreviations
+        # Abbreviations list for text processing logic
         self.abbreviations = {
             'Mr.', 'Mrs.', 'Ms.', 'Dr.', 'Prof.', 'Sr.', 'Jr.', 'Ph.D.', 'M.D.', 'B.A.', 'M.A.',
             'B.S.', 'M.S.', 'B.Sc.', 'M.Sc.', 'LL.B.', 'LL.M.', 'J.D.', 'Esq.', 'Inc.', 'Ltd.',
             'Co.', 'Corp.', 'Ave.', 'St.', 'Rd.', 'Blvd.', 'Dr.', 'Apt.', 'Ste.', 'No.', 'vs.',
             'etc.', 'i.e.', 'e.g.', 'a.m.', 'p.m.', 'U.S.', 'U.K.', 'N.Y.', 'L.A.', 'D.C.'
         }
+    
+    def _should_process_current_phrase(self):
+        """Determine if the current accumulated phrase should be processed."""
+        if not self.current_phrase:
+            return False
+            
+        # Check if the phrase ends with a sentence-ending punctuation
+        if self.current_phrase.rstrip().endswith(('.', '!', '?')):
+            # Make sure it's not just ending with an abbreviation
+            for abbr in self.abbreviations:
+                if self.current_phrase.rstrip().endswith(abbr):
+                    return False
+            return True
+            
+        # Process if we have enough words and there's a natural break
+        # words = self.current_phrase.split()
+        # return len(words) >= 5 and any(word.endswith((',', ';')) for word in words)
         
-    
-    def start_audio_stream(self):
-        """Start the audio playback stream"""
-        with self.stream_lock:
-            if self.stream:
-                try:
-                    self.stream.stop_stream()
-                    self.stream.close()
-                except:
-                    pass
-                
-            self.stream = self.p.open(
-                format=self.p.get_format_from_width(2),  # 16-bit audio
-                channels=1,
-                rate=24000,
-                output=True
-            )
-            self.is_playing = True
-            self.audio_finished_event.clear()
+ 
+    def format_time_for_tts(self,text):
+        # Pattern to match times like 11:00 AM, 3:45 PM, etc.
+        pattern = r'(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)'
         
-        # Start a thread for playing audio
-        self.play_thread = threading.Thread(target=self._play_audio, daemon=True)
-        self.play_thread.start()
-    
-    def _play_audio(self):
-        """Play audio chunks from the queue"""
-        while self.is_playing and not self.stop_event.is_set():
-            try:
-                # Get audio chunk from queue with timeout
-                audio_chunk = self.audio_queue.get(timeout=2.0)
-                
-                # Ensure stream is open before playing
-                with self.stream_lock:
-                    if not self.is_playing or not self.stream or not self.stream.is_active():
-                        self.start_audio_stream()
-                    
-                    try:
-                        # Update last chunk info before playing
-                        with self.last_chunk_lock:
-                            self.last_chunk_time = time.time()
-                            self.last_chunk_size = len(audio_chunk)
-                        
-                        # Play the audio
-                        self.stream.write(audio_chunk)
-                    except Exception as e:
-                        # Reopen stream on error
-                        logger.error(f"Error playing audio: {e}")
-                        self.start_audio_stream()
-                
-                self.audio_queue.task_done()
-            except queue.Empty:
-                # No chunks available, check if we're done
-                if self.audio_queue.empty() and self.text_queue.empty():
-                    # Check if enough time has passed since last chunk was played
-                    with self.last_chunk_lock:
-                        if self.last_chunk_time > 0 and self.last_chunk_size > 0:
-                            last_chunk_duration = self.last_chunk_size / (24000 * 2)  # bytes / (sample_rate * bytes_per_sample)
-                            time_since_last_chunk = time.time() - self.last_chunk_time
-                            
-                            # Only set finished event if the last chunk has had time to play
-                            if time_since_last_chunk > last_chunk_duration:
-                                # Signal that we've finished playing all audio
-                                self.audio_finished_event.set()
-                            else:
-                                logger.info(f"Not enough time passed for last chunk to play, waiting...")
-                        else:
-                            # No audio has been played yet or empty audio
-                            self.audio_finished_event.set()
-                continue
-            except Exception as e:
-                logger.error(f"Unexpected error in _play_audio: {e}")
-                pass
+        def replace_time(match):
+            hour = int(match.group(1))
+            minute = int(match.group(2))
+            period = match.group(3).upper()
+            
+            # Format the time in a TTS-friendly way
+            if minute == 0:
+                return f"{hour} o'clock {period}"
+            else:
+                return f"{hour} {minute} {period}"
         
-        # Signal that we've finished playing all audio
-        self.audio_finished_event.set()
-    
-    def _is_phrase_complete(self, text):
-        """Check if a phrase is complete based on punctuation."""
-        text = text.strip()
-        phrase_endings = ['.', '?']
-        return any(text.endswith(end) for end in phrase_endings)
-    
-    def _process_text_queue(self):
-        """Process text chunks from the queue, sending complete phrases to TTS."""
-        while not self.stop_event.is_set():
-            try:
-                # Get text chunk with timeout
-                text_chunk = self.text_queue.get(timeout=0.1)
-                
-                with self.buffer_lock:
-                    self.current_phrase += text_chunk
-                    
-                    #Check for abbreviations
-                    if text_chunk.strip() in self.abbreviations:
-                        continue
-                    
-                    # Check if phrase is complete
-                    elif self._is_phrase_complete(self.current_phrase):
-                        phrase_to_speak = self.current_phrase.strip()
-                        self.current_phrase = ""
-                        
-                        # Send phrase to TTS service
-                        self._send_to_tts(phrase_to_speak)
-                
-                self.text_queue.task_done()
-            except queue.Empty:
-                # If no new text but we have accumulated text, process it
-                with self.buffer_lock:
-                    if self.current_phrase and len(self.current_phrase.split()) >= 3:
-                        phrase_to_speak = self.current_phrase.strip()
-                        self.current_phrase = ""
-                        # Send phrase to TTS service
-                        self._send_to_tts(phrase_to_speak)
-            except Exception:
-                pass
+        # Check if the pattern exists in the text
+        if re.search(pattern, text):
+            # If pattern exists, replace all occurrences
+            return re.sub(pattern, replace_time, text)
+        else:
+            # If no pattern is found, return the original text
+            return text
+
     
     def _send_to_tts(self, text):
-        """Send text to TTS service and process the response."""
-        if not text:
+        """Send text to TTS service and yield audio chunks."""
+        if not text or not text.strip():
             return
+        
+        text = text.strip()
+        # Format time in text
+        text = self.format_time_for_tts(text)
         
         try:
             # Prepare the request
             url = f"{self.server_url}/tts-stream"
+            logger.info(f"Sending text to TTS: {text}")
             
             response = requests.post(
                 url,
-                json={"text": text},
+                json={"text": text, "language": "en"},
                 headers={"Content-Type": "application/json"},
                 stream=True
             )
@@ -199,7 +106,7 @@ class TTSClient:
                 # Process streaming response
                 buffer = ""
                 
-                for line in response.iter_lines():  
+                for line in response.iter_lines():
                     if line:
                         # Decode bytes to string
                         line_str = line.decode('utf-8')
@@ -213,130 +120,188 @@ class TTSClient:
                             if 'chunk' in data:
                                 # Decode base64 audio chunk
                                 audio_bytes = base64.b64decode(data['chunk'])
-                                
-                                # Add to all audio chunks for later use
-                                self.all_audio_chunks.append(audio_bytes)
-                                
-                                # Add to the audio queue for playback
-                                self.audio_queue.put(audio_bytes)
-                                
-                                # Update last chunk info
-                                with self.last_chunk_lock:
-                                    self.last_chunk_time = time.time()
-                                    self.last_chunk_size = len(audio_bytes)
+                                yield audio_bytes
                         except json.JSONDecodeError:
                             # Incomplete JSON, continue adding to buffer
                             continue
             else:
-                logger.error(f"Error from TTS server: {response.status_code} - {response.text}")
+               logger.error(f"Error from TTS server: {response.status_code} - {response.text}")
         except Exception as e:
             logger.error(f"Error sending text to TTS: {e}")
     
-    def stream_text(self, text_chunk):
-        """Add a chunk of text to the processing queue."""
+    def stream_text(self, text_chunk: str) -> Generator[bytes, None, None]:
+        """
+        Process a chunk of text and yield audio chunks.
+        Works with both single words/tokens from LLM streaming and full paragraphs.
+        """
+        if not text_chunk:
+            return
+        
+        logger.info(f"Received: {text_chunk}")
+        
         words = text_chunk.strip().split()
         if len(words) > 1:
+            word_list = []
             for word in words:
-                self.text_queue.put(word + " ")
-        else:
-            self.text_queue.put(text_chunk)
+                word_list.append(word + " ")     
+            words = word_list      
+
+        for word in words:
+            with self.buffer_lock:
+                # Add text to current phrase buffer
+                self.current_phrase += word
+                
+                # For LLM streaming input (typically one word/token at a time)
+                # Check if the chunk is just a single period or another sentence-ending punctuation
+                is_end_mark = text_chunk.strip() in ['.', '!', '?']
+                
+                # Skip processing if this is just an abbreviation
+                is_abbreviation = text_chunk.strip() in self.abbreviations
+                if is_abbreviation:
+                    return
+                    
+                # Check if we should process what we have so far
+                if self._should_process_current_phrase() or is_end_mark:
+                    phrase_to_speak = self.current_phrase.strip()
+                    self.current_phrase = ""
+
+                    # Send phrase to TTS and yield audio chunks
+                    yield from self._send_to_tts(phrase_to_speak)
     
-    def wait_for_completion(self, timeout=5):
-        """Wait for all audio to finish playing.
-        
-        Args:
-            timeout: Maximum time (in seconds) to wait for inactivity before considering the process complete.
-                     This is NOT an absolute timeout from start to finish, but rather a timeout for inactivity.
-        """
-        # Process any remaining text
+    def process_text_stream(self, text_stream: Iterable[str]) -> Generator[bytes, None, None]:
+        """Process a stream of text chunks and yield audio chunks."""
+        for text_chunk in text_stream:
+            if self.stop_event.is_set():
+                break
+                
+            yield from self.stream_text(text_chunk)
+            
+        # Process any remaining text in the buffer if the stream is exhausted
         with self.buffer_lock:
-            if self.current_phrase:
+            if self.current_phrase and not self.stop_event.is_set():
+                yield from self._send_to_tts(self.current_phrase)
+                self.current_phrase = ""
+    
+    def finish(self) -> Generator[bytes, None, None]:
+        """Process any remaining text and signal completion."""
+        with self.buffer_lock:
+            if self.current_phrase and not self.stop_event.is_set():
                 phrase_to_speak = self.current_phrase.strip()
                 self.current_phrase = ""
-                self._send_to_tts(phrase_to_speak)
-        
-        # Start monitoring for inactivity immediately
-        last_activity_time = time.time()
-        start_time = time.time()
-        
-        # Initialize tracking variables
-        text_queue_size_last = self.text_queue.qsize()
-        audio_queue_size_last = self.audio_queue.qsize()
-        last_queue_change_time = time.time()
-        
-        # Keep monitoring until we detect sufficient inactivity
-        while True:
-            # Check if queues have changed size (indicating activity)
-            current_text_size = self.text_queue.qsize()
-            current_audio_size = self.audio_queue.qsize()
-            
-            # Check if queue sizes have changed
-            if current_text_size != text_queue_size_last or current_audio_size != audio_queue_size_last:
-                last_queue_change_time = time.time()
-                last_activity_time = time.time()  # Reset inactivity timer when queues change
-                
-                # Update last known sizes
-                text_queue_size_last = current_text_size
-                audio_queue_size_last = current_audio_size
-            
-            # Check audio chunk activity
-            with self.last_chunk_lock:
-                if self.last_chunk_time > 0:  # If we've played any audio
-                    # Calculate expected duration of last chunk
-                    last_chunk_duration = self.last_chunk_size / (24000 * 2)  # bytes / (sample_rate * bytes_per_sample)
-                    time_since_last_chunk = time.time() - self.last_chunk_time
-                    
-                    # Update last activity time if we've received a new chunk recently
-                    if time_since_last_chunk < 0.5:  # Very recent activity
-                        last_activity_time = time.time()
-                    
-                    # If the last chunk hasn't had time to finish playing, we're still active
-                    if time_since_last_chunk < last_chunk_duration:
-                        last_activity_time = max(last_activity_time, self.last_chunk_time + last_chunk_duration)
-            
-            # Check if we've been inactive for the timeout period
-            current_inactivity_time = time.time() - last_activity_time
-            
-            # Check if both queues are empty AND we've been inactive for the timeout
-            if (self.text_queue.empty() and self.audio_queue.empty() and 
-                current_inactivity_time >= timeout):
-                break
-            
-            # If queues are not empty but there's been no activity for an extended period (2x timeout)
-            # This is a safety check in case processing stalls
-            if current_inactivity_time >= (timeout * 2):
-                break
-            
-            # Short sleep to avoid CPU spinning
-            time.sleep(0.2)
-            
-            # Safety timeout - if total time exceeds 5 minutes, exit with warning
-            if time.time() - start_time > 300:  # 5 minutes
-                break
-        
-        # Now set the event if it's still not set
-        if not self.audio_finished_event.is_set():
-            self.audio_finished_event.set()
-        
-        # Add a small fixed delay to ensure any final audio has finished playing
-        time.sleep(1.0)
-        
-        return True
+                yield from self._send_to_tts(phrase_to_speak)
+    
+    def reset(self):
+        """Reset the client state."""
+        logger.info("Resetting TTS client state")
+        with self.buffer_lock:
+            self.current_phrase = ""
+        self.stop_event.clear()
     
     def stop(self):
-        """Stop all processing and clean up resources."""
-        
-        # Now set stop event
+        """Stop all processing."""
         self.stop_event.set()
+        with self.buffer_lock:
+            self.current_phrase = ""
+        logger.info("TTS client stopped")
+
+    # Async implementations
+    async def _send_to_tts_async(self, text):
+        """Async version of send_to_tts."""
+        if not text or not text.strip():
+            return
         
-        # Stop audio
-        with self.stream_lock:
-            self.is_playing = False
-            if self.stream:
-                try:
-                    self.stream.stop_stream()
-                    self.stream.close()
-                except:
-                    pass
+        text = text.strip()
         
-        self.p.terminate()
+        try:
+            # Prepare the request
+            url = f"{self.server_url}/tts-stream"
+            logger.info(f"Sending text to TTS (async): {text}")
+            
+            # Use httpx for async requests
+            import httpx
+            async with httpx.AsyncClient() as client:
+                async with client.stream(
+                    "POST",
+                    url,
+                    json={"text": text, "language": "en"},
+                    headers={"Content-Type": "application/json"}
+                ) as response:
+                    # Check if the request was successful
+                    if response.status_code == 200:
+                        # Process streaming response
+                        buffer = ""
+                        
+                        async for line in response.aiter_lines():
+                            if line:
+                                buffer += line
+                                
+                                # Try to parse JSON from buffer
+                                try:
+                                    data = json.loads(buffer)
+                                    buffer = ""
+                                    
+                                    if 'chunk' in data:
+                                        # Decode base64 audio chunk
+                                        audio_bytes = base64.b64decode(data['chunk'])
+                                        yield audio_bytes
+                                except json.JSONDecodeError:
+                                    # Incomplete JSON, continue adding to buffer
+                                    continue
+                    else:
+                        logger.error(f"Error from TTS server: {response.status_code} - {await response.text()}")
+        except Exception as e:
+            logger.error(f"Error sending text to TTS async: {e}")
+    
+    async def stream_text_async(self, text_chunk: str) -> AsyncGenerator[bytes, None]:
+        """Async version of stream_text."""
+        if not text_chunk or self.stop_event.is_set():
+            return
+        
+        logger.info(f"Received (async): {text_chunk}")
+        
+        with self.buffer_lock:
+            # Add text to current phrase buffer
+            self.current_phrase += text_chunk
+            
+            # For LLM streaming input (typically one word/token at a time)
+            # Check if the chunk is just a single period or another sentence-ending punctuation
+            is_end_mark = text_chunk.strip() in ['.', '!', '?']
+            
+            # Skip processing if this is just an abbreviation
+            is_abbreviation = text_chunk.strip() in self.abbreviations
+            if is_abbreviation:
+                return
+                
+            # Check if we should process what we have so far
+            if self._should_process_current_phrase() or is_end_mark:
+                phrase_to_speak = self.current_phrase.strip()
+                self.current_phrase = ""
+                
+                # Send phrase to TTS and yield audio chunks
+                async for chunk in self._send_to_tts_async(phrase_to_speak):
+                    yield chunk
+    
+    async def process_text_stream_async(self, text_stream) -> AsyncGenerator[bytes, None]:
+        """Async version of process_text_stream."""
+        async for text_chunk in text_stream:
+            if self.stop_event.is_set():
+                break
+                
+            async for chunk in self.stream_text_async(text_chunk):
+                yield chunk
+                
+        # Process any remaining text in the buffer if the stream is exhausted
+        with self.buffer_lock:
+            if self.current_phrase and not self.stop_event.is_set():
+                async for chunk in self._send_to_tts_async(self.current_phrase):
+                    yield chunk
+                self.current_phrase = ""
+    
+    async def finish_async(self) -> AsyncGenerator[bytes, None]:
+        """Async version of finish."""
+        with self.buffer_lock:
+            if self.current_phrase and not self.stop_event.is_set():
+                phrase_to_speak = self.current_phrase.strip()
+                self.current_phrase = ""
+                async for chunk in self._send_to_tts_async(phrase_to_speak):
+                    yield chunk

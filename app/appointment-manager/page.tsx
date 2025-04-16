@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@heroui/button';
 import { Card, CardBody } from '@heroui/card';
 import { Divider } from '@heroui/divider';
@@ -8,8 +8,8 @@ import { Input } from '@heroui/input';
 import { Select, SelectItem } from '@heroui/select';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/table';
 import { ReminderResponse } from './types';
-import { AppointmentConversation } from '../../components/voice/AppointmentConversation';
-import { MedicationConversation } from '../../components/voice/MedicationConversation';
+import { AppointmentConversation, AppointmentConversationRef } from '../../components/voice/AppointmentConversation';
+import { MedicationConversation, MedicationConversationRef } from '../../components/voice/MedicationConversation';
 import { appointmentManagerApi } from './api';
 import { 
   ClockIcon, 
@@ -36,6 +36,8 @@ export default function AppointmentManager() {
   const [type, setType] = useState<'appointment' | 'medication'>('appointment');
   const [daysAhead, setDaysAhead] = useState<number>(1);
   const [hoursAhead, setHoursAhead] = useState<number>(1);
+  const [daysAheadInput, setDaysAheadInput] = useState<string>('1');
+  const [hoursAheadInput, setHoursAheadInput] = useState<string>('1');
   const [loading, setLoading] = useState(false);
   const [reminders, setReminders] = useState<ReminderResponse[]>([]);
   const [selectedReminder, setSelectedReminder] = useState<ReminderResponse | undefined>(undefined);
@@ -43,6 +45,35 @@ export default function AppointmentManager() {
   const [appointmentResult, setAppointmentResult] = useState<ConversationResult | null>(null);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [currentStep, setCurrentStep] = useState<FlowStep>(FlowStep.SEARCH);
+  
+  // Add ref for active conversation - update with union type
+  const conversationRef = useRef<AppointmentConversationRef | MedicationConversationRef | null>(null);
+  
+  // Add an effect to close WebSocket when component unmounts (e.g., navigating to a different page)
+  useEffect(() => {
+    // Add beforeunload event handler
+    const handleBeforeUnload = () => {
+      // Close WebSocket connection when page is unloaded
+      if (conversationRef.current && conversationRef.current.setShouldKeepConnection) {
+        console.log('[Navigation] Page unloading, closing WebSocket');
+        conversationRef.current.setShouldKeepConnection(false);
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      // Remove event listener
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      
+      // Close WebSocket connection when component unmounts
+      if (conversationRef.current && conversationRef.current.setShouldKeepConnection) {
+        console.log('[Navigation] Component unmounting, closing WebSocket');
+        conversationRef.current.setShouldKeepConnection(false);
+      }
+    };
+  }, []);
   
   // Process a single medication or appointment at a time
   const handleStartSchedule = async () => {
@@ -110,6 +141,18 @@ export default function AppointmentManager() {
     setCurrentStep(FlowStep.RESULTS);
   };
   
+  // Add method to close connection when navigating away
+  const handleBackToSearch = () => {
+    // Close WebSocket connection if there's an active conversation
+    if (conversationRef.current && conversationRef.current.setShouldKeepConnection) {
+      console.log('[Navigation] Closing WebSocket before navigating back to search');
+      conversationRef.current.setShouldKeepConnection(false);
+    }
+    
+    // Reset state and navigate
+    setCurrentStep(FlowStep.SEARCH);
+  };
+  
   // Format the reminder type for display
   const formatReminderType = (type: string) => {
     return type.charAt(0).toUpperCase() + type.slice(1);
@@ -167,26 +210,62 @@ export default function AppointmentManager() {
                     <SelectItem key="medication">Medication</SelectItem>
                   </Select>
                   <div className="grid grid-cols-2 gap-4">
-                    <Input
-                      label="Days Ahead"
-                      labelPlacement="outside"
-                      placeholder="Input days ahead"
-                      type="number"
-                      value={daysAhead.toString()}
-                      onChange={(e) => setDaysAhead(parseInt(e.target.value) || 1)}
-                      min={1}
-                      startContent={<CalendarIcon className="w-4 h-4 text-gray-400" />}
-                    />
-                    <Input
-                      label="Hours Ahead"
-                      labelPlacement="outside"
-                      placeholder="Input hours ahead"
-                      type="number"
-                      value={hoursAhead.toString()}
-                      onChange={(e) => setHoursAhead(parseInt(e.target.value) || 1)}
-                      min={1}
-                      startContent={<ClockIcon className="w-4 h-4 text-gray-400" />}
-                    />
+                    <div className={type === 'medication' ? 'col-span-2' : ''}>
+                      <Input
+                        label="Days Ahead"
+                        labelPlacement="outside"
+                        placeholder="Input days ahead"
+                        type="number"
+                        value={daysAheadInput}
+                        onChange={(e) => {
+                          setDaysAheadInput(e.target.value);
+                          if (e.target.value === '') {
+                          } else {
+                            setDaysAhead(parseInt(e.target.value) || 1);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!e.target.value || parseInt(e.target.value) < 1) {
+                            setDaysAhead(1);
+                            setDaysAheadInput('1');
+                          } else {
+                            const numValue = parseInt(e.target.value);
+                            setDaysAhead(numValue);
+                            setDaysAheadInput(numValue.toString());
+                          }
+                        }}
+                        min={1}
+                        startContent={<CalendarIcon className="w-4 h-4 text-gray-400" />}
+                      />
+                    </div>
+                    {type === 'appointment' && (
+                      <Input
+                        label="Hours Ahead"
+                        labelPlacement="outside"
+                        placeholder="Input hours ahead"
+                        type="number"
+                        value={hoursAheadInput}
+                        onChange={(e) => {
+                          setHoursAheadInput(e.target.value);
+                          if (e.target.value === '') {
+                          } else {
+                            setHoursAhead(parseInt(e.target.value) || 1);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!e.target.value || parseInt(e.target.value) < 1) {
+                            setHoursAhead(1);
+                            setHoursAheadInput('1');
+                          } else {
+                            const numValue = parseInt(e.target.value);
+                            setHoursAhead(numValue);
+                            setHoursAheadInput(numValue.toString());
+                          }
+                        }}
+                        min={1}
+                        startContent={<ClockIcon className="w-4 h-4 text-gray-400" />}
+                      />
+                    )}
                   </div>
                   <Button 
                     color="primary" 
@@ -261,11 +340,13 @@ export default function AppointmentManager() {
                         <AppointmentConversation 
                           reminder={selectedReminder}
                           onComplete={(result) => handleCompleteConversation(result)}
+                          ref={conversationRef}
                         />
                       ) : (
                         <MedicationConversation 
                           reminder={selectedReminder}
                           onComplete={(result) => handleCompleteConversation(result)}
+                          ref={conversationRef}
                         />
                       )}
                     </div>
@@ -370,7 +451,7 @@ export default function AppointmentManager() {
                   <div className="flex justify-between mt-4">
                     <Button 
                       color="default"
-                      onClick={() => setCurrentStep(FlowStep.SEARCH)}
+                      onClick={handleBackToSearch}
                       startContent={<ArrowPathIcon className="h-4 w-4" />}
                     >
                       Back to Schedule
@@ -378,6 +459,10 @@ export default function AppointmentManager() {
                     <Button 
                       color="primary"
                       onClick={() => {
+                        // Close WebSocket connection
+                        if (conversationRef.current && conversationRef.current.setShouldKeepConnection) {
+                          conversationRef.current.setShouldKeepConnection(false);
+                        }
                         setSelectedReminder(undefined);
                         setAppointmentResult(null);
                         setCurrentStep(FlowStep.SEARCH);
@@ -404,7 +489,7 @@ export default function AppointmentManager() {
             color="default" 
             variant="flat" 
             size="sm" 
-            onClick={() => setCurrentStep(FlowStep.SEARCH)}
+            onClick={handleBackToSearch}
           >
             Back to Search
           </Button>

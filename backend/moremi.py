@@ -330,8 +330,6 @@ class ConversationManager:
             if should_speak:
                 try:
                     self.tts.stream_text(content)
-                    self.tts.wait_for_completion()
-                    self.tts.stop()
                 except Exception as e:
                     logger.error(f"Error in TTS for non-streaming response: {e}")
             
@@ -362,10 +360,7 @@ class ConversationManager:
                         self.tts.stream_text(content_piece)
                     except KeyboardInterrupt:
                         self.tts.stop()
-                        pass
-        if should_speak:
-            self.tts.wait_for_completion(2)      
-            self.tts.stop()      
+                        pass  
         print("\n")
         
         self.conversation_history.append({"role": "assistant", "content": collected_content})
