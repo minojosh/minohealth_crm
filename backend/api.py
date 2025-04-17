@@ -748,10 +748,14 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                                     play_locally=True
                                 ) 
                                 tts_client.wait_for_completion()
+                                
+                                assistant.LLM.conversation_history[-1]['content'] += f"\n{status_msg}"
                         
                     
                     # Handle available slots
                     if assistant.suit_doc:
+                        assistant.LLM.conversation_history[-1]['content'] += " \nA suitable doctor has been found."
+                        
                         slots_response = ""
                         for doc in assistant.suit_doc:
                             # Use the unified scheduler service to get slots
@@ -776,6 +780,7 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
                         )
                         
                         tts_client.wait_for_completion()
+                        
                     else:
                         await websocket.send_json({
                             "type": "message",
@@ -858,6 +863,7 @@ async def schedule_session(websocket: WebSocket, patient_id: int):
             })
     finally:
         logger.info(f"Cleaning up schedule_session for patient {patient_id}")
+        # Stop TTS client
         tts_client.stop()
 
 @app.websocket("/ws/conversation")

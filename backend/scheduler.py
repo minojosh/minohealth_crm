@@ -188,7 +188,7 @@ class SpeechAssistant:
     def _load_prompts(self) -> None:
         """Load system prompts from configuration file."""
         try:
-            with open('backend/prompt.json', 'r', encoding='utf-8') as file:
+            with open('backend/prompts.json', 'r', encoding='utf-8') as file:
                 schema = json.load(file)
             self.system_prompt = schema.get("systemprompt", "")
             self.summary_system_prompt = schema.get("summarysystemprompt", "")
@@ -234,17 +234,26 @@ class SpeechAssistant:
 
         # Initial Doctor paitient conversation
         question = f'''
-Task: You are a doctor's medical assistant that strictly follows the given instructions. Never deviate or add anything extra. Follow these rules exactly as written. Think step by step.
-The current user is not the patient but is scheduling an appointment for the patient.  NEVER address the patient directly instead all question should be routed to through the user.
-Your task is to aid the user schedule an appointment by following these steps:
-1. Select the doctor 
-   - Understand the conversation below for a scheduling task.
-   - If a doctor's name is mentioned, check this list of doctors, <{names}>, and only output the doctor's full name nothing before or after.  
-   - If a doctor's name is not explicitly mentioned, do this subsection:
+Task(Follow the instructions carefully): 
+Never deviate or add anything extra. Follow these rules exactly as written. Think step by step. NEVER address the patient directly instead all question should be routed to through the user. Your task is to aid the user schedule an appointment by following these steps:
+
+Select a doctor 
+   - The conversation below is between a doctor and a patient. Use it to complete the task. Do not assume or guess anything. All the information you need is in the conversation. Based on the conversation you will either choose the path A or B. Read both carefully and use the conversation (reflect on the conversation and conditions for A and B) to decide which path to take. If both are not applicable then output tell the user that the context is insufficient to complete the task.
+   
+   A. Check if a doctor's name is mentioned. If a doctor's name is mentioned, check this list of doctors, <{names}>, for a match. If there is a match output the name as seen in the list else output the doctor's name as mentioned in the conversation. Only output the doctor's name nothing before or after. Do nothing else after extracting the doctor's name. 
+   
+   B. If a doctor's name is not explicitly mentioned from the conversation, do this subsection:
       -- From the conversation try and match the described specialty with each specialty in our list of available specialties, <{specialties}>.
       -- If there isn't a match then extract the exact name of the specialty from the conversation and ONLY output, search_specialty: <specialty>, nothing before or after.
       -- If there is a match then refer to the specialty exactly as it is in our list and ONLY output, search_specialty: <specialty>, nothing before or after.
-   - Only do this after the user has confirmed the patients appointment date. Extract the patients name and confirm with the user, if the name is not known ask the user directly. Example: What is the name of the patient.   
+      
+Follow the example below:
+
+User: 
+Conversation:"Doctor: Good morning! What brings you in today?\n\nPatient: Good morning, doctor. I've been having persistent lower back pain for the past few weeks. It's worse in the morning and sometimes spreads to my legs.\n\nDoctor: I see. Have you experienced any numbness, tingling, or weakness in your legs?\n\nPatient: Yes, sometimes my left leg feels a bit numb, especially after sitting for too long.\n\nDoctor: That could indicate a nerve-related issue or a spinal problem. While I can do a preliminary assessment, I recommend that you see an orthopedic specialist for a detailed evaluation. They can check for conditions like a herniated disc or sciatica.\n\nPatient: That makes sense. Should I get any tests done before seeing the specialist?\n\nDoctor: I'll prescribe an X-ray of your lower back. Depending on the results, the orthopedic doctor may request an MRI if needed.\n\nPatient: Alright. When can I see the orthopedic doctor?\n\nDoctor: I would have to confirm and let you know.\n\nPatient: Thank you, doctor. I'll get the X-ray done.\n\nDoctor: That's a good plan. Take care, and if the pain worsens before your appointment, don't hesitate to call us.\n\nPatient: I appreciate it. See you soon!"
+Assistant: search_specialty: orthopedic
+           
+[NOTE: You are not the patient, you are the one scheduling the appointment. You are speaking to the consulting doctor with regards to scheduling the patients appointment. Be concise, clear, and direct. Avoid unnecessary details or filler. At this stage it is either you can extract the doctor's name or the specialty from the conversation. PAY ATTENTION TO WHEN YOU ARE ASKED TO OUTPUT ONLY A SPECIFIC DETAIL. NOTE HOW IN THE EXAMPLE ABOVE THE ASSISTANT OUTPUTS ONLY search_specialty: orthopedic, nothing before or after.]   
      
 Conversation:
 {context}  
@@ -387,9 +396,12 @@ Conversation:
         
         if 'search_specialty' in str(response).lower():
             self.handle_specialty_search(response)
-        else:
+        elif any(doc['doctor_name'] in response for doc in docs):
             self.handle_doctor_search(response)
-
+        else:
+            self.add_status_message(response)
+            
+            
     def add_status_message(self, text):
         """Add a status message, log it, and send it to TTS."""
         logger.info(text)
@@ -398,7 +410,7 @@ Conversation:
         return text
 
     def handle_specialty_search(self, response):
-        text = "Finding a suitable doctor. Please wait..."
+        text = "Finding a suitable doctor for the patient. Please wait."
         self.add_status_message(text)
         
         for doc in docs:
@@ -410,7 +422,7 @@ Conversation:
             self.handle_no_doctors_found("specialty")
 
     def handle_doctor_search(self, response):
-        text = 'Finding available days for the doctor. Please wait...'
+        text = 'Retrieving information about the suitable doctor. Please wait...'
         self.add_status_message(text)
         
         for doc in docs:

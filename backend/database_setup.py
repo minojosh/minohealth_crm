@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, date
 import random
 
 def create_database():
-    conn = sqlite3.connect('healthcare.db')
+    conn = sqlite3.connect('backend/healthcare.db')
     cursor = conn.cursor()
     
     # Drop existing tables if they exist

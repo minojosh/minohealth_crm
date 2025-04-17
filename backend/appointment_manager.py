@@ -28,7 +28,7 @@ import asyncio
 client = SpeechRecognitionClient()
 dotenv_path = os.path.join(os.path.dirname(__file__), '../.env')
 if not os.path.exists(dotenv_path):
-    logger.warning(f"Environment file not found at {dotenv_path}, using environment variables")
+    logging.warning(f"Environment file not found at {dotenv_path}, using environment variables")
 load_dotenv(dotenv_path=dotenv_path, encoding='utf-8')
 tts_url = os.getenv("XTTS_URL")
 print(f"tts_url: {tts_url}")
@@ -181,31 +181,39 @@ class SchedulerManager:
             logger.error(f"Error retrieving upcoming appointments: {e}")
             return []
 
-    def get_active_medications(self) -> List[Tuple[Medication, Patient]]:
-        """Retrieve active medications for all patients."""
+    def get_active_medications(self, days_ahead=0) -> List[Tuple[Medication,Patient]]:
+        """Retrieve medications that are active within the specified days ahead range.
+        
+        Args:
+            days_ahead: Number of days ahead to check for active medications. Default is 0 (today only).
+            
+        Returns:
+            List of tuples containing (Medication, Patient) for medications active within the date range.
+        """
+        # Calculate start and end dates for the range
         now = datetime.now()
+        start_date = now.date()
+        end_date = start_date + timedelta(days=days_ahead)
+        
         try:
-            logger.info(f"Querying active medications for date: {now.date()}")
-            medications = self.session.query(Medication, Patient).join(Patient).filter(
+            logger.info(f"Querying medications active between {start_date} and {end_date}")
+            active_medications = self.session.query(Medication, Patient).join(Patient).filter(
                 and_(
-                    Medication.start_date <= now.date(),
-                    Medication.end_date >= now.date()
+                    Medication.start_date <= end_date,  # Medication starts before or on the end date
+                    Medication.end_date >= start_date   # Medication ends after or on the start date
                 )
             ).all()
             
-            logger.info(f"Found {len(medications)} active medications")
+            logger.info(f"Found {len(active_medications)} medications active in the next {days_ahead} days")
             # Debug logging
-            for med, patient in medications:
-                logger.info(f"Found medication: {med.name} for patient: {patient.name}")
+            for med, patient in active_medications:
+                logger.info(f"Active medication: {med.name} for patient: {patient.name} (ends on {med.end_date})")
                 logger.debug(f"Medication details - Start: {med.start_date}, End: {med.end_date}, Dosage: {med.dosage}")
             
-            return medications
-            
+            return active_medications
         except Exception as e:
-            logger.error(f"Error retrieving active medications: {e}")
-            return []
-
-    # ...existing code...
+            logger.error(f"Error querying medications active in the next {days_ahead} days: {str(e)}")
+            raise
 
     def _get_new_date(self, doctor_id: int) -> List[dict]:
         """
@@ -360,14 +368,21 @@ class SchedulerManager:
                 success=False,
                 message=f"Failed to process medication reminder: {str(e)}"
             )
-   
-    def process_medication_reminders(self, days_ahead) -> List[ReminderMessage]:
-        """Process and create reminders for active medications."""
+    
+    def process_medication_reminders(self, days_ahead=0) -> List[ReminderMessage]:
+        """Process and create reminders for medications that are active within the specified days ahead range.
+        
+        Args:
+            days_ahead: Number of days ahead to check for active medications. Default is 0 (today only).
+        
+        Returns:
+            List of ReminderMessage objects for medications active within the date range.
+        """
         reminders = []
         results = []
         try:
-            logger.info("Retrieving active medications...")
-            medications = self.get_active_medications()
+            logger.info(f"Retrieving medications expiring within {days_ahead} days...")
+            medications = self.get_active_medications(days_ahead=days_ahead)
             logger.info(f"Retrieved {len(medications)} active medications")
             
             # First, create all reminder objects
@@ -396,12 +411,17 @@ class SchedulerManager:
         return reminders
 
 class MedicalAgent:
-    def __init__(self, reminder, message_type, days_ahead):
-        self.scheduler = SchedulerManager(days_ahead)
+    def __init__(self, reminder, message_type, days_ahead = None):
+        if days_ahead is None:
+            self.scheduler = SchedulerManager()
+        else:
+            self.scheduler = SchedulerManager(days_ahead)
         self.voice_assistant = VoiceAssistant()
         self.reminder = reminder
         self.message_type = message_type
-        self.api = "http://46.101.91.139:5001/inference_history" #os.getenv('API_URL')
+        load_dotenv()
+        self.api =  os.getenv('MOREMI_API_BASE_UR')
+        self.LLM = ConversationManager(base_url=self.api)
         self._load_prompts()
         self.audio_base64 = None
         
@@ -438,23 +458,15 @@ class MedicalAgent:
             self.system_prompt=""
             self.reschedule_message="Let me find available slots for rescheduling."
     
-    def moremi_response(self, messages, system_prompt: Optional[str] = None) -> str:
+    def moremi_response(self, message, system_prompt: Optional[str] = None, should_speak: Optional[bool] = False) -> str:
         """Get response from Moremi API using ConversationManager for text-only processing."""
+        self.LLM.custom_params["system_prompt"] = system_prompt
+        self.LLM.add_user_message(text=message)
         
-        
-        base_url = "http://46.101.91.139:5003/v1"  
-        conversation_manager = ConversationManager(base_url=base_url)
-        print("yaaayyyyy")
-        
-        
-        conversation_manager.custom_params["system_prompt"] = system_prompt
-        
-        
-        conversation_manager.add_user_message(text=messages)
-
-        
-    
-        response = conversation_manager.get_assistant_response()
+        if should_speak:
+            response = self.LLM.get_assistant_response(should_speak=True)
+        else:
+            response = self.LLM.get_assistant_response()
         
         return response
 
@@ -467,7 +479,7 @@ class MedicalAgent:
             if available_slots:
                 return self.scheduler.format_available_slots(available_slots)
             else:
-                return "I am sorry, but there are no available appointment slots in the next 30 days."
+                return "I am sorry, but there are no available appointment slots in the days you specified."
         except Exception as e:
             logger.error(f"Error rescheduling appointment: {e}")
             raise
@@ -482,19 +494,20 @@ class MedicalAgent:
         
         for msg in messages:
             # Format patient's message
-            if msg.user_input:
-                formatted_text += f"Patient: {msg.user_input}\n\n"
+            if msg['role'] == 'user':
+                formatted_text += f"Patient: {msg['content']}\n\n"
             
             # Format doctor's message
-            if msg.response:
+            if msg['role'] == 'assistant':
                 # Clean up any markdown or special formatting
-                clean_response = msg.response.strip()
+                clean_response = msg['content'].strip()
                 formatted_text += f"Doctor: {clean_response}\n\n"
         
         return formatted_text
 
     def extract_datetime_from_moremi(self, response: str) -> str:
-        pattern = r"""
+        # Pattern 1: Natural language format - "Saturday, March 29, 2025 at 4:45 PM"
+        natural_pattern = r"""
             # Match weekday
             ([A-Za-z]+day)[\s,]*
             # Match month and day
@@ -507,24 +520,83 @@ class MedicalAgent:
             (\d{1,2}:\d{2}\s*[APM]{2})
         """
         
-        match = re.search(pattern, response, re.VERBOSE)
-        if not match:
-            raise ValueError("Could not find datetime information in text")
+        # Try natural language pattern first
+        natural_match = re.search(natural_pattern, response, re.VERBOSE)
+        if natural_match:
+            weekday = natural_match.group(1)
+            date = natural_match.group(2)
+            year = natural_match.group(3) if natural_match.group(3) else "2025"
+            time = natural_match.group(4)
+            
+            datetime_str = f"{weekday}, {date}, {year} at {time}"
+            try:
+                dt = datetime.strptime(datetime_str, "%A, %B %d, %Y at %I:%M %p")
+                return dt.strftime("%Y-%m-%d %H:%M")
+            except ValueError as e:
+                pass  # If parsing fails, we'll try the ISO pattern
         
-        weekday = match.group(1)
-        date = match.group(2)
-        year = match.group(3) if match.group(3) else "2025"
-        time = match.group(4)
-
-        datetime_str = f"{weekday}, {date}, {year} at {time}"
+        # Natural language format with ordinal day first - "29th March 2025, 04:45 PM"
+        ordinal_first_pattern = r"""
+            # Match day with ordinal suffix
+            (\d{1,2}(?:st|nd|rd|th))
+            \s+
+            # Match month
+            ([A-Za-z]+)
+            # Optional year
+            (?:,?\s+(\d{4}))?
+            # Optional 'at' or comma before time
+            (?:,?\s+(?:at\s+)?|\s+at\s+)?
+            # Match time
+            (\d{1,2}:\d{2}\s*[APM]{2})
+        """
         
-        try:
-            # Convert to datetime object
-            dt = datetime.strptime(datetime_str, "%A, %B %d, %Y at %I:%M %p")
-            # Format the datetime object to desired output format
-            return dt.strftime("%Y-%m-%d %H:%M")
-        except ValueError as e:
-            raise ValueError(f"Failed to parse datetime: {e}")
+        # Try ordinal_first_pattern first
+        ordinal_match = re.search(ordinal_first_pattern, response, re.VERBOSE)
+        if ordinal_match:
+            day_with_suffix = ordinal_match.group(1)
+            month = ordinal_match.group(2)
+            year = ordinal_match.group(3) if ordinal_match.group(3) else "2025"
+            time = ordinal_match.group(4)
+            
+            # Remove ordinal suffix from day
+            day = re.sub(r'(st|nd|rd|th)$', '', day_with_suffix)
+            
+            datetime_str = f"{day} {month} {year} {time}"
+            try:
+                dt = datetime.strptime(datetime_str, "%d %B %Y %I:%M %p")
+                return dt.strftime("%Y-%m-%d %H:%M")
+            except ValueError as e:
+                print(f"Ordinal first format parsing failed: {e}")
+                
+        # For ISO format, extract date and time separately
+        # Extract date: Look for YYYY-MM-DD pattern
+        date_pattern = r"(\d{4}-\d{1,2}-\d{1,2})"
+        date_match = re.search(date_pattern, response)
+        
+        if date_match:
+            date_str = date_match.group(1)
+            
+            # Extract time: Look for HH:MM:SS or HH:MM pattern
+            time_pattern = r"(\d{1,2}:\d{1,2}(?::\d{1,2})?)"
+            time_match = re.search(time_pattern, response)
+            
+            if time_match:
+                time_str = time_match.group(1)
+                
+                # Handle time with or without seconds
+                has_seconds = len(time_str.split(":")) > 2
+                time_format = "%H:%M:%S" if has_seconds else "%H:%M"
+                
+                # Combine and parse the datetime
+                datetime_str = f"{date_str} {time_str}"
+                try:
+                    dt = datetime.strptime(datetime_str, f"%Y-%m-%d {time_format}")
+                    return dt.strftime("%Y-%m-%d %H:%M")
+                except ValueError as e:
+                    print(f"ISO format parsing failed: {e}")
+        
+        # If we got here, neither pattern matched
+        raise ValueError("Could not find datetime information in text")
 
     def conversation_manager(self):
         messages = []
@@ -546,8 +618,15 @@ class MedicalAgent:
                 medication_dosage=self.reminder.details['dosage'],
                 medication_frequency=self.reminder.details['frequency'],
             )
-
-        messages.append(Message(user_input='Hi', response=initial_message))
+            
+        
+        self.LLM.conversation_history.append({
+                "role": "user",
+                "content": "Hi"},
+                {
+                 "role": "assistant",
+                "content": initial_message   
+                })
         print("speaking........")
         
         # Use TTSClient exclusively for speech synthesis
@@ -569,8 +648,7 @@ class MedicalAgent:
                 logger.info(f"User input: {user_input}")
                 
                 # Get Moremi response
-                messages.append(Message(user_input=user_input))
-                response = self.moremi_response(messages, self.system_prompt)
+                response = self.moremi_response(user_input, self.system_prompt)
                 
                 if 'reschedule_appointment' in response:
                     logger.info("User requested to reschedule appointment")
@@ -583,7 +661,6 @@ class MedicalAgent:
                     self.audio_base64 = base64_audio
                     response = self.appointment_rescheduler()
                 elif any(goodbye_message.strip('.!?').lower() in response.lower() for goodbye_message in goodbye_messages):
-                    messages[-1].add_response(response)
                     logger.info(f"Moremi response: {response}")
                     logger.info("Conversation is over")
                     
@@ -599,7 +676,6 @@ class MedicalAgent:
                     # User confirms request
                     pass
                     
-                messages[-1].add_response(response)
                 logger.info(f"Moremi response: {response}")
                
                 # Use TTSClient for speech synthesis
@@ -610,6 +686,24 @@ class MedicalAgent:
                 )
                 self.audio_base64 = base64_audio
                 print("\nReady for next input...")
+                
+                context = self.format_conversation(self.LLM.conversation_history)
+                final = self.moremi_response(context, self.extract_prompt) 
+                print(f'final:{final}')
+                day = self.extract_datetime_from_moremi(final)
+                print(f'datetime: {day}')
+                try:
+                    newday = datetime.strptime(day, '%Y-%m-%d %H:%M')
+                    result = schedule_appointment(
+                        doctor_id=self.reminder.details['doctor_id'],
+                        patient_id=self.reminder.details['patient_id'],
+                        appointment_datetime=newday
+                    )
+                    print(f"Scheduling result: {result}")
+                    return result['success']
+                except Exception as e:
+                    logger.error(f"Error scheduling appointment: {str(e)}")
+                    return False
 
         except KeyboardInterrupt:
             logger.info("Conversation ended by user")
@@ -625,47 +719,104 @@ class MedicalAgent:
                 pass
             return False
     
-        context = self.format_conversation(messages)
-        final = moremi(context, self.extract_prompt) 
-        print(f'final:{final}')
-        day = self.extract_datetime_from_moremi(final)
-        print(f'datetime: {day}')
-        newday = datetime.strptime(day, '%Y-%m-%d %H:%M')
-        print(schedule_appointment(self.reminder.details['patient_id'], newday))
-        return True
+        
+
+def schedule_appointment(doctor_id: int, patient_id: int, appointment_datetime: Optional[datetime] = None, days_ahead: int = 30) -> Dict[str, Any]:
+    """
+    Schedule an appointment with a doctor for a patient.
+    
+    Args:
+        doctor_id: ID of the doctor
+        patient_id: ID of the patient
+        appointment_datetime: Optional specific datetime for the appointment
+        days_ahead: Number of days ahead to look for available slots if no specific datetime
+        
+    Returns:
+        Dict containing appointment details or error message
+    """
+    try:
+        with SchedulerManager(days_ahead) as scheduler:
+            # If no specific datetime provided, get the next available slot
+            if not appointment_datetime:
+                available_slots = scheduler._get_new_date(doctor_id)
+                if not available_slots:
+                    return {"success": False, "message": "No available slots found"}
+                appointment_datetime = available_slots[0]['datetime']
+            
+            # Create the appointment
+            appointment = Appointment(
+                doctor_id=doctor_id,
+                patient_id=patient_id,
+                datetime=appointment_datetime,
+                status='scheduled'
+            )
+            
+            scheduler.session.add(appointment)
+            scheduler.session.commit()
+            
+            # Get doctor and patient details for the response
+            doctor = scheduler.session.query(Doctor).get(doctor_id)
+            patient = scheduler.session.query(Patient).get(patient_id)
+            
+            return {
+                "success": True,
+                "message": "Appointment scheduled successfully",
+                "appointment": {
+                    "id": appointment.id,
+                    "doctor_name": doctor.name,
+                    "patient_name": patient.name,
+                    "datetime": appointment_datetime.isoformat(),
+                    "status": appointment.status
+                }
+            }
+            
+    except Exception as e:
+        logger.error(f"Error scheduling appointment: {str(e)}")
+        return {"success": False, "message": f"Failed to schedule appointment: {str(e)}"}
 
 def main():
-    """Main function to run the scheduler."""
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Run the appointment and medication scheduler.')
-    parser.add_argument('--hours-ahead', type=int, required=True,
-                      help='Number of hours ahead to check for appointments')
-    parser.add_argument('--days-ahead', type=int, required=True,
-                      help='Number of days ahead to look for available slots when rescheduling')
-    parser.add_argument('--type', type=str, required=True,
-                      help='Type of reminder to process (appointment or medication)')
-                                      
-    args = parser.parse_args()
-    
-    logger.info("Starting appointment and medication scheduler")
-    
-    try:
-        with SchedulerManager(args.days_ahead) as scheduler:
-            if args.type == 'appointment':
-                # Process appointment reminders with both hours_ahead and days_ahead
-                appointment_reminders = scheduler.process_appointment_reminders(
-                    hours_ahead=args.hours_ahead,
-                    days_ahead=args.days_ahead
-                )
-                logger.info(f"Processed {len(appointment_reminders)} appointment reminders")
-            else:
-                # Process medication reminders - only process one at a time
-                medication_reminders = scheduler.process_medication_reminders(days_ahead=args.days_ahead)
-                logger.info(f"Processed medication reminders")
-                
-    except Exception as e:
-        logger.error(f"Error in scheduler main function: {e}")
-        raise
+    # Main function to run the scheduler
+    if __name__ == "__main__":
+        # Parse command line arguments
+        parser = argparse.ArgumentParser(description='Run the appointment and medication scheduler.')
+        parser.add_argument('--hours-ahead', type=int, required=True,
+                          help='Number of hours ahead to check for appointments')
+        parser.add_argument('--days-ahead', type=int, required=True,
+                          help='Number of days ahead to look for available slots when rescheduling')
+        parser.add_argument('--type', type=str, required=True,
+                          help='Type of reminder to process (appointment or medication)')
+        parser.add_argument('--target-date', type=str, required=False,
+                          help='Target date for medication reminders (YYYY-MM-DD format)')
+                                          
+        args = parser.parse_args()
+        
+        logger.info("Starting appointment and medication scheduler")
+        
+        try:
+            with SchedulerManager(args.days_ahead) as scheduler:
+                if args.type == 'appointment':
+                    # Process appointment reminders with both hours_ahead and days_ahead
+                    appointment_reminders = scheduler.process_appointment_reminders(
+                        hours_ahead=args.hours_ahead,
+                        days_ahead=args.days_ahead
+                    )
+                    logger.info(f"Processed {len(appointment_reminders)} appointment reminders")
+                else:
+                    # Process medication reminders with target date
+                    target_date = None
+                    if args.target_date:
+                        try:
+                            target_date = datetime.strptime(args.target_date, '%Y-%m-%d').date()
+                            logger.info(f"Using target date: {target_date} for medication reminders")
+                        except ValueError:
+                            logger.error(f"Invalid date format: {args.target_date}. Using current date.")
+                    
+                    medication_reminders = scheduler.process_medication_reminders(target_date=target_date)
+                    logger.info(f"Processed {len(medication_reminders)} medication reminders")
+                    
+        except Exception as e:
+            logger.error(f"Error in scheduler main function: {e}")
+            raise
 
 if __name__ == "__main__":
     main()
