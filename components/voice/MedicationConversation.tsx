@@ -640,40 +640,36 @@ export const MedicationConversation = forwardRef<MedicationConversationRef, Medi
 
   const stopRecording = async () => {
     try {
-        // 1. Stop processing first
+        // 1. Stop recording first but keep processor alive until chunks are processed
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+
+        // 2. Process any remaining chunks in the queue
+        if (inputQueueRef.current.chunks.length > 0) {
+            console.log(`Processing ${inputQueueRef.current.chunks.length} remaining chunks...`);
+            processNextChunk(); // This will process all chunks recursively
+        }
+
+        // 3. Now clean up audio processing nodes
         if (processorRef.current) {
-            processorRef.current.onaudioprocess = null; // Remove the event handler first
+            processorRef.current.onaudioprocess = null;
             processorRef.current.disconnect();
             processorRef.current = null;
         }
 
-        // 2. Disconnect source
         if (sourceRef.current) {
             sourceRef.current.disconnect();
             sourceRef.current = null;
         }
 
-        // 3. Close audio context
         if (audioContextRef.current) {
             await audioContextRef.current.close();
             audioContextRef.current = null;
         }
-
-        // 4. Stop all tracks in the stream
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => {
-                track.stop();
-            });
-            streamRef.current = null;
-        }
-
-        // 5. Clear input queue
-        inputQueueRef.current = {
-            chunks: [],
-            isProcessing: false
-        };
         
-        // Send any remaining transcription
+        // 4. Send final transcription if we have any
         if (transcriptionBufferRef.current && transcriptionBufferRef.current.trim()) {
             if (wsRef.current?.readyState === WebSocket.OPEN) {
                 wsRef.current.send(JSON.stringify({
@@ -684,16 +680,15 @@ export const MedicationConversation = forwardRef<MedicationConversationRef, Medi
             }
         }
         
-        // Clear transcription buffers
+        // 5. Clear transcription buffers
         transcriptionBufferRef.current = '';
         setCurrentTranscription('');
         
-        // Update recording state
+        // 6. Update recording state
         setIsRecording(false);
         
     } catch (error) {
         console.error("Error cleaning up recording resources:", error);
-        // Still try to update state even if cleanup failed
         setIsRecording(false);
     }
 };
@@ -749,7 +744,9 @@ export const MedicationConversation = forwardRef<MedicationConversationRef, Medi
 
     console.log('[WebSocket] TTS playback started');
     setIsPlayingAudio(true);
+    if (!ttsPlaying){
     setTtsPlaying(true);
+    }
     const nextChunk = audioQueueRef.current[0];
 
     try {

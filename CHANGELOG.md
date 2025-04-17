@@ -1,10 +1,8 @@
 ## TODOS
 
-- [ ] Improve audio chunking management for api calls and responses
 - [ ] Improve UI for data management page
 
 ## PENDING
-
 
 ## BUGS
 
@@ -19,3 +17,4 @@
 - [X] Frontend component url pointing to local host
 - [X] Removed hours ahead when medication is selected
 - [X] Fix numeric updates for incremental up, down and add remove fixed number beginning the count
+- [X] Improve audio chunking management for api calls and responses

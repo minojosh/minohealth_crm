@@ -153,6 +153,16 @@ class AudioChunkProcessor {
   private resetBuffer(): void {
     this.buffer = [];
   }
+
+  // Add method to force process remaining buffer
+  forceProcessBuffer(): Float32Array | null {
+    if (this.buffer.length > 0) {
+      const chunk = this.concatenateBuffer();
+      this.resetBuffer();
+      return chunk;
+    }
+    return null;
+  }
 }
 
 
@@ -191,6 +201,7 @@ export const AppointmentConversation = forwardRef<AppointmentConversationRef, Co
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const chunkProcessorRef = useRef<AudioChunkProcessor | null>(null);
   
   // Add these refs after other refs
   const inputQueueRef = useRef<AudioInputQueue>({
@@ -609,6 +620,7 @@ const processNextChunk = async () => {
         const result = await response.json();
         
         if (result.transcription?.trim()) {
+            console.log('[STT] Transcription result:', result.transcription?.trim());
             transcriptionBufferRef.current += ' ' + result.transcription.trim();
             setCurrentTranscription(transcriptionBufferRef.current);
         }
@@ -622,7 +634,7 @@ const processNextChunk = async () => {
         
         // Process next chunk if available
         if (inputQueueRef.current.chunks.length > 0) {
-            processNextChunk();
+             await processNextChunk();
         }
     }
 };
@@ -669,6 +681,7 @@ const handleStartRecording = async () => {
             silenceThreshold: 0.005,
             maxChunkDuration: 10000
         });
+        chunkProcessorRef.current = chunkProcessor; // Store the instance
 
         // Connect audio nodes
         sourceRef.current.connect(processorRef.current);
@@ -713,40 +726,68 @@ const handleStartRecording = async () => {
 
 const handleStopRecording = async () => {
     try {
-        // 1. Stop processing first
+        // 1. Stop recording and audio input first
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+
+        // Update recording state
+        setIsRecording(false);
+        setIsProcessing(true);
+        
+        // 2. Force process any remaining audio in buffer
+        if (chunkProcessorRef.current) {
+            const remainingChunk = chunkProcessorRef.current.forceProcessBuffer();
+            if (remainingChunk) {
+                inputQueueRef.current.chunks.push({
+                    data: remainingChunk,
+                    timestamp: Date.now()
+                });
+            }
+        }
+
+        // 3. Wait for all chunks to be processed
+        if (inputQueueRef.current.chunks.length > 0) {
+            console.log(`Processing ${inputQueueRef.current.chunks.length} remaining chunks...`);
+            // Wait for queue to be empty and processing to complete
+            await new Promise<void>((resolve) => {
+                const checkQueue = () => {
+                    if (inputQueueRef.current.chunks.length === 0 && !inputQueueRef.current.isProcessing) {
+                        resolve();
+                    } else {
+                        // If not processing, trigger processNextChunk
+                        if (!inputQueueRef.current.isProcessing) {
+                            processNextChunk();
+                        }
+                        setTimeout(checkQueue, 100);
+                    }
+                };
+                checkQueue();
+            });
+
+            // Give time for UI to update
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        // 4. Now we can safely clean up audio nodes
         if (processorRef.current) {
-            processorRef.current.onaudioprocess = null; // Remove the event handler first
+            processorRef.current.onaudioprocess = null;
             processorRef.current.disconnect();
             processorRef.current = null;
         }
 
-        // 2. Disconnect source
         if (sourceRef.current) {
             sourceRef.current.disconnect();
             sourceRef.current = null;
         }
 
-        // 3. Close audio context
         if (audioContextRef.current) {
             await audioContextRef.current.close();
             audioContextRef.current = null;
         }
-
-        // 4. Stop all tracks in the stream
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => {
-                track.stop();
-            });
-            streamRef.current = null;
-        }
-
-        // 5. Clear input queue
-        inputQueueRef.current = {
-            chunks: [],
-            isProcessing: false
-        };
         
-        // Send any remaining transcription
+        // 5. Send final transcription if we have any
         if (transcriptionBufferRef.current && transcriptionBufferRef.current.trim()) {
             if (wsRef.current?.readyState === WebSocket.OPEN) {
                 wsRef.current.send(JSON.stringify({
@@ -757,16 +798,15 @@ const handleStopRecording = async () => {
             }
         }
         
-        // Clear transcription buffers
+        // 6. Clear transcription buffers
         transcriptionBufferRef.current = '';
         setCurrentTranscription('');
+        setIsProcessing(false);
+
         
-        // Update recording state
-        setIsRecording(false);
         
     } catch (error) {
         console.error("Error cleaning up recording resources:", error);
-        // Still try to update state even if cleanup failed
         setIsRecording(false);
     }
 };
@@ -831,6 +871,9 @@ const handleStopRecording = async () => {
 
     console.log('[WebSocket] TTS playback started');
     setIsPlayingAudio(true);
+    if (!ttsPlaying) {
+      setTtsPlaying(true);
+    }
     const nextChunk = audioQueueRef.current[0];
 
     try {
@@ -857,7 +900,6 @@ const handleStopRecording = async () => {
   // Monitor queue and process chunks
   useEffect(() => {
     if (!isPlayingAudio && audioQueue.length > 0) {
-      setTtsPlaying(true);
       processAudioQueue();
     }
   }, [audioQueue, isPlayingAudio, processAudioQueue]);
